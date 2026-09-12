@@ -155,6 +155,24 @@ def check_app_exercises(templates: Path) -> None:
                 # learner's edits would land on their own project.
                 shutil.copytree(solution, work, dirs_exist_ok=True)
 
+                # Bump the mtime of every overlaid source. rsync and copytree
+                # both preserve the files' git-checkout mtimes, which can be
+                # *older* than an object file the warm `.build` compiled for a
+                # previous exercise — and several exercises define the same
+                # type (three define `IssueController`, with different routes).
+                # SwiftPM's incremental check is mtime-based, so a stale-but-
+                # newer `.o` gets reused and the app links against the previous
+                # exercise's macro-generated `_flightRoute_*` symbols, failing
+                # with an undefined-reference error for a symbol the *current*
+                # source would have produced. Touching forces a recompile of
+                # whatever changed while leaving the expensive dependency build
+                # warm.
+                for path in work.rglob("*"):
+                    if ".build" in path.parts or path.is_dir():
+                        continue
+                    if path.suffix in {".swift", ".yaml", ".yml", ".json"} or path.name == "Package.swift":
+                        path.touch()
+
                 # An exercise whose solution lives in Tests/ needs the test
                 # target compiled — plain `swift build` skips it entirely,
                 # so the whole file would go unchecked while still reporting

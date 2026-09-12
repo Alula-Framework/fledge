@@ -194,7 +194,7 @@ export const curriculum: PartOutline[] = [
 			{
 				slug: '01-repo-wiring',
 				title: 'Wiring Hangar into Flight',
-				description: 'Request-scoped repos, and the connection-affinity bug this guide exists to prevent.'
+				description: 'Leasing a connection per operation with withRepo, and the connection-affinity bug this guide exists to prevent.'
 			},
 			{
 				slug: '02-authentication',

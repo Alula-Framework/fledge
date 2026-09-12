@@ -4,27 +4,33 @@ description: An ordinary POST route, and the socket subscribers it reaches.
 order: 3
 ---
 
-`ChannelBroadcaster` is a plain container singleton — nothing about
-reaching it requires being inside a channel at all:
+`ChannelBroadcaster` is a plain value the `FlightChannelsModule` provides —
+nothing about reaching it requires being inside a channel at all. A controller
+injects it like any other dependency:
 
 ```swift
-@PostRoute("/projects/:key/issues")
-func create(_ context: RequestContext, body: CreateIssueRequest) async throws -> Response {
-    guard let key = context.pathParam("key"), let project = try await db.findProject(byKey: key) else {
-        throw HTTPError(.notFound, "no such project")
+@Controller
+struct IssueCreationController {
+    // flight:hand-registered — the broadcaster is provided by FlightChannelsModule.
+    @Inject var broadcaster: ChannelBroadcaster
+
+    @PostRoute("/projects/:key/issues")
+    func create(_ context: RequestContext, body: CreateIssueRequest) async throws -> Response {
+        guard let key = context.pathParam("key"), let project = try await db.findProject(byKey: key) else {
+            throw HTTPError(.notFound, "no such project")
+        }
+        let issue = try await db.insertIssue(projectID: project.id, title: body.title, body: body.body)
+
+        await broadcaster.broadcast(
+            topic: "project:\(project.key)", event: "issue_created", payload: wire(issue))
+
+        return try Response.json(IssueResponse(issue), status: .created)
     }
-    let issue = try await db.insertIssue(projectID: project.id, title: body.title, body: body.body)
-
-    let broadcaster = try context.resolve(ChannelBroadcaster.self)
-    await broadcaster.broadcast(
-        topic: "project:\(project.key)", event: "issue_created", payload: wire(issue))
-
-    return try Response.json(IssueResponse(issue), status: .created)
 }
 ```
 
 Nothing here is a `Channel` — it's an ordinary `@PostRoute` handler that
-happens to resolve the same broadcaster a channel would. The handler
+happens to hold the same broadcaster a channel would. The handler
 doesn't know or care whether anyone is subscribed; if the project's board
 is open in a browser somewhere, `issue_created` reaches it exactly as if
 the issue had been created over the socket instead of over HTTP.

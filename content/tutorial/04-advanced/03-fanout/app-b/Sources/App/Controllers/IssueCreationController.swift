@@ -15,6 +15,11 @@ struct IssueResponse: Codable, ResponseEncodable {
 
 @Controller
 struct IssueCreationController {
+    // flight:hand-registered — the broadcaster is provided by
+    // FlightChannelsModule as a value, injected the ordinary way rather than
+    // pulled from the context when the handler runs.
+    @Inject var broadcaster: ChannelBroadcaster
+
     @PostRoute("/projects/:key/issues")
     func create(_ context: RequestContext, body: CreateIssueRequest) async throws -> Response {
         guard let key = context.pathParam("key") else {
@@ -22,7 +27,6 @@ struct IssueCreationController {
         }
         let issue = IssueResponse(id: UUID(), title: body.title)
 
-        let broadcaster = try context.resolve(ChannelBroadcaster.self)
         await broadcaster.broadcast(
             topic: "project:\(key)", event: "issue_created", payload: Self.wire(issue))
 
