@@ -52,16 +52,18 @@ version, while tus 1.0 is what every upload library actually in use
 
 ```swift
 let store = try DiskUploadStore(directory: uploadsDirectory)
-container.uploads(at: "/uploads", store: store) { options in
+let uploads: [RouteRegistration] = RouteRegistration.uploads(at: "/uploads", store: store) { options in
     options.maxSize = 2 << 30       // 2 GiB per upload
     options.ttl = .seconds(7 * 24 * 3600)
 }
 ```
 
-This registers five ordinary routes — `POST`/`HEAD`/`PATCH`/`DELETE` plus
-an `OPTIONS` for capability discovery — the same way any other route
-appears in startup logs and actuator introspection, not a special-cased
-fallback. A client creates an upload, `PATCH`es chunks to it with an
+`RouteRegistration.uploads` produces five ordinary routes as *values* —
+`POST`/`HEAD`/`PATCH`/`DELETE` plus an `OPTIONS` for capability discovery. A
+module holds them (`let uploads: [RouteRegistration]`, built in its `init`
+since the store is), and the composition root folds them into the web layer —
+so they appear in startup logs and actuator introspection like any other
+route, not a special-cased fallback. A client creates an upload, `PATCH`es chunks to it with an
 `Upload-Offset` header, and can stop and resume from any point by asking
 `HEAD` where it got to:
 

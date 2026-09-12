@@ -63,8 +63,11 @@ drives a real `ChannelClient`, reconnection and all, against a real server
 with zero sockets:
 
 ```swift
-let container = try TestContainer.build { AppModule() }
-let transport = InMemoryChannelTransport(testClient: try TestClient(container: container))
+// harness.testClient is a TestClient built over the socket route the way the
+// app composes it — FlightChannelsModule's `sockets` behind SocketController.
+// RealtimeTests.swift in the demo template shows that wiring in full.
+let harness = try Harness()
+let transport = InMemoryChannelTransport(testClient: harness.testClient)
 let client = ChannelClient(url: URL(string: "flight-test:///socket")!, transport: transport)
 
 await #expect(throws: ChannelClientError.channelError(reason: "forbidden")) {

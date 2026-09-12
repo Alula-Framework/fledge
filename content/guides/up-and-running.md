@@ -35,10 +35,10 @@ MyService/
 ```
 
 `Main.swift` is the whole boot sequence, in one place: configuration
-loads, the container is built (every module's `dependencies` forming a
-DAG resolved once), the container freezes, and only then does the server
-start accepting requests. There's no window where a request could arrive
-against a half-registered container.
+loads, the modules compose in dependency order (each module's
+`dependencies` forming a DAG resolved once), every component is built
+once, and only then does the server start accepting requests. There's no
+window where a request could arrive against a half-built graph.
 
 `HealthController` is the one route worth curling once `swift run` is up:
 
@@ -73,15 +73,14 @@ swift test
 
 The generated test drives the same route through `TestClient` — routing,
 middleware, and dependency injection all run for real, with no socket and
-no port to collide with:
+no port to collide with. It builds the graph and its routes the way the
+composition root does, then dispatches against them:
 
 ```swift
 @Test("the index route answers with the configured application name")
 func index() async throws {
-    let container = try TestContainer.build(
-        configuration: Configuration(values: ["app.name": "TestApp"])
-    ) { AppModule() }
-    let client = try TestClient(container: container)
+    let graph = try FlightGraph(configuration: Configuration(values: ["app.name": "TestApp"]))
+    let client = try TestClient(routes: flightRoutes(graph))
     let response = await client.get("/")
     #expect(response.bodyText == "TestApp is flying")
 }
@@ -93,8 +92,8 @@ func index() async throws {
   thing worth adding to `HealthController`'s file.
 - [Configuration](/guides/configuration) — the three layers `app.name`
   above actually comes from.
-- [Testing](/guides/testing) — what `TestClient` is doing under the hood,
-  and the other two sizes of test beyond the one above.
+- [Testing](/guides/testing) — the direct unit-test tier most of your
+  tests should be, and where this end-to-end style fits.
 
 [Part 0 of the tutorial](/tutorial/00-setup) walks through all of this
 one exercise at a time, including what each generated file is for.
