@@ -23,27 +23,30 @@ struct RequestTiming {
 It both logs the timing and returns it as a header, so you can see the
 layer working with `curl -i` as well as in the log.
 
-`@Middleware` registers `RequestTiming` as an ordinary singleton component —
+`@Middleware` builds `RequestTiming` as an ordinary singleton component —
 `@Inject` can resolve it, a test can construct it directly — exactly like
 `@Component`. What it deliberately does *not* do is enroll the type in any
-pipeline. That's a separate, explicit step:
+lane. That's a separate, explicit step: a module holds the lane as a value,
+listing the middleware *instances* that run in it, outermost first.
 
 ```swift
-container.pipeline {
-    RequestTiming.self
+struct AppModule: FlightModule {
+    static var dependencies: [any FlightModule.Type] { [] }
+
+    let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane(
+        .default, [RequestTiming()])
 }
 ```
 
-A `@Middleware` type written but left out of every `pipeline { }` block
-simply never runs, which is a one-line fix to notice and make, not a
-silently wrong answer shipping because a registration call was forgotten
-somewhere.
+A `@Middleware` type written but left out of every lane simply never runs,
+which is a one-line fix to notice and make, not a silently wrong answer
+shipping because a registration call was forgotten somewhere.
 
 **This is why the exercise touches two files**: `RequestTiming.swift`,
 where the type goes, and `Main.swift`, where it gets enrolled. Write only
 the first and rebuild — the app serves exactly as before and the header
-never appears, because nothing put the layer in a pipeline. Add the
-`pipeline { }` block to `AppModule.configure`, rebuild, and it does:
+never appears, because nothing put the layer in a lane. Add the `middleware`
+property to `AppModule`, rebuild, and it does:
 
 ```
 HTTP/1.1 200 OK
@@ -84,36 +87,35 @@ struct MaintenanceGate {
 No `MiddlewareResult` enum, no closure-arity to get right — a layer that has
 nothing to add to a failure just lets a thrown error propagate outward
 through every enclosing layer exactly like an ordinary Swift call. Listing
-both types orders them, outermost first:
+both instances orders them, outermost first:
 
 ```swift
-container.pipeline {
-    RequestTiming.self
-    MaintenanceGate.self
-}
+let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane(
+    .default, [RequestTiming(), MaintenanceGate()])
 ```
 
 `RequestTiming` wraps `MaintenanceGate` wraps the handler — a request the
 gate turns away is still timed, because timing sits outside it. Reverse the
-two lines and it wouldn't be.
+two entries and it wouldn't be.
 
 ## Named lanes
 
-The pipeline above extends the *default* lane every route runs unless told
+The lane above extends the *default* lane every route runs unless told
 otherwise. A controller that wants a different stack entirely — nothing at
-all, or something narrower — names its own:
+all, or something narrower — names its own. A module declares as many lanes
+as it likes by concatenating them, and a route opts in by name:
 
 ```swift
-container.pipeline("admin") {
-    RequestTiming.self
-    MaintenanceGate.self
-}
+let middleware: [MiddlewareRegistration] =
+    MiddlewareRegistration.lane(.default, [RequestTiming()])
+    + MiddlewareRegistration.lane("admin", [RequestTiming(), MaintenanceGate()])
 
 @Controller("/admin", pipelines: ["admin"])
 struct AdminController { /* ... */ }
 ```
 
 This is the same mechanism the previous exercise's asset mount used —
-`pipelines: ["assets"]` names a lane too, just one declared empty. Naming an
-undeclared lane fails at bootstrap, pointing at the route and the lane —
-never a 500 discovered from a request three deploys later.
+`pipelines: ["assets"]` names a lane too, just one declared empty with
+`MiddlewareRegistration.lane("assets", [])`. Naming an undeclared lane fails
+at bootstrap, pointing at the route and the lane — never a 500 discovered
+from a request three deploys later.

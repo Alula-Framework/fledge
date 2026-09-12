@@ -2,67 +2,62 @@ import FlightActuator
 import FlightCore
 import FlightTransport
 import FlightWeb
-import Foundation
 
 /// Your application's module: one place that says what this app is made of.
 ///
-/// `flightRegisterAll` is generated at build time from everything the
-/// registration plugin found in this target — every `@Controller`,
-/// `@Service`, `@Repository`, and `@Component`. Adding a controller does not
-/// mean editing this file.
+/// Everything the registration plugin scans — every `@Controller`, `@Service`,
+/// `@Repository`, and `@Component` — is wired by the generated composition
+/// root, so adding a controller does not mean editing this file.
 struct AppModule: FlightModule {
-    /// Modules that must be configured before this one. The list is a DAG
-    /// resolved once at bootstrap, so ordering is checked rather than hoped
-    /// for.
+    /// Modules that must be built before this one. The list is a DAG resolved
+    /// once at bootstrap, so ordering is checked rather than hoped for.
     static var dependencies: [any FlightModule.Type] { [] }
 
-    func configure(_ container: Container) throws {
-        try flightRegisterAll(container)
+    /// The empty `"assets"` lane, as a value. Declaring a lane with nothing in
+    /// it is the point, not a placeholder: it is how the asset traffic opts out
+    /// of everything the default lane carries. `.lane(_:_:)` emits a marker
+    /// even for an empty list, so the lane still *exists* to be named — a mount
+    /// naming a lane nobody declared fails at startup.
+    let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane("assets", [])
 
-        container.pipeline("assets") {}
-        container.assets(at: "/", root: "web/build", pipelines: ["assets"]) { options in
+    /// A built frontend, mounted as a routing fallback rather than a route: it
+    /// only answers a `GET`/`HEAD` the router did not match. The value form of
+    /// the old `container.assets(at:root:pipelines:)`; the composer hands these
+    /// to `FlightWebModule` the same way it hands over routes.
+    let assets: [AssetMountRegistration] = [
+        .mount(at: "/", root: "web/build", pipelines: ["assets"]) { options in
             options.spaFallback = "index.html"
             options.exclude = ["/api"]
             options.cache("no-cache", matching: "index.html")
             options.cache("public, max-age=31536000, immutable", matching: "_app/immutable/**")
         }
-    }
+    ]
 }
 
 @main
 struct Main {
     static func main() async {
-        // Configuration loads first, then the container is built, the module
-        // DAG configures, the container freezes, and only then does the
-        // server start accepting requests. Nothing serves traffic against a
-        // half-registered container.
-        do {
-            try await Flight.bootstrap(
-                configuration: try Configuration.load(),
-                modules: [
-                    FlightWebModule<FlightTransport>.self,
-                    AppModule.self,
-                    ActuatorModule.self,
-                ]
-            )
-        } catch {
-            // Not `main() async throws`. An error escaping `main` is reported
-            // by the Swift runtime as "Fatal error: Error raised at top
-            // level" followed by a register dump and a backtrace — which is
-            // what a new project sees when Postgres is not running or port
-            // 8080 is already bound. Those two deserve a line of text and a
-            // non-zero exit, not a crash report.
-            //
-            // `String(reflecting:)` rather than plain interpolation because
-            // PostgresNIO's `description` is deliberately redacted — it says
-            // "Generic description to prevent accidental leakage" and nothing
-            // about what went wrong. The reflected form names the host, the
-            // port and the errno. That is safe here specifically: this is a
-            // startup failure, so there are no user queries or bind values to
-            // leak, and the process is about to exit.
-            FileHandle.standardError.write(
-                Data("App failed to start: \(String(reflecting: error))\n".utf8))
-            exit(1)
-        }
+        // Configuration loads first, then the modules are composed in
+        // dependency order, every component is built once, and only then does
+        // the server start accepting requests. Nothing serves traffic against
+        // a half-built graph.
+        //
+        // `Flight.run` rather than `main() async throws`: an error escaping
+        // `main` is reported by the Swift runtime as "Fatal error: Error
+        // raised at top level" followed by a register dump and a backtrace —
+        // which is what a new project sees when Postgres is not running or the
+        // port is already bound. `run` prints the reason and exits 1.
+        await Flight.run(
+            configuration: try Configuration.load(),
+            modules: [
+                FlightWebModule<FlightTransport>.self,
+                AppModule.self,
+                ActuatorModule.self,
+            ],
+            // Built by the plugin, in dependency order, from the list above:
+            // `modules:` says which subsystems this application includes, and
+            // this is how they are constructed.
+            composedBy: flightComposeModules
+        )
     }
 }

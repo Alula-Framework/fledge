@@ -2,63 +2,54 @@ import FlightActuator
 import FlightCore
 import FlightTransport
 import FlightWeb
-import Foundation
 
 /// Your application's module: one place that says what this app is made of.
 ///
-/// `flightRegisterAll` is generated at build time from everything the
-/// registration plugin found in this target — every `@Controller`,
-/// `@Service`, `@Repository`, and `@Component`. Adding a controller does not
-/// mean editing this file.
+/// Everything the registration plugin scans — every `@Controller`, `@Service`,
+/// `@Repository`, and `@Component` — is wired by the generated composition
+/// root, so adding a controller does not mean editing this file.
 struct AppModule: FlightModule {
-    /// Modules that must be configured before this one. The list is a DAG
-    /// resolved once at bootstrap, so ordering is checked rather than hoped
-    /// for.
+    /// Modules that must be built before this one. The list is a DAG resolved
+    /// once at bootstrap, so ordering is checked rather than hoped for.
     static var dependencies: [any FlightModule.Type] { [] }
 
-    func configure(_ container: Container) throws {
-        try flightRegisterAll(container)
-
-        container.pipeline {
-            RequestTiming.self
-        }
-    }
+    /// The application's default-lane middleware, outermost first — the value
+    /// form of the old `container.pipeline { }`. A `@Middleware` type is an
+    /// ordinary component; naming its *instance* here is the separate, explicit
+    /// step that puts it in a lane. The composer collects `middleware` from
+    /// every module and hands it to `FlightWebModule`.
+    ///
+    /// The explicit `[MiddlewareRegistration]` annotation is load-bearing: the
+    /// build-time scanner reads the declared type to know this property feeds
+    /// the middleware aggregate.
+    let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane(
+        .default, [RequestTiming()])
 }
 
 @main
 struct Main {
     static func main() async {
-        // Configuration loads first, then the container is built, the module
-        // DAG configures, the container freezes, and only then does the
-        // server start accepting requests. Nothing serves traffic against a
-        // half-registered container.
-        do {
-            try await Flight.bootstrap(
-                configuration: try Configuration.load(),
-                modules: [
-                    FlightWebModule<FlightTransport>.self,
-                    AppModule.self,
-                    ActuatorModule.self,
-                ]
-            )
-        } catch {
-            // Not `main() async throws`. An error escaping `main` is reported
-            // by the Swift runtime as "Fatal error: Error raised at top
-            // level" followed by a register dump and a backtrace — which is
-            // what a new project sees when Postgres is not running or port
-            // 8080 is already bound. Those two deserve a line of text and a
-            // non-zero exit, not a crash report.
-            //
-            // `String(reflecting:)` rather than plain interpolation because
-            // PostgresNIO's `description` is deliberately redacted — it says
-            // "Generic description to prevent accidental leakage" and nothing
-            // about what went wrong. The reflected form names the host, the
-            // port and the errno. That is safe here specifically: this is a
-            // startup failure, so there are no user queries or bind values to
-            // leak, and the process is about to exit.
-            FileHandle.standardError.write(
-                Data("App failed to start: \(String(reflecting: error))\n".utf8))
-            exit(1)
-        }
+        // Configuration loads first, then the modules are composed in
+        // dependency order, every component is built once, and only then does
+        // the server start accepting requests. Nothing serves traffic against
+        // a half-built graph.
+        //
+        // `Flight.run` rather than `main() async throws`: an error escaping
+        // `main` is reported by the Swift runtime as "Fatal error: Error
+        // raised at top level" followed by a register dump and a backtrace —
+        // which is what a new project sees when Postgres is not running or the
+        // port is already bound. `run` prints the reason and exits 1.
+        await Flight.run(
+            configuration: try Configuration.load(),
+            modules: [
+                FlightWebModule<FlightTransport>.self,
+                AppModule.self,
+                ActuatorModule.self,
+            ],
+            // Built by the plugin, in dependency order, from the list above:
+            // `modules:` says which subsystems this application includes, and
+            // this is how they are constructed.
+            composedBy: flightComposeModules
+        )
     }
 }

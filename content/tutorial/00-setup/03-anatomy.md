@@ -32,7 +32,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [.executable(name: "App", targets: ["App"])],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.7.0", traits: ["Web"])
+        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.16.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
@@ -61,8 +61,9 @@ transport protocol is a peer you could swap in.
 
 The plugin line matters more than it looks: `FlightRegistrationPlugin`
 scans this target for `@Component`/`@Controller`/`@Service` at *build*
-time and generates the code that registers them. There is no runtime route
-table anywhere in this project for you to find and mutate.
+time and generates the composition root (`flightComposeModules`) that builds
+and wires them. There is no runtime route table anywhere in this project for
+you to find and mutate.
 
 ## `flight.yaml` — layer 3 of configuration
 
@@ -90,44 +91,41 @@ minute ago is still the value it would read now.
 ```swift
 struct AppModule: FlightModule {
     static var dependencies: [any FlightModule.Type] { [] }
-
-    func configure(_ container: Container) throws {
-        try flightRegisterAll(container)
-    }
 }
 
 @main
 struct Main {
     static func main() async {
-        do {
-            try await Flight.bootstrap(
-                configuration: try Configuration.load(),
-                modules: [
-                    FlightWebModule<FlightTransport>.self,
-                    AppModule.self,
-                    ActuatorModule.self,
-                ])
-        } catch {
-            FileHandle.standardError.write(
-                Data("App failed to start: \(String(reflecting: error))\n".utf8))
-            exit(1)
-        }
+        await Flight.run(
+            configuration: try Configuration.load(),
+            modules: [
+                FlightWebModule<FlightTransport>.self,
+                AppModule.self,
+                ActuatorModule.self,
+            ],
+            composedBy: flightComposeModules
+        )
     }
 }
 ```
 
 Read this and you've read the order events happen in, for every Flight
-app you'll ever open: configuration loads, the container is built, every
-module's `dependencies` form a DAG that's resolved once, each module
-configures the container in that order, the container freezes, and *only
-then* does the server start accepting requests. Nothing serves traffic
-against a half-registered container — there's no window where a request
-could arrive before your controllers exist.
+app you'll ever open: configuration loads, the modules are composed in
+dependency order — each module's `dependencies` form a DAG that's resolved
+once — every `@Controller`, `@Service`, `@Repository`, and `@Component` is
+built a single time and wired by type, and *only then* does the server start
+accepting requests. Nothing serves traffic against a half-built graph —
+there's no window where a request could arrive before your controllers exist.
 
-`flightRegisterAll` is the function the registration plugin generated.
-Adding a controller to this project means writing the controller, not
-editing `Main.swift` — `AppModule.configure` doesn't grow a line per
-route.
+`Flight.run` rather than `main() async throws` is deliberate: an error
+escaping `main` prints a raw runtime backtrace, while `run` prints the reason
+(Postgres down, port already bound) and exits 1.
+
+`flightComposeModules` is the composition root the registration plugin
+generated. `AppModule` is a *value* — no `configure` method, no registration
+call. Adding a controller to this project means writing the controller, not
+editing `Main.swift`; the plugin finds the new type at build time and wires it
+in.
 
 ## `Controllers/HealthController.swift` — the one route worth curling
 

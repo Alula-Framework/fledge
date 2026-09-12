@@ -11,26 +11,30 @@ not a route:
 struct AppModule: FlightModule {
     static var dependencies: [any FlightModule.Type] { [] }
 
-    func configure(_ container: Container) throws {
-        try flightRegisterAll(container)
+    let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane("assets", [])
 
-        container.pipeline("assets") { }
-        container.assets(at: "/", root: "web/build", pipelines: ["assets"]) { options in
+    let assets: [AssetMountRegistration] = [
+        .mount(at: "/", root: "web/build", pipelines: ["assets"]) { options in
             options.spaFallback = "index.html"
             options.exclude = ["/api"]
             options.cache("no-cache", matching: "index.html")
             options.cache("public, max-age=31536000, immutable", matching: "_app/immutable/**")
         }
-    }
+    ]
 }
 ```
 
-The empty `pipeline("assets") { }` is the point of the lane, not a
-placeholder: declaring a lane with nothing in it is how this traffic opts
-out of everything the default lane carries. That needs flight `0.9.1` or
-later — before it, an empty block registered nothing, the lane left no
-trace, and the mount failed at startup complaining the lane was never
-declared. (Found by compiling this exercise; see the changelog entry.)
+A mount and its lane are *values* the module holds — the composition root
+folds each module's `assets` and `middleware` into the web layer, matched by
+type, so the explicit `[AssetMountRegistration]` and `[MiddlewareRegistration]`
+annotations are what let the build's scanner recognize them.
+
+The empty `MiddlewareRegistration.lane("assets", [])` is the point of the lane,
+not a placeholder: declaring a lane with nothing in it is how this traffic opts
+out of everything the default lane carries. `.lane(_:_:)` emits a marker
+registration even for an empty list, precisely so the lane still *exists* to be
+named — the empty static-asset lane is the case that mechanism was built for. A
+mount naming a lane nobody declared fails at startup, pointing at both.
 
 "Fallback" is exact: a mount only answers a `GET`/`HEAD` the router didn't
 match. A real route always wins, matched routes never pay anything for the
