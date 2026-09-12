@@ -297,16 +297,21 @@ template if any.
 
 ## 7. Curriculum
 
-Structured as five parts; each exercise is one concept, Svelte-tutorial
-granularity (5–15 minutes). Titles are working titles.
+Structured as parts; each exercise is one concept, Svelte-tutorial
+granularity (5–15 minutes). Titles are working titles. The *(runtime: …)*
+labels below are the original plan; the `app`/`app+db` execution tiers were
+built and then removed (see STATUS.md), so the shipped runtimes are
+`none`/`snippet`/`db`/`local` and `site/src/lib/curriculum.ts` is the source
+of truth for what actually exists.
 
 **Part 0 — Setup** *(mirrors the CLI; runtime: none/snippet)*
 Installing Swift and flight-cli · `flight new` and the tier/trait model ·
 project anatomy (Package.swift, flight.yaml, the module list) · running
 locally, and how the in-browser workspace corresponds to it.
 
-**Part 1 — Flight basics** *(runtime: app)*
-Bootstrap, modules, and the container (what `flightRegisterAll` wires) ·
+**Part 1 — Flight basics** *(runtime: local)*
+Bootstrap, modules, and the composition root (what `flightComposeModules`
+wires, in what order) ·
 first route with `@Controller`/`@GetRoute` · path/query parameters ·
 request bodies and content negotiation (JSON *and* forms out of the box —
 the round-1 benchmark finding, taught as a feature) · responses, status
@@ -352,6 +357,20 @@ live cluster) · capstone: the live issue board, assembled from everything
 capstone can never silently rot) · deployment guide (systemd, Docker,
 strip-your-binary — the measured 75% size reduction, reverse proxy,
 health checks).
+
+**Part 5 — Authoring your own modules** *(runtime: local)*
+The seam every subsystem (yours and the framework's) is built on, taught by
+writing one. A `FlightModule` is a value: your first module and providing a
+value by type (the `// flight:hand-registered` marker, the required explicit
+type annotation) · modules that depend on modules (`dependencies` as an
+inclusion edge, an `init` the composition root satisfies by type,
+configuration and another module's value; ambiguity is a build error) ·
+contributing routes, channels, and middleware as `[RouteRegistration]` /
+`[ChannelRegistration]` / `[MiddlewareRegistration]` values the root
+aggregates · a module that runs something (`var service:`,
+`cancelWhenGracefulShutdown`, shutdown phases, the provide-vs-take-the-graph
+cycle rule) · packaging a module in its own library package, installed by
+listing it — the shape `FlightSecurityModule` and friends already ship in.
 
 Changeset appears both inside Part 2 (its natural home, Ecto-style) and as
 a standalone guide in the plain-docs track for direct linking.
