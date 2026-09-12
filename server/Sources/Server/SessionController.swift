@@ -29,13 +29,13 @@ struct WriteRequest: Decodable {
 /// an `HttpOnly` cookie is by design unreadable from the client's own JS.
 @Controller
 struct SessionController {
-    // flight:hand-registered — registered in AppModule.configure(_:); it
+    // flight:hand-registered — provided by AppModule (matched by type); it
     // composes an actor and two value types, so it isn't itself a scanned
-    // @Component.
-    @Autowired var sessionService: SessionService
+    // @Service.
+    @Inject var sessionService: SessionService
     @ConfigValue("session.hardCapSeconds", default: 3600) var hardCapSeconds: Int
 
-    @PostMapping("/api/session")
+    @PostRoute("/api/session")
     func createSession(_ context: RequestContext) async -> Response {
         do {
             let sessionID = try await sessionService.getOrCreateSession(
@@ -53,7 +53,7 @@ struct SessionController {
         }
     }
 
-    @PostMapping("/api/session/write")
+    @PostRoute("/api/session/write")
     func write(_ context: RequestContext, body: WriteRequest) async -> Response {
         guard let sessionID = context.request.cookie(sessionCookieName) else {
             return .problem(status: .badRequest, message: "no session — POST /api/session first")
@@ -68,7 +68,7 @@ struct SessionController {
         }
     }
 
-    @PostMapping("/api/session/run")
+    @PostRoute("/api/session/run")
     func run(_ context: RequestContext) async -> Response {
         guard let sessionID = context.request.cookie(sessionCookieName) else {
             return .problem(status: .badRequest, message: "no session — POST /api/session first")
@@ -83,7 +83,7 @@ struct SessionController {
         }
     }
 
-    @PostMapping("/api/session/reset")
+    @PostRoute("/api/session/reset")
     func reset(_ context: RequestContext) async -> Response {
         guard let sessionID = context.request.cookie(sessionCookieName) else {
             return .problem(status: .badRequest, message: "no session — POST /api/session first")

@@ -4,17 +4,10 @@ import FlightWeb
 import Foundation
 
 struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
-
-    func configure(_ container: Container) throws {
-        // WorkspaceState is a plain actor, not a @Component — registered
-        // by hand rather than risking an unverified assumption about
-        // whether the @Component macro supports actor types.
-        container.register(WorkspaceState.self, scope: .singleton) { _ in
-            WorkspaceState()
-        }
-        try flightRegisterAll(container)
-    }
+    /// A plain actor, provided as a value the composition root wires into
+    /// `RunnerController` by type — not a scanned @Component, so a stored
+    /// property here is how it enters the graph.
+    let state: WorkspaceState = WorkspaceState()
 }
 
 @main
@@ -38,12 +31,13 @@ struct Main {
             // than making an unlucky learner's first session pay it.
             try warmUp(workspace: URL(fileURLWithPath: workspacePath))
 
-            try await Flight.bootstrap(
+            await Flight.run(
                 configuration: configuration,
                 modules: [
                     FlightWebModule<FlightTransport>.self,
                     AppModule.self,
-                ])
+                ],
+                composedBy: flightComposeModules)
         } catch {
             FileHandle.standardError.write(
                 Data("supervisor failed to start: \(String(reflecting: error))\n".utf8))

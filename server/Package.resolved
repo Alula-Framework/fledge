@@ -1,5 +1,5 @@
 {
-  "originHash" : "ed0fabc0cf8254d4ea55940fab0be6442f9b44fd14c773a345ed768cd97d3c73",
+  "originHash" : "e67fc61d68483477a3638a03af08301b56d62496f31bf66b937999a2a83e983f",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Flight-Framework/flight.git",
       "state" : {
-        "revision" : "504da7aa569c831e1a1de4da624eb1f0bd33856d",
-        "version" : "0.9.0"
+        "revision" : "4bff63ea8515021a4f40712a50fe7e9f3ba8a55e",
+        "version" : "0.17.0"
       }
     },
     {

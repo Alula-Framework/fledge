@@ -9,7 +9,7 @@ let package = Package(
     name: "supervisor",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.8.0", traits: ["Web"])
+        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.17.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(

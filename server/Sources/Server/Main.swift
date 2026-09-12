@@ -1,106 +1,128 @@
 import FlightChannels
 import FlightCore
+import FlightPubSub
 import FlightTransport
 import FlightWeb
 import Foundation
 import PostgresNIO
 import ServiceLifecycle
 
-/// Registers the sessions/execution modules (PLAN §4). A plain struct — no
-/// `service` of its own; the periodic reaper is `SessionReaperModule`,
-/// separate, because a `FlightModule`'s `service` is a computed property
-/// with no parameters, so a module that needs the post-freeze container to
-/// build its service has to be a class that stashes it during `configure`
-/// (the exact shape `FlightPresenceModule` uses) — no reason to make this
-/// module a class too when it registers components and nothing else.
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [FlightChannelsModule.self, PostgresModule.self] }
-
-    func configure(_ container: Container) throws {
-        container.register(SessionBroker.self, scope: .singleton) { container in
-            let configuration = try container.resolve(Configuration.self)
-            let runnerPool = configuration.reader.stringArray(forKey: "runners.pool", default: [])
-            let idleTimeout = try configuration.getIfPresent("session.idleTimeoutSeconds", as: Int.self) ?? 600
-            let hardCap = try configuration.getIfPresent("session.hardCapSeconds", as: Int.self) ?? 3600
-            return SessionBroker(
-                runnerPool: runnerPool,
-                idleTimeout: .seconds(idleTimeout),
-                hardCap: .seconds(hardCap))
-        }
-        container.register(RunnerClient.self, scope: .singleton) { _ in RunnerClient() }
-        container.register(SessionService.self, scope: .singleton) { container in
-            SessionService(
-                broker: try container.resolve(SessionBroker.self),
-                client: try container.resolve(RunnerClient.self),
-                broadcaster: try container.resolve(ChannelBroadcaster.self),
-                postgres: try container.resolve(PostgresAdmin.self))
-        }
-
-        container.registerChannel("session:*") { container in
-            SessionChannel(broker: try container.resolve(SessionBroker.self))
-        }
-        // No `authenticate` closure — v1 has no accounts (PLAN §1); the
-        // session id itself is the only credential (see SessionService).
-        container.registerChannelSocket("/socket")
-
-        try flightRegisterAll(container)
-    }
-}
-
 /// Owns the one admin `PostgresClient` session-database provisioning uses
-/// (PLAN §3's `db` tier) — separate from `AppModule` because it needs to
-/// hand a long-running `Service` (the client's own `.run()` task) to the
-/// app's `ServiceGroup`, the same reason `SessionReaperModule` is a class.
-/// Depended on by `AppModule` so `PostgresAdmin` is registered before
-/// `SessionService` ever tries to resolve it.
+/// (PLAN §3's `db` tier). Built once at composition — no stashed `Container`,
+/// no `resolve` — and its connection-pool loop is kept alive for the app's
+/// lifetime by the module's `service`.
 ///
-/// `configure(_:)` only registers factories — it never calls
-/// `container.resolve(_:)` directly. `Container.resolve` traps
-/// ("resolve() called during the registration phase") unless it's called
-/// from *inside* a factory closure, which runs later, at `freeze()`; found
-/// by actually running this against a real container, not assumed from
-/// `SessionBroker`'s already-correct factory-closure pattern, which this
-/// module's first draft didn't follow.
-final class PostgresModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+/// Connects to Postgres's always-present `postgres` maintenance database,
+/// never the template: `CREATE`/`DROP DATABASE` cannot run against a database
+/// something is connected to, and this admin client must never be the thing
+/// holding that lock.
+struct PostgresModule: FlightModule {
+    /// The maintenance-database admin surface. Provided to `AppModule` and the
+    /// reaper by type; the composition root wires it.
+    let postgresAdmin: PostgresAdmin
+    private let postgresClient: PostgresClient
 
-    private var container: Container?
-
-    init() {}
-
-    func configure(_ container: Container) throws {
-        self.container = container
-
-        // Connects to Postgres's own always-present `postgres` maintenance
-        // database, never the template — `CREATE`/`DROP DATABASE` cannot
-        // run against a database something is currently connected to, and
-        // this admin client must never be the thing holding that lock.
-        container.register(PostgresClient.self, scope: .singleton) { container in
-            let settings = try PostgresSettings(container)
-            return PostgresClient(
-                configuration: PostgresClient.Configuration(
-                    host: settings.host, port: settings.port, username: settings.username,
-                    password: settings.password, database: "postgres", tls: .disable))
-        }
-
-        container.register(PostgresAdmin.self, scope: .singleton) { container in
-            let settings = try PostgresSettings(container)
-            return PostgresAdmin(
-                client: try container.resolve(PostgresClient.self),
-                templateDatabase: settings.templateDatabase,
-                connectionInfo: PostgresAdmin.ConnectionInfo(
-                    host: settings.host, port: settings.port, username: settings.username,
-                    password: settings.password))
-        }
+    init(configuration: Configuration) throws {
+        let settings = try PostgresSettings(configuration)
+        let client = PostgresClient(
+            configuration: PostgresClient.Configuration(
+                host: settings.host, port: settings.port, username: settings.username,
+                password: settings.password, database: "postgres", tls: .disable))
+        self.postgresClient = client
+        self.postgresAdmin = PostgresAdmin(
+            client: client,
+            templateDatabase: settings.templateDatabase,
+            connectionInfo: PostgresAdmin.ConnectionInfo(
+                host: settings.host, port: settings.port,
+                username: settings.username, password: settings.password))
     }
 
-    var service: (any Service)? {
-        container.map { PostgresClientService(container: $0) }
+    /// Keeps `PostgresClient`'s connection-pool loop alive — the outbound-admin
+    /// analogue of `FlightTransport`'s inbound HTTP service. A value now, built
+    /// from the client this module already holds, rather than a stashed
+    /// container resolved at `run()`.
+    var service: (any Service)? { PostgresClientService(client: postgresClient) }
+}
+
+/// Keeps `PostgresClient`'s own connection-pool loop running for the app's
+/// lifetime.
+struct PostgresClientService: Service, Sendable {
+    let client: PostgresClient
+    func run() async throws { await client.run() }
+}
+
+/// The runner-lease broker, the runner HTTP client, and the `session:*`
+/// channel — everything the sessions module needs that depends on neither the
+/// channel broadcaster nor the component graph, so it composes before Channels
+/// and hands its values to `AppModule`.
+struct SessionModule: FlightModule {
+    /// The lease broker and runner client, provided to `AppModule` by type.
+    let broker: SessionBroker
+    let client: RunnerClient
+    /// The `session:*` channel, collected by the composition root and handed to
+    /// `FlightChannelsModule`. `SessionChannel` needs only the broker to gate
+    /// joins — the broadcaster arrives per-join — so declaring channels here
+    /// creates no dependency on Channels, and therefore no cycle.
+    let channels: [ChannelRegistration]
+
+    init(configuration: Configuration) throws {
+        let runnerPool = configuration.reader.stringArray(forKey: "runners.pool", default: [])
+        let idleTimeout = try configuration.getIfPresent("session.idleTimeoutSeconds", as: Int.self) ?? 600
+        let hardCap = try configuration.getIfPresent("session.hardCapSeconds", as: Int.self) ?? 3600
+        let broker = SessionBroker(
+            runnerPool: runnerPool,
+            idleTimeout: .seconds(idleTimeout),
+            hardCap: .seconds(hardCap))
+        self.broker = broker
+        self.client = RunnerClient()
+        self.channels = [
+            ChannelRegistration("session:*", source: "SessionModule") { _ in
+                SessionChannel(broker: broker)
+            }
+        ]
     }
 }
 
-/// The four config reads both `PostgresClient` and `PostgresAdmin`'s
-/// factories need, in one place so they can't drift apart from each other.
+/// The HTTP-facing half of the sessions module: builds `SessionService` from
+/// the broker/client (`SessionModule`), the broadcaster (`FlightChannelsModule`)
+/// and the Postgres admin (`PostgresModule`), all matched by type by the
+/// composition root, and owns the idle-TTL reaper as its service.
+///
+/// It takes those values and provides `sessionService`; it does not take the
+/// component graph and does not declare channels, so nothing depends on it and
+/// the module graph stays acyclic.
+struct AppModule: FlightModule {
+    static var dependencies: [any FlightModule.Type] {
+        [FlightChannelsModule.self, SessionModule.self, PostgresModule.self]
+    }
+
+    /// Provided to `SessionController` (matched by type). It composes an actor
+    /// and two value types, so it isn't itself a scanned `@Service`.
+    let sessionService: SessionService
+    private let reaper: SessionReaperService
+
+    init(
+        configuration: Configuration,
+        broadcaster: ChannelBroadcaster,
+        broker: SessionBroker,
+        client: RunnerClient,
+        postgres: PostgresAdmin
+    ) {
+        self.sessionService = SessionService(
+            broker: broker, client: client, broadcaster: broadcaster, postgres: postgres)
+        self.reaper = SessionReaperService(
+            broker: broker, client: client, broadcaster: broadcaster,
+            postgres: postgres, configuration: configuration)
+    }
+
+    /// The idle-TTL reaper (PLAN §4). Built from the values this module already
+    /// holds — no post-freeze container lookup, so no reason for a separate
+    /// class module the way the container era needed one.
+    var service: (any Service)? { reaper }
+}
+
+/// The four config reads both `PostgresClient` and `PostgresAdmin` need, in one
+/// place so they can't drift apart.
 private struct PostgresSettings {
     let host: String
     let port: Int
@@ -108,8 +130,7 @@ private struct PostgresSettings {
     let password: String?
     let templateDatabase: String
 
-    init(_ container: Container) throws {
-        let configuration = try container.resolve(Configuration.self)
+    init(_ configuration: Configuration) throws {
         host = try configuration.getIfPresent("postgres.host", as: String.self) ?? "postgres"
         port = try configuration.getIfPresent("postgres.port", as: Int.self) ?? 5432
         username = try configuration.getIfPresent("postgres.username", as: String.self) ?? "postgres"
@@ -119,63 +140,21 @@ private struct PostgresSettings {
     }
 }
 
-/// Keeps `PostgresClient`'s own connection-pool loop alive for the app's
-/// lifetime — the same role `FlightTransport`'s HTTP service plays for
-/// inbound connections, just for this one outbound admin connection.
-///
-/// Stores the container, not a resolved `PostgresClient`, and resolves
-/// only inside `run()` — the same reason `SessionReaperService` and
-/// `FlightPresenceModule`'s `PresenceService` both do this: `run()` is
-/// called well after `freeze()`, while a module's `service` getter itself
-/// runs in the same pre-freeze pass as `configure()` (confirmed directly
-/// against a real crash: resolving eagerly in the getter traps with the
-/// exact "resolve() called during the registration phase" precondition
-/// PostgresModule.configure's first draft also hit).
-struct PostgresClientService: Service, Sendable {
-    let container: Container
-    func run() async throws {
-        let client = try container.resolve(PostgresClient.self)
-        await client.run()
-    }
-}
-
-/// Separate from `AppModule` because its `service` needs the container
-/// post-freeze (to resolve `SessionBroker`/`RunnerClient`/
-/// `ChannelBroadcaster` once every module has configured) — the same
-/// reason `FlightPresenceModule` is a class rather than a struct.
-final class SessionReaperModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [AppModule.self] }
-
-    private var container: Container?
-
-    init() {}
-
-    func configure(_ container: Container) throws {
-        self.container = container
-    }
-
-    var service: (any Service)? {
-        container.map { SessionReaperService(container: $0) }
-    }
-}
-
 @main
 struct Main {
     static func main() async {
-        do {
-            let configuration = try Configuration.load()
-            try await Flight.bootstrap(
-                configuration: configuration,
-                modules: [
-                    FlightWebModule<FlightTransport>.self,
-                    PostgresModule.self,
-                    AppModule.self,
-                    SessionReaperModule.self,
-                ])
-        } catch {
-            FileHandle.standardError.write(
-                Data("server failed to start: \(String(reflecting: error))\n".utf8))
-            exit(1)
-        }
+        // `Flight.run` composes the module DAG, builds every component once, and
+        // starts the ServiceGroup — request serving begins only after the whole
+        // graph is built. `composedBy: flightComposeModules` is the generated
+        // composition root; `modules:` names which subsystems to include.
+        await Flight.run(
+            configuration: try Configuration.load(),
+            modules: [
+                FlightWebModule<FlightTransport>.self,
+                PostgresModule.self,
+                SessionModule.self,
+                AppModule.self,
+            ],
+            composedBy: flightComposeModules)
     }
 }

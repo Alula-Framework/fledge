@@ -27,9 +27,9 @@ struct WriteRequest: Decodable {
 /// previous session, or a guess, is rejected, never just "present."
 @Controller
 struct RunnerController {
-    // flight:hand-registered — registered in AppModule.configure(_:),
+    // flight:hand-registered — provided by AppModule (matched by type),
     // since it's a plain actor, never scanned as a @Component.
-    @Autowired var state: WorkspaceState
+    @Inject var state: WorkspaceState
     @ConfigValue("workspace.live", default: "/workspace") var liveWorkspacePath: String
     @ConfigValue("workspace.pristine", default: "/workspace-pristine") var pristineWorkspacePath: String
 
@@ -43,7 +43,7 @@ struct RunnerController {
 
     private static let maxContentBytes = 32 * 1024
 
-    @PostMapping("/lease")
+    @PostRoute("/lease")
     func lease(_ context: RequestContext) async -> Response {
         guard let id = await state.lease(databaseURL: context.request.headers[.databaseURL]) else {
             return .problem(status: .conflict, message: "already leased")
@@ -51,7 +51,7 @@ struct RunnerController {
         return (try? Response.json(["leaseId": id], status: .created)) ?? .status(.internalServerError)
     }
 
-    @PostMapping("/write")
+    @PostRoute("/write")
     func write(_ context: RequestContext, body: WriteRequest) async throws -> Response {
         guard await isLeaseValid(context) else {
             return .problem(status: .forbidden, message: "no valid lease")
@@ -63,7 +63,7 @@ struct RunnerController {
         return .noContent
     }
 
-    @PostMapping("/run")
+    @PostRoute("/run")
     func run(_ context: RequestContext) async -> Response {
         guard await isLeaseValid(context) else {
             return .problem(status: .forbidden, message: "no valid lease")
@@ -72,12 +72,12 @@ struct RunnerController {
         let databaseURL = await state.databaseURL
         return .serverSentEvents { events in
             for await event in ProcessRunner.run(in: workspace, databaseURL: databaseURL) {
-                guard events.send(data: Self.encode(event), event: Self.name(event)) else { return }
+                guard await events.send(data: Self.encode(event), event: Self.name(event)) else { return }
             }
         }
     }
 
-    @PostMapping("/reset")
+    @PostRoute("/reset")
     func reset(_ context: RequestContext) async throws -> Response {
         guard await isLeaseValid(context) else {
             return .problem(status: .forbidden, message: "no valid lease")
@@ -87,7 +87,7 @@ struct RunnerController {
         return .noContent
     }
 
-    @PostMapping("/release")
+    @PostRoute("/release")
     func release(_ context: RequestContext) async throws -> Response {
         guard await isLeaseValid(context) else {
             return .problem(status: .forbidden, message: "no valid lease")

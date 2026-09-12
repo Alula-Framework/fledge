@@ -4,26 +4,39 @@ import Logging
 import ServiceLifecycle
 
 /// The periodic half of the sessions module (PLAN §4: "idle TTL reaper").
-/// Every `reapIntervalSeconds`, sweeps sessions past the idle timeout or
-/// hard cap, tells each one's runner to release the lease (scrubbing its
-/// workspace back to pristine), and pushes a `session_expired` event so a
-/// still-connected browser learns its session is gone rather than
-/// silently getting 404s on its next request.
+/// Every `reapIntervalSeconds`, sweeps sessions past the idle timeout or hard
+/// cap, tells each one's runner to release the lease (scrubbing its workspace
+/// back to pristine), drops its session database, and pushes a
+/// `session_expired` event so a still-connected browser learns its session is
+/// gone rather than silently getting 404s on its next request.
+///
+/// Built by `AppModule` from the values the composition root wired into it —
+/// no stashed `Container`, no `resolve` at `run()`.
 struct SessionReaperService: Service, Sendable {
-    let container: Container
+    let broker: SessionBroker
+    let client: RunnerClient
+    let broadcaster: ChannelBroadcaster
+    let postgres: PostgresAdmin
+    let configuration: Configuration
     let logger: Logger
 
-    init(container: Container, logger: Logger = Logger(label: "flight-school.server.reaper")) {
-        self.container = container
+    init(
+        broker: SessionBroker,
+        client: RunnerClient,
+        broadcaster: ChannelBroadcaster,
+        postgres: PostgresAdmin,
+        configuration: Configuration,
+        logger: Logger = Logger(label: "flight-school.server.reaper")
+    ) {
+        self.broker = broker
+        self.client = client
+        self.broadcaster = broadcaster
+        self.postgres = postgres
+        self.configuration = configuration
         self.logger = logger
     }
 
     func run() async throws {
-        let broker = try container.resolve(SessionBroker.self)
-        let client = try container.resolve(RunnerClient.self)
-        let broadcaster = try container.resolve(ChannelBroadcaster.self)
-        let postgres = try container.resolve(PostgresAdmin.self)
-        let configuration = try container.resolve(Configuration.self)
         let interval = try configuration.getIfPresent("session.reapIntervalSeconds", as: Int.self) ?? 30
 
         await cancelWhenGracefulShutdown {
