@@ -1,88 +1,118 @@
 ---
 title: Testing
-description: Three sizes of test, and the in-memory transport that makes the smallest one fast.
+description: Unit tests are direct struct calls; end-to-end is a small, separate tier.
 order: 7
 ---
 
-Every test so far in this tutorial would already have used `TestClient` if
-it had been shown running:
+A Flight controller is a struct, and a route is one of its methods. A service
+is a struct that takes its collaborators. So the great majority of your tests
+need nothing more than Swift: construct the type with fakes in place of its
+dependencies, call the method, and check what comes back — no container, no
+router, no HTTP.
+
+## Service unit tests
+
+`UserService` injects `any UserRepositoryProtocol`, so a test hands it a fake
+and calls its methods directly:
 
 ```swift
-@Test("the index route answers with the configured application name")
-func index() async throws {
-    let container = try TestContainer.build(
-        configuration: Configuration(values: ["app.name": "TestApp"])
-    ) { AppModule() }
-    let client = try TestClient(container: container)
-    let response = await client.get("/")
-    #expect(response.status == .ok)
-    #expect(response.bodyText == "TestApp is flying")
+@Test("find(byID:) returns the matching user")
+func findByID() async throws {
+    let service = UserService(repository: MockUserRepository(users: [ada]))
+
+    #expect(try await service.find(byID: ada.id) == ada)
 }
 ```
 
-`TestClient` doesn't route through an in-process stand-in for the network
-— it skips the transport layer entirely, dispatching straight through the
-same `Request`/`Response` values a real socket would eventually produce.
-Routing, middleware, dependency injection, and JSON encoding all run for
-real. These tests are fast because the network is absent, not because
-anything about the framework is stubbed.
+`MockUserRepository` is a plain type conforming to `UserRepositoryProtocol` —
+the seam that makes this possible. Nothing is registered or resolved: wiring
+the real repository in is the composition root's job, and a unit test is
+exactly the place that does it by hand instead.
 
-## Three sizes, not two
+## Controller unit tests
 
-"Fast" and "thorough" usually trade off against each other one axis at a
-time: how much of the container gets built.
-
-**Call the handler directly** — the smallest. Construct the controller
-yourself and call the method; no router involved at all:
+Same shape. A controller injects its service, so construct it and call the
+route method — it is just a function:
 
 ```swift
-let container = try TestContainer.build { FakeRepository(users: users) }
-let controller = UserController(_flight: container)
-let result = try await controller.list(.mock(container: container))
-```
+@Test("getUser returns the mocked user")
+func getUser() async throws {
+    let controller = UserController(
+        users: UserService(repository: MockUserRepository(users: [ada])))
 
-Reach for this when the logic under test is the point and routing isn't —
-`RequestContext.mock(container:)` builds a context with no real request
-behind it at all.
+    let user = try await controller.getUser(.mock(pathParameters: ["id": ada.id.uuidString]))
 
-**`Components`** — the middle size, and the one most suites want. Register
-only the pieces a test actually exercises, then drive requests through
-`TestClient` the way the example at the top of this page does. This is
-"the real controller, routing, middleware, DI" without booting anything
-the test doesn't touch.
-
-**`AppModule` plus an override** — the largest, and the only one that
-checks the wiring itself:
-
-```swift
-let container = try TestContainer.build {
-    AppModule()
-} overriding: { container in
-    container.override((any UserRepositoryProtocol).self, scope: .scoped) { _ in fakeUsers }
+    #expect(user.id == ada.id)
 }
 ```
 
-Freezing a container is where lifetime mistakes surface — a singleton that
-accidentally captured a request-scoped dependency, or two modules both
-claiming the same key, are invisible to a test that never freezes one.
-This size boots every module the real application boots and swaps exactly
-one seam, so it's the one test that would actually catch that class of
-bug.
+Two things to notice:
 
-## What doesn't fit this story: Hangar directly
+- **Handlers return domain values, not `Response`.** `getUser` returns a
+  `User`; the framework maps it to JSON and a status at the route boundary. So
+  a unit test asserts on the *value* — the handler's actual decision — not on
+  the encoder's output. (A handler that returns `Response` directly, like
+  `createUser`, you assert `.status` on.)
+- **`RequestContext.mock(...)`** builds a context with no transport behind it:
+  path parameters, headers, and a body when you need them, nothing when you
+  don't.
+
+Error paths are just as direct — you don't need HTTP to prove a 404's cause:
+
+```swift
+@Test("getUser throws notFound for an unknown id")
+func getUserMissing() async {
+    let controller = UserController(users: UserService(repository: MockUserRepository()))
+
+    await #expect(throws: HTTPError.self) {
+        try await controller.getUser(.mock(pathParameters: ["id": UUID().uuidString]))
+    }
+}
+```
+
+To mock the *service* rather than the repository beneath it, give the
+controller a protocol to inject — `@Inject var users: any UserServicing` — and
+pass a `MockUserService`. The composition root wires the real one to its single
+conformer automatically, the same way it does for the repository here. Mock at
+whichever seam the test is actually about.
+
+## End-to-end, sparingly
+
+Unit tests deliberately skip the wiring: that a path routes, a body decodes, a
+return value encodes, the declared middleware runs, a thrown error becomes the
+right status. A *small* number of whole-path tests cover that, driving real
+requests through the composed dispatch with `TestClient` — which skips the
+network but runs routing, middleware, DI, and encoding for real:
+
+```swift
+let client = try TestClient(routes: [
+    UserController._flightRoute_getUser_1 { _ in
+        UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+    }
+])
+let response = await client.get("/user/\(ada.id)")
+
+#expect(response.status == .ok)
+```
+
+Keep this tier small — a handful of representative paths, not one per handler.
+Wiring a controller's routes in by hand (each `_flightRoute_*` factory, taking
+a closure that builds the controller) is deliberately a little verbose: it is
+the reminder that this is the plumbing-proving tier, run once, while the unit
+tests above are where the logic actually gets exercised.
+
+## Hangar and real Postgres
 
 `FlightDataTesting` ships an `InMemoryDataSource` for testing against the
-generic `DataSource` seam — but it's a connection pool, not a database: it
-never executes SQL, only records that something was asked of it. That's
-enough for testing your own scope-bound-connection wiring, but Hangar's
-`Repo` is built directly on `PostgresConnection`, not on the generic
-`DataSource` protocol, so there's no seam here to swap `InMemoryDataSource`
-into underneath it.
+generic `DataSource` seam — but it is a connection pool, not a database: it
+never executes SQL, only records that something was asked of it. That is enough
+for testing your own connection-leasing wiring, but Hangar's `Repo` is built
+directly on `PostgresConnection`, not on the generic `DataSource` protocol, so
+there is no seam here to swap `InMemoryDataSource` into underneath it.
 
-The answer isn't a faster fake for `Repo` — it's the same principle the
-`Components` size already teaches: depend on a protocol, and register a
-fake conforming to it, exactly like `FakeRepository` above. A test that
-genuinely needs to prove a *query* renders and runs correctly needs real
-Postgres, the same way Hangar's own test suite does — `./scripts/test.sh`,
-starting a throwaway server and tearing it down, is the honest tier for
-that, not a faster substitute pretending to be one.
+The answer isn't a faster fake for `Repo` — it is the same principle the unit
+tests above already use: depend on a protocol, and pass a fake conforming to
+it, exactly like `MockUserRepository`. A test that genuinely needs to prove a
+*query* renders and runs correctly needs real Postgres, the same way Hangar's
+own suite does — a throwaway server started and torn down is the honest tier
+for that, not a faster substitute pretending to be one.
