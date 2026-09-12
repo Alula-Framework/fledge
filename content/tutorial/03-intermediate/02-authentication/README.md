@@ -20,16 +20,19 @@ security:
 ```swift
 modules: [
     FlightWebModule<FlightTransport>.self,
-    FlightSecurityModule.self,
+    FlightOIDCModule.self,
     AppModule.self,
 ]
 ```
 
 That's the entire integration for any OIDC-compliant provider — Descope,
-Keycloak, Auth0, Okta, Entra are the same validator with different
-configuration values, not separate packages. The JWKS endpoint is resolved
-by OIDC discovery automatically; cryptographic verification is JWTKit's, not
-hand-rolled here.
+Keycloak, Auth0, Entra are the same validator with different
+configuration values, not separate packages. `FlightOIDCModule` pulls
+`FlightSecurityModule` in with it — the security module wires the machinery
+but provides no validator on purpose, and `FlightOIDCModule` is the value
+that fills that seam with an `OIDCTokenValidator` built from the config
+above. The JWKS endpoint is resolved by OIDC discovery automatically;
+cryptographic verification is JWTKit's, not hand-rolled here.
 
 ## Reading who's making the request
 
@@ -45,22 +48,40 @@ func documents(_ context: RequestContext) async throws -> Response {
 `requirePrincipal()` throws a 401 for an unauthenticated request;
 `context.principal` is the non-throwing form, `nil` rather than thrown, for
 routes that behave differently for a guest instead of refusing them
-outright. Either way the identity is request-scoped — `PrincipalHolder` is
-resolved fresh per request, never shared or leaked between them — so a
-`@Service` reads it by injecting it, the same as any other dependency:
+outright. Either way the identity *rides the request context*: the
+`Authentication` middleware writes it onto the copy of `RequestContext` it
+passes downstream, so a handler reads it straight off `context` with nothing
+to resolve and nothing shared between requests. (It used to live in a
+`PrincipalHolder` resolved per request as a `.scoped` component — a scope
+kind that no longer exists, because a typed field on the context is where
+per-request state belongs now.)
+
+Service code that shouldn't take a principal parameter reads the *ambient*
+identity instead — `Principal.current`, a task-local the handler binds for
+the duration of a call with `context.withPrincipal { }`:
 
 ```swift
+@GetRoute("/documents")
+func documents(_ context: RequestContext) async throws -> Response {
+    try await context.withPrincipal {
+        .json(try await documents.currentUsersDocuments())
+    }
+}
+
 @Service
 struct DocumentService {
-    // flight:hand-registered — FlightSecurityModule registers PrincipalHolder
-    @Inject var identity: PrincipalHolder
+    @Inject var repo: DocumentRepository
 
     func currentUsersDocuments() async throws -> [Document] {
-        guard let principal = identity.principal else { throw SecurityError.unauthenticated }
-        ...
+        guard let principal = Principal.current else { throw SecurityError.unauthenticated }
+        return try await repo.all(Document.where { $0.ownerID == principal.subject })
     }
 }
 ```
+
+The task-local propagates to structured child tasks but deliberately not
+across `Task.detached` — a background job should not silently inherit the
+requester's identity.
 
 A `struct`, not a `final class`: `@Service`'s expansion requires
 `Sendable`, and a class holding a mutable `@Inject` property cannot be
@@ -68,13 +89,23 @@ A `struct`, not a `final class`: `@Service`'s expansion requires
 it reads more mysteriously than it is. Value types are the default shape
 for components across Flight for exactly this reason.
 
-The `// flight:hand-registered` comment is also load-bearing rather than
-decorative. `PrincipalHolder` comes from `FlightSecurityModule`, not from
-a `@Component` in your own target, so the build plugin can't see its
-registration and warns that resolution will fail at startup. The comment
-is how you say "I know, it's registered elsewhere" — and it's a warning
-worth keeping, since the same message means a genuine mistake whenever
-the type *isn't* registered.
+`DocumentService` injects only `DocumentRepository` — a scanned
+`@Repository` the build plugin can see. When a component instead injects a
+value a *module* provides rather than a scanned annotation — the
+`any TokenValidator` a WebSocket upgrade handler needs, say — mark that one
+`// flight:hand-registered`:
+
+```swift
+// flight:hand-registered
+@Inject var validator: any TokenValidator
+```
+
+The comment is load-bearing rather than decorative. The build plugin can't
+see a module-provided value's origin, so an unmarked `@Inject` of a type it
+never scanned draws a warning that resolution will fail at startup. The
+marker is how you say "I know, it's wired by a module" — and it's a warning
+worth keeping, since the same message means a genuine mistake whenever the
+type *isn't* provided anywhere.
 
 ## Bearer tokens are the default seam, not the only one
 
@@ -105,6 +136,33 @@ every handler and service — which is the actual design: Flight standardizes
 deliberately agnostic about whether that identity came from a signed
 bearer token or a server-side session lookup.
 
+You supply that validator the same way `FlightOIDCModule` supplies its own:
+as a module value with an *explicit* type annotation, which the composition
+root matches to `FlightSecurityModule`'s `validator:` parameter by type:
+
+```swift
+struct AuthModule: FlightModule {
+    let tokenValidator: any TokenValidator = OpaqueTokenValidator()
+}
+```
+
+```swift
+modules: [
+    FlightWebModule<FlightTransport>.self,
+    FlightSecurityModule.self,   // the machinery, minus the validator
+    AuthModule.self,             // your validator, provided as a value
+    AppModule.self,
+]
+```
+
+List `FlightSecurityModule` itself here rather than `FlightOIDCModule` — the
+security module wires the middleware and takes whatever `(any TokenValidator)`
+the composition finds, and `FlightSecurityModule` cannot even be built
+without one, so a forgotten validator fails loudly at startup rather than at
+the first request. The annotation is required: `let tokenValidator = OpaqueTokenValidator()`
+leaves the source scanner nothing to match against `validator: any TokenValidator`,
+so it must read `let tokenValidator: any TokenValidator = …`.
+
 ## Enforcement is a separate decision from authentication
 
 `FlightSecurityModule` installs its `Authentication` middleware
@@ -112,26 +170,37 @@ automatically — but that middleware always continues, whether or not a
 token was presented, so a public route stays public even with the module
 installed. Requiring a principal is something the application opts into,
 either per route with a handler-level guard (`requirePrincipal()`, as
-above) or globally with `RequireAuthentication`, the same `@Middleware`
-vocabulary the previous exercise covered:
+above) or declaratively by naming a *lane*:
 
 ```swift
-container.pipeline {
-    RequireAuthentication.self
+@Controller("/admin", pipelines: [.authenticated])   // 401 for anonymous
+struct AdminController {
+    @GetRoute("/status", pipelines: [.public])        // deliberately public, and says so
+    func status(_ context: RequestContext) -> Response { .text("ok") }
 }
 ```
 
-`RequireAuthentication` isn't installed by `FlightSecurityModule` itself —
-it's a policy decision the application makes, not something a security
-module should assume for you. It composes with `Authentication` the same
-way any two middleware do: `FlightSecurityModule.configure` runs (and
-registers `Authentication`) before `AppModule.configure`'s own
-`pipeline { }` call, because that's the order the bootstrap's `modules:`
-list named them in — so `RequireAuthentication` always sees the principal
-this request's `Authentication` decided, with no order number to get right
-by hand.
+`.authenticated` is one of two canonical lanes `FlightSecurityModule`
+declares. A lane *is* the whole middleware stack for a route naming it, so
+this one starts with `Authentication` and ends with `RequireAuthentication`:
+the route establishes the identity it then requires, without depending on
+the default lane it replaced. `.authentication` is the other — identity
+established, nobody rejected — for a route that serves signed-in and
+anonymous callers differently.
 
-Answering a request `RequireAuthentication` rejects always carries an RFC
-6750 `WWW-Authenticate: Bearer` challenge; `SecurityError.unauthenticated`
-and `.forbidden` thrown from a handler render as the generic 401/403
-either way.
+There's no ordering to get right by hand anymore. Lanes are declared with
+`MiddlewareRegistration.lane(_:_:)` and *compose* across modules rather than
+running in whatever order the `modules:` list happened to name them:
+`FlightSecurityModule` contributes `Authentication` and
+`RequireAuthentication` to the `.authenticated` lane, a module of your own
+can add to it, and the composition root folds every contribution into one
+stack. The old `container.pipeline { RequireAuthentication.self }` — which
+worked only because `FlightSecurityModule.configure` had registered
+`Authentication` before `AppModule.configure` ran — is gone with the
+container.
+
+Authorization stays in the handler: `requireRole` and `requireScope` depend
+on a value no lane can describe. Answering a request `RequireAuthentication`
+rejects always carries an RFC 6750 `WWW-Authenticate: Bearer` challenge;
+`SecurityError.unauthenticated` and `.forbidden` thrown from a handler render
+as the generic 401/403 either way.

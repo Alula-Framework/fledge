@@ -5,23 +5,34 @@ order: 11
 ---
 
 Everything so far has been Hangar directly — a `Repo`, a `Configuration`,
-a live connection, assembled by hand. A real Flight app instead wires a
-whole store in at bootstrap, through `flight-data`:
+a live connection, assembled by hand. A real Flight app instead names a
+whole store as a module, and lets the composition root wire it — this is the
+database module the bootstrap exercise promised you'd meet in Part 2:
 
 ```swift
-container.register(dataSource: PostgresDataSource.self, name: PrimaryDataSource.name) { c in
-    let settings = try DataSourceSettings.load(
-        name: PrimaryDataSource.name, from: c.resolve(Configuration.self))
-    return try PostgresDataSource(settings: settings)
+struct AppModule: FlightModule {
+    static var dependencies: [any FlightModule.Type] {
+        [PostgresDataModule<PrimaryDataSource>.self]
+    }
 }
 ```
 
-`PostgresDataSource` is Hangar underneath — everything from `@Entity`
-through bulk writes is the same API, reached through a pool Flight now owns
-the lifecycle of. `register(dataSource:name:)` registers the pool as a
-singleton, a request-scoped connection lease, and a liveness probe the
-actuator can report on — all in one call, at the same `configure(_:)` step
-every other module uses.
+`PostgresDataModule<PrimaryDataSource>` owns one named pool. It reads
+`datasource.<name>.*` out of `Configuration` and builds a
+`PostgresDataSource` in its own initializer, so a bad URL or pool size fails
+at *composition* — startup — rather than at the first query. `PostgresDataSource`
+is Hangar underneath: everything from `@Entity` through bulk writes is the
+same API, reached through a pool Flight now owns the lifecycle of.
+
+The module *provides* that pool, and its liveness probe, as values. The
+composition root reads them and wires the pool by type into whatever
+`@Repository` injects a `PostgresDataSource`, and aggregates the probe into
+the set the actuator reports on — the three things the old
+`register(dataSource:name:)` did in one container call, now split into
+"the module owns the pool" and "the composition root wires it." A second
+store is a second instantiation, `PostgresDataModule<Analytics>.self`
+alongside the first, each generic over its own `DataSourceName`; there is no
+registration call to write either way.
 
 ## Migrations
 
@@ -83,7 +94,7 @@ backend, and switching is a module choice, never a code change:
 
 ```swift
 .package(url: "https://github.com/Flight-Framework/flight-data.git",
-         from: "0.3.0", traits: ["Postgres", "Valkey"])
+         from: "0.6.0", traits: ["Postgres", "Valkey"])
 ```
 
 ```swift
@@ -94,7 +105,7 @@ modules: [
 ```
 
 `PricingService` above doesn't change at all — `@Cacheable` talks to
-whichever cache the container resolves. The trait matters at the
+whichever cache module the app composed. The trait matters at the
 `Package.swift` level for a different reason than convenience: a plain
 `FlightCache` consumer that never asks for the `Valkey` trait never
 resolves `valkey-swift` or `NIOSSL` at all, so an application that only

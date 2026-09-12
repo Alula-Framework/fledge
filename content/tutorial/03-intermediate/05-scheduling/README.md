@@ -61,7 +61,7 @@ pair, `claim` must return `true` in *at most one* process. Returning `true`
 in none is survivable — that firing is skipped and logged; returning `true`
 in two is the bug the whole mechanism exists to prevent, so an
 implementation that's unsure must refuse rather than guess. With no
-coordinator registered, the default always claims `true` — correct for a
+coordinator provided, the default always claims `true` — correct for a
 single server, and exactly why the framework warns at startup if it
 detects scheduled jobs and no coordinator: it's telling you which side of
 that assumption you're currently on.
@@ -89,13 +89,35 @@ conflicting row and returns it, and every other server's attempt returns
 nothing. The primary key is `(job, scheduled_for)`, so two servers whose
 clocks differ by a second still agree on which *firing* they're contending
 for, since the scheduler passes the schedule's own instant rather than
-each server's local idea of "now." Wiring it in is one registration:
+each server's local idea of "now." You wire it in by *providing* it — a
+stored property on a module, which the composition root matches to
+`FlightSchedulerModule` by type:
 
 ```swift
-container.register((any JobCoordinator).self, scope: .singleton) { c in
-    PostgresJobCoordinator(dataSource: try c.resolve(PostgresDataSource.self))
+struct AppModule: FlightModule {
+    static var dependencies: [any FlightModule.Type] {
+        [PostgresDataModule<PrimaryDataSource>.self, FlightSchedulerModule.self]
+    }
+
+    /// Handed to `FlightSchedulerModule`, matched by the `any JobCoordinator`
+    /// type. Built from the datasource the composition root already wired, so
+    /// the module reads it off the graph.
+    let jobCoordinator: any JobCoordinator
+
+    init(graph: FlightGraph) {
+        self.jobCoordinator = PostgresJobCoordinator(dataSource: graph.postgresDataSource)
+    }
 }
 ```
+
+The explicit `any JobCoordinator` annotation is what makes the match work:
+the composition root reads source text, not a conformance table, so
+`let jobCoordinator = PostgresJobCoordinator(...)` — inferred type — wouldn't
+be recognized as the coordinator `FlightSchedulerModule` is looking for. This
+used to be a `container.register((any JobCoordinator).self)` the scheduler
+resolved at runtime, which meant a deployment that forgot it degraded
+silently; providing it as a value means the missing-coordinator warning at
+startup is the only place that question gets answered.
 
 ## When every node running it is actually what you want
 
