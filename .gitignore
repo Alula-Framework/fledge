@@ -4,5 +4,10 @@
 .build/
 .swiftpm/
 
+# Tutorial exercise solutions overlay onto CLI templates, which ship without a
+# Package.resolved — so an app-b's must never be committed (a build or the Swift
+# LSP regenerates one in place). The runner/server pins above are the exceptions.
+content/tutorial/**/Package.resolved
+
 # OS
 .DS_Store
