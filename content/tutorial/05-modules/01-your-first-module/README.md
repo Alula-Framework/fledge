@@ -81,13 +81,17 @@ it reads your *source*, at build time, before anything runs:
 
 ## Why a module, and not just a global
 
-A module is a *value*, built once when the app is composed, in dependency
-order — which is what `static var dependencies` is for. List another module
-there and it is built before yours, so anything it provides is ready by the
-time yours is constructed, and arrives through your module's own initializer
-(matched by type, the same way `clock` reached the controller). The next
-exercises use exactly that: a module that needs the scheduler, or the database,
-names it in `dependencies` and is handed what it provides.
+A module is a *value*, built once when the app is composed. `static var
+dependencies` says which *other* modules come along when this one is included —
+naming one module names its whole stack, so an app that lists `AppModule` and
+depends on, say, the database module doesn't also have to list the database
+module by hand. It is an inclusion list, not an ordering knob: construction
+order isn't read off it. The generator works out the order from the *values* —
+if your module's initializer needs a `Clock`, whatever module provides a
+`Clock` is built first, because it has to be. The next exercises lean on
+exactly that: a module names another in `dependencies` to pull it in, declares
+an `init` that takes the value that module provides, and is handed it —
+matched by type, the same way `clock` reached the controller.
 
 **Try it.** In a `skeleton` project, add the `Clock` type and the `clock`
 property to `AppModule`, add `TimeController`, and `curl 127.0.0.1:8080/time`.

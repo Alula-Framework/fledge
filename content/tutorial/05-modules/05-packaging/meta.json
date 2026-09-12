@@ -1,0 +1,9 @@
+{
+  "runtime": "local",
+  "template": "skeleton",
+  "focus": [
+    "Package.swift",
+    "GreetKit/Sources/GreetKit/GreetingModule.swift",
+    "Sources/App/Main.swift"
+  ]
+}

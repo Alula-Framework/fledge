@@ -295,9 +295,9 @@ export const curriculum: PartOutline[] = [
 			},
 			{
 				slug: '02-providing-values',
-				title: "Providing a value the scan can't build",
+				title: 'Modules that depend on modules',
 				description:
-					'Hand the graph a value by type — and why the stored property needs an explicit annotation.'
+					'Pull in a stack with dependencies, and receive configuration and another module’s value through your init.'
 			},
 			{
 				slug: '03-routes-and-channels',

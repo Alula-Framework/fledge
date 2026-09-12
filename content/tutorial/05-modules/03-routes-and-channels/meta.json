@@ -1,0 +1,7 @@
+{
+  "runtime": "local",
+  "template": "skeleton",
+  "focus": [
+    "Sources/App/Main.swift"
+  ]
+}
