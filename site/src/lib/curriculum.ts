@@ -72,13 +72,13 @@ export const curriculum: PartOutline[] = [
 		exercises: [
 			{
 				slug: '01-bootstrap',
-				title: 'Bootstrap, modules, and the container',
-				description: 'What flightRegisterAll actually wires, and in what order.'
+				title: 'Bootstrap, modules, and the composition root',
+				description: 'What the composition root wires, and in what order.'
 			},
 			{
 				slug: '02-first-route',
 				title: 'Your first route',
-				description: '@Controller and @GetMapping, and why there is no route table to find.'
+				description: '@Controller and @GetRoute, and why there is no route table to find.'
 			},
 			{
 				slug: '03-parameters',
@@ -224,7 +224,7 @@ export const curriculum: PartOutline[] = [
 			{
 				slug: '07-testing',
 				title: 'Testing',
-				description: 'Three sizes of test, and the in-memory transport that makes the smallest one fast.'
+				description: 'Unit tests as direct struct calls, with a small end-to-end tier.'
 			}
 		]
 	},
@@ -278,6 +278,43 @@ export const curriculum: PartOutline[] = [
 				slug: '09-deployment',
 				title: 'Deployment',
 				description: 'systemd, Docker, stripping your release binary, and a reverse proxy in front of it.'
+			}
+		]
+	},
+	{
+		slug: '05-modules',
+		title: 'Part 5 — Authoring your own modules',
+		summary:
+			'Writing a FlightModule: providing components, values, routes, and a service, all wired by the composition root — the seam every subsystem (yours and the framework’s) is built on.',
+		runtime: 'local',
+		exercises: [
+			{
+				slug: '01-your-first-module',
+				title: 'Your first module',
+				description: 'A FlightModule is a value: what it declares, and how the composition root wires it.'
+			},
+			{
+				slug: '02-providing-values',
+				title: "Providing a value the scan can't build",
+				description:
+					'Hand the graph a value by type — and why the stored property needs an explicit annotation.'
+			},
+			{
+				slug: '03-routes-and-channels',
+				title: 'Contributing routes, channels, and middleware',
+				description:
+					'A module offers [RouteRegistration] / [ChannelRegistration] / [MiddlewareRegistration]; the root aggregates them.'
+			},
+			{
+				slug: '04-a-service',
+				title: 'A module that runs something',
+				description:
+					'Owning a long-running service, and the provide-vs-take-the-graph rule that keeps composition acyclic.'
+			},
+			{
+				slug: '05-packaging',
+				title: 'Packaging a module for reuse',
+				description: 'Shipping a module in its own package, the way FlightSecurityModule and friends do.'
 			}
 		]
 	}

@@ -1,0 +1,5 @@
+{
+  "runtime": "local",
+  "template": "skeleton",
+  "focus": ["Sources/App/Main.swift", "Sources/App/Controllers/TimeController.swift"]
+}
