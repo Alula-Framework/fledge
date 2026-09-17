@@ -85,11 +85,9 @@ requests through the composed dispatch with `TestClient` — which skips the
 network but runs routing, middleware, DI, and encoding for real:
 
 ```swift
-let client = try TestClient(routes: [
-    UserController._flightRoute_getUser_1 { _ in
-        UserController(users: UserService(repository: MockUserRepository(users: [ada])))
-    }
-])
+let client = try TestClient(routes: UserController.flightRoutes { _ in
+    UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+})
 let response = await client.get("/user/\(ada.id)")
 
 #expect(response.status == .ok)

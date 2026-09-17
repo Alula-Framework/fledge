@@ -51,11 +51,9 @@ struct TutorialTestingTests {
     /// returns a `User`, so status, headers and encoded body do not exist yet.
     @Test("GET /user/:id routes and encodes end to end")
     func endToEnd() async throws {
-        let client = try TestClient(routes: [
-            UserController._flightRoute_getUser_1 { _ in
-                UserController(users: UserService(repository: MockUserRepository(users: [ada])))
-            }
-        ])
+        let client = try TestClient(routes: UserController.flightRoutes { _ in
+            UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+        })
         let response = await client.get("/user/\(ada.id)")
 
         #expect(response.status == .ok)
