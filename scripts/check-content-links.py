@@ -23,9 +23,21 @@ CONTENT = ROOT / "content"
 LINK_RE = re.compile(r"\]\((\.[^)]+)\)")
 
 
+def content_markdown() -> list[Path]:
+    """Our markdown, not our dependencies'.
+
+    An exercise that has been built locally has a `.build/` holding checked-out
+    dependency sources — thousands of markdown files belonging to other
+    projects. Their DocC links (`./bitcollections/bitset`) do not resolve as
+    filesystem paths and never will, so walking them buries any real breakage
+    in hundreds of lines of noise about swift-collections.
+    """
+    return [path for path in CONTENT.rglob("*.md") if ".build" not in path.parts]
+
+
 def check_relative_links() -> list[str]:
     problems = []
-    for md_file in CONTENT.rglob("*.md"):
+    for md_file in content_markdown():
         text = md_file.read_text()
         for match in LINK_RE.finditer(text):
             target = match.group(1)

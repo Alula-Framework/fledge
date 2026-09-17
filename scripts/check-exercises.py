@@ -153,7 +153,14 @@ def check_app_exercises(templates: Path) -> None:
                     continue
                 # Overlay the solution over the template, exactly as a
                 # learner's edits would land on their own project.
-                shutil.copytree(solution, work, dirs_exist_ok=True)
+                #
+                # `ignore` matters here as much as on the two copies above: an
+                # `app-b` that has been built locally has a `.build/` full of
+                # read-only git objects, and copying those onto the workspace
+                # dies with EACCES — taking the whole run down after the
+                # exercises before it have passed. Nothing in `.build` is part
+                # of a learner's edits.
+                shutil.copytree(solution, work, dirs_exist_ok=True, ignore=ignore)
 
                 # Bump the mtime of every overlaid source. rsync and copytree
                 # both preserve the files' git-checkout mtimes, which can be
