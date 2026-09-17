@@ -24,7 +24,7 @@ let package = Package(
     products: [.library(name: "GreetKit", targets: ["GreetKit"])],
     dependencies: [
         .package(url: "https://github.com/Flight-Framework/flight.git",
-                 from: "0.17.0", traits: ["Web"])
+                 from: "0.18.0", traits: ["Web"])
     ],
     targets: [
         .target(name: "GreetKit", dependencies: [
@@ -84,7 +84,7 @@ An application adds the package and names the module. Nothing else:
 ```swift
 // the app's Package.swift
 dependencies: [
-    .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.17.0", traits: ["Web"]),
+    .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.18.0", traits: ["Web"]),
     .package(url: "https://github.com/you/GreetKit.git", from: "1.0.0"),
 ],
 // ...and on the App target:

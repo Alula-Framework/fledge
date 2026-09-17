@@ -11,7 +11,7 @@ let package = Package(
         .executable(name: "App", targets: ["App"])
     ],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.17.0", traits: ["Web"]),
+        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.18.0", traits: ["Web"]),
         .package(path: "GreetKit"),
     ],
     targets: [
