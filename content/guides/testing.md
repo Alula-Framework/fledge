@@ -68,12 +68,34 @@ let client = try TestClient(routes: [
         UserController(users: UserService(repository: MockUserRepository(users: [ada])))
     }
 ])
-#expect(await client.get("/user/\(ada.id)").status == .ok)
+let response = await client.get("/user/\(ada.id)")
+
+#expect(response.status == .ok)
+#expect(response.headers[.contentType]?.contains("json") == true)
+#expect(try response.decodeJSON(UserPayload.self).email == ada.email)
 ```
 
-Keep this tier small — a handful of representative paths, not one per handler.
-The unit tests above are where logic is exercised; these prove the plumbing
-once.
+This is where response *inspection* belongs, because it is the only tier that
+has a response to inspect. A direct call returns the handler's domain value —
+`getUser` returns a `User` — so status, headers and encoded shape simply do not
+exist yet. Here they do:
+
+- **status** — `response.status`, including that a thrown `HTTPError` became the
+  code a client actually sees;
+- **headers** — `response.headers[.contentType]`, and the same subscript for any
+  other field name;
+- **shape** — `decodeJSON` into a small `Decodable` describing the wire format.
+  Decode into a payload type rather than back into the entity: an entity with
+  associations is `Encodable` but deliberately *not* `Decodable`, because once
+  an unloaded association has crossed the wire as `null`, "not loaded" and
+  "loaded and empty" are indistinguishable. The payload type also states what
+  the endpoint is supposed to return.
+
+Each route is wired in by the factory the `@Controller` macro generated for it —
+`_flightRoute_<method>_<n>` — which is what the composition root calls from
+`flightRoutes(graph)`. Keep this tier small: a handful of representative paths,
+not one per handler. The unit tests above are where logic is exercised; these
+prove the plumbing once.
 
 ## Query shape, without a database
 

@@ -46,6 +46,9 @@ struct TutorialTestingTests {
     /// End-to-end, sparingly: one whole-path test through the composed dispatch,
     /// proving routing + decoding + encoding wire up. `TestClient` skips the
     /// network but runs the real pipeline.
+    ///
+    /// It is also the only tier with a response to inspect — a direct call
+    /// returns a `User`, so status, headers and encoded body do not exist yet.
     @Test("GET /user/:id routes and encodes end to end")
     func endToEnd() async throws {
         let client = try TestClient(routes: [
@@ -54,6 +57,23 @@ struct TutorialTestingTests {
             }
         ])
         let response = await client.get("/user/\(ada.id)")
+
         #expect(response.status == .ok)
+        #expect(response.headers[.contentType]?.contains("json") == true)
+
+        // Decoded into a wire-shaped type rather than back into `User`: an
+        // entity with associations is Encodable but deliberately not Decodable,
+        // because `null` cannot distinguish "not preloaded" from "preloaded and
+        // empty". Extra keys in the payload are simply ignored.
+        let decoded = try response.decodeJSON(UserPayload.self)
+        #expect(decoded.id == ada.id)
+        #expect(decoded.email == ada.email)
     }
+}
+
+/// The JSON shape `User` encodes to, as this endpoint's clients see it.
+private struct UserPayload: Decodable {
+    let id: UUID
+    let name: String
+    let email: String
 }

@@ -93,13 +93,26 @@ let client = try TestClient(routes: [
 let response = await client.get("/user/\(ada.id)")
 
 #expect(response.status == .ok)
+#expect(response.headers[.contentType]?.contains("json") == true)
+#expect(try response.decodeJSON(UserPayload.self).email == ada.email)
 ```
 
-Keep this tier small — a handful of representative paths, not one per handler.
-Wiring a controller's routes in by hand (each `_flightRoute_*` factory, taking
-a closure that builds the controller) is deliberately a little verbose: it is
-the reminder that this is the plumbing-proving tier, run once, while the unit
-tests above are where the logic actually gets exercised.
+This tier is also the only one with a response to *inspect*. A direct call hands
+back the handler's domain value — `getUser` returns a `User` — so there is no
+status, no header and no encoded body to examine. Here there is all three:
+`response.status`, `response.headers[.contentType]`, and `decodeJSON` into a
+small `Decodable` that describes the wire shape. Decode into a payload type
+rather than the entity itself: an entity with associations is `Encodable` but
+deliberately not `Decodable`, since `null` cannot distinguish "not preloaded"
+from "preloaded and empty".
+
+Each route is wired in through the factory the `@Controller` macro generates for
+it — `_flightRoute_<method>_<n>`, the same one the composition root calls from
+`flightRoutes(graph)`. Naming them by hand is a rough edge rather than a virtue;
+what actually keeps this tier small is that it answers a *different question*.
+A handful of representative paths prove the plumbing once — routing, decoding,
+encoding, error-to-status — while the unit tests above are where the logic
+itself gets exercised.
 
 ## Hangar and real Postgres
 
