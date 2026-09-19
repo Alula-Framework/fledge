@@ -12,6 +12,13 @@ and the `flight` command itself.
 Flight targets Swift 6.3 or later, on Linux or macOS 15+. If you already
 have `swift --version` printing 6.3 or newer, skip ahead.
 
+**On a Mac, you also need the macOS 26 SDK — Xcode 26.** That is a requirement
+to *build*, not to run: what you build still runs on macOS 15. Flight's
+configuration layer reaches for FoundationEssentials, which older Darwin SDKs
+do not offer, and the failure looks unrelated to the SDK when you hit it — an
+error about `Data` having no member `bytes`, inside a package you did not
+write. On Linux there is nothing extra to install.
+
 If not, [Swiftly](https://www.swift.org/install/) is the fastest path on
 either platform:
 
