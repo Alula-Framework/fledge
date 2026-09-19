@@ -32,7 +32,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [.executable(name: "App", targets: ["App"])],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.21.1", traits: ["Web"])
+        .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.21.2", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
