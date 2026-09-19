@@ -94,7 +94,7 @@ backend, and switching is a module choice, never a code change:
 
 ```swift
 .package(url: "https://github.com/Flight-Framework/flight-data.git",
-         from: "0.6.0", traits: ["Postgres", "Valkey"])
+         from: "0.7.0", traits: ["Postgres", "Valkey"])
 ```
 
 ```swift

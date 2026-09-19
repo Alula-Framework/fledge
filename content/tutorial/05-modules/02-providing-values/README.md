@@ -92,11 +92,47 @@ reach a consuming module through exactly this init-parameter matching.
 ## When two modules provide the same type
 
 Matching by type has one failure mode worth knowing before you hit it: if *two*
-modules both provide a `Clock`, the root can't guess which one your `Greeter`
-should get, so it refuses to — the build fails with a composition-ambiguity
-error naming both providers. The fix is to remove one, or to give the consuming
-module an initializer parameter specific enough to disambiguate. Ambiguity is a
-build-time error, never a runtime coin-flip.
+modules both provide a `Clock`, nothing in `GreetingModule`'s `clock:` parameter
+says which one it meant, so the root refuses to guess — the build fails with a
+composition-ambiguity error naming both providers.
+
+Two providers of one type is a shape worth having, though — a system clock and
+a fixed one you pin in tests — so the answer isn't to rename the type until the
+collision goes away. You nominate a default instead:
+
+```swift
+struct GreetingModule: FlightModule {
+    static var dependencies: [any FlightModule.Type] { [ClockModule.self] }
+    // Which provider an unqualified match resolves to, for types that have more
+    // than one. Only ambiguous types consult it.
+    static var defaultProviders: [any FlightModule.Type] { [ClockModule.self] }
+    ...
+}
+```
+
+The nomination is read from every module in the graph, so it can live on any of
+them; putting it on the module that pulls both in is the convention, because
+that's where a reader goes looking. Now every unqualified match — the `clock:`
+parameter above included — resolves to `ClockModule.clock`.
+
+Where a *component* wants the other one, it says so at its injection site:
+
+```swift
+@Component
+struct AuditTrail {
+    @Inject(from: FixedClockModule.self) var clock: Clock
+}
+```
+
+One asymmetry to know before you rely on it: `@Inject(from:)` is a property
+annotation, so components can name a provider and a module's initializer
+parameters cannot. A module init always receives the default. If a module needs
+specifically the *other* provider, make that one the default and annotate the
+components that want the first.
+
+Either way the ambiguity is a build-time error, never a runtime coin-flip — and
+the error text spells out both lines above with your own names already
+substituted into them, so you don't have to remember this page.
 
 **Try it.** In a `skeleton` project, add both modules and the
 `GreetingController`, then `curl 127.0.0.1:8080/greeting` — the reply changes
