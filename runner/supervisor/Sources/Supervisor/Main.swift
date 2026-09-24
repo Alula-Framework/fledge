@@ -1,9 +1,9 @@
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 import Foundation
 
-struct AppModule: FlightModule {
+struct AppModule: AlulaModule {
     /// A plain actor, provided as a value the composition root wires into
     /// `RunnerController` by type — not a scanned @Component, so a stored
     /// property here is how it enters the graph.
@@ -31,13 +31,13 @@ struct Main {
             // than making an unlucky learner's first session pay it.
             try warmUp(workspace: URL(fileURLWithPath: workspacePath))
 
-            await Flight.run(
+            await Alula.run(
                 configuration: configuration,
                 modules: [
-                    FlightWebModule<FlightTransport>.self,
+                    AlulaWebModule<AlulaTransport>.self,
                     AppModule.self,
                 ],
-                composedBy: flightComposeModules)
+                composedBy: alulaComposeModules)
         } catch {
             FileHandle.standardError.write(
                 Data("supervisor failed to start: \(String(reflecting: error))\n".utf8))

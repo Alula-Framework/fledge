@@ -1,5 +1,5 @@
-import FlightDataPostgres
-import FlightWeb
+import AlulaDataPostgres
+import AlulaWeb
 import Foundation
 
 @Entity("projects")

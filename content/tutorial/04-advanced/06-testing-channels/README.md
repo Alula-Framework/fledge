@@ -1,6 +1,6 @@
 ---
 title: Testing channels
-description: FlightChannelsTesting, and asserting on a protocol instead of a socket.
+description: AlulaChannelsTesting, and asserting on a protocol instead of a socket.
 order: 6
 ---
 
@@ -8,15 +8,15 @@ A join a channel should refuse is a protocol-level fact — the exact wire
 message that comes back matters, not just that *something* was rejected:
 
 ```swift
-@Test("join rejected: flight:error with the rejection reason and the ref")
+@Test("join rejected: alula:error with the rejection reason and the ref")
 func joinRejected() async throws {
     let harness = try Harness()
     let wire = try await harness.wire()
-    try wire.send(ref: "9", topic: "room:locked", event: "flight:join")
+    try wire.send(ref: "9", topic: "room:locked", event: "alula:join")
 
     let error = try await wire.nextEnvelope()
     #expect(error == Envelope(
-        ref: "9", topic: "room:locked", event: "flight:error",
+        ref: "9", topic: "room:locked", event: "alula:error",
         payload: ["reason": "forbidden"]))
 }
 ```
@@ -28,7 +28,7 @@ when what you're testing *is* the protocol — the exact close reason, the
 exact shape of a rejection — a client that helpfully retries or hides
 correlation from you would be testing the wrong layer. Underneath, it's
 still `InMemoryWebSocket` — no socket, no port — the same primitive
-`FlightWebTesting` already gave you.
+`AlulaWebTesting` already gave you.
 
 ## Asserting on fan-out
 
@@ -64,11 +64,11 @@ with zero sockets:
 
 ```swift
 // harness.testClient is a TestClient built over the socket route the way the
-// app composes it — FlightChannelsModule's `sockets` behind SocketController.
+// app composes it — AlulaChannelsModule's `sockets` behind SocketController.
 // RealtimeTests.swift in the demo template shows that wiring in full.
 let harness = try Harness()
 let transport = InMemoryChannelTransport(testClient: harness.testClient)
-let client = ChannelClient(url: URL(string: "flight-test:///socket")!, transport: transport)
+let client = ChannelClient(url: URL(string: "alula-test:///socket")!, transport: transport)
 
 await #expect(throws: ChannelClientError.channelError(reason: "forbidden")) {
     try await client.channel("room:locked").join()

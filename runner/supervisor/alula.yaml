@@ -7,5 +7,5 @@ server:
 
 # workspace.live / workspace.pristine default to /workspace and
 # /workspace-pristine in RunnerController itself — overridable per
-# deployment via FLIGHT_WORKSPACE_LIVE / FLIGHT_WORKSPACE_PRISTINE if
+# deployment via ALULA_WORKSPACE_LIVE / ALULA_WORKSPACE_PRISTINE if
 # the runner image ever needs different paths.

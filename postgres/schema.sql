@@ -1,4 +1,4 @@
--- Copied verbatim from benchmark/harness/schema.sql (Flight-Framework/benchmark)
+-- Copied verbatim from benchmark/harness/schema.sql (Alula-Framework/benchmark)
 -- — PLAN §4: "the issues/projects/users domain reused from the benchmark
 -- suite," so the tutorial, the benchmark, and the eventual capstone all
 -- teach against the same real schema, never three drifting approximations

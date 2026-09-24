@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that content doesn't lie — modeled directly on flight-cli's
+"""Checks that content doesn't lie — modeled directly on alula-cli's
 CI/verify-tutorial.sh, whose own comment explains why this class of check
 exists: "the previous tutorial in this ecosystem drifted until seven of the
 nine files it told you to create no longer existed. Nothing caught that,
@@ -42,7 +42,7 @@ def check_relative_links() -> list[str]:
         for match in LINK_RE.finditer(text):
             target = match.group(1)
             resolved = (md_file.parent / target).resolve()
-            # A relative link with no extension, like `./02-flight-new`, is
+            # A relative link with no extension, like `./02-alula-new`, is
             # a site *route* (SvelteKit strips .md), so check for the file
             # with .md appended if the bare path doesn't exist.
             if not resolved.exists() and not resolved.with_suffix(".md").exists():

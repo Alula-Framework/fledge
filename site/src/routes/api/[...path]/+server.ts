@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 // `/api/*` and `/socket` are not SvelteKit routes — they belong to the
-// Flight backend (`server/`), and something has to put the two behind one
+// Alula backend (`server/`), and something has to put the two behind one
 // origin: Caddy in the compose setup, vite's dev proxy under
 // `npm run dev` (see ../../../../vite.config.ts, which forwards both,
 // `/socket` with `ws: true`).
@@ -17,7 +17,7 @@ import type { RequestHandler } from './$types';
 // runs, then shows no build output at all, because that arrives over the
 // channel. A silent half-working state is worse than an honest refusal.
 const explain =
-	'The /api routes are served by the Flight backend, not by SvelteKit, and ' +
+	'The /api routes are served by the Alula backend, not by SvelteKit, and ' +
 	'/socket needs a WebSocket proxy this route cannot provide. Use the ' +
 	'origin that fronts both: http://localhost/ (Caddy) in the compose setup, ' +
 	'or `npm run dev` for local work. The site container port serves pages ' +

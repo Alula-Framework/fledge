@@ -1,5 +1,5 @@
-import FlightCore
-import FlightScheduler
+import AlulaCore
+import AlulaScheduler
 import Foundation
 
 @Scheduler

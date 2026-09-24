@@ -10,7 +10,7 @@ import NIOCore
 ///
 /// `HTTPClient.shared` (AsyncHTTPClient's process-wide client) is the one
 /// real precedent for outbound HTTP calls in this codebase
-/// (`FlightSecurityCore/OIDC/JWKSSource.swift`) — Flight has no outbound
+/// (`AlulaSecurityCore/OIDC/JWKSSource.swift`) — Alula has no outbound
 /// client wrapper of its own, so this follows that same convention rather
 /// than inventing one.
 struct RunnerClient: Sendable {
@@ -93,8 +93,8 @@ struct RunnerClient: Sendable {
     /// EventSource framing directly — `event:`/`data:` lines, multi-line
     /// data joined with "\n", a blank line ending a frame, lines starting
     /// with ":" ignored as comments/heartbeats — matching
-    /// `ServerSentEvent.encoded` in FlightWeb exactly, since that's what
-    /// wrote it. No SSE-consuming helper exists anywhere in Flight to
+    /// `ServerSentEvent.encoded` in AlulaWeb exactly, since that's what
+    /// wrote it. No SSE-consuming helper exists anywhere in Alula to
     /// reuse (checked): this is a from-scratch client parser.
     func run(
         baseURL: String, leaseID: String,

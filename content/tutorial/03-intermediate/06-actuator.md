@@ -28,22 +28,22 @@ you ask" part.
 ## An allowlist, not a `.prod` check
 
 The obvious gate — "publish the dashboard unless the environment is
-`.prod`" — has a real failure mode: an unset `FLIGHT_ENV` resolves to
+`.prod`" — has a real failure mode: an unset `ALULA_ENV` resolves to
 `dev`, and any environment name the code doesn't recognize (a typo,
 `production` instead of `prod`) is *also* not `.prod`, so both would have
-published the dashboard by accident. Flight inverts it: only environments
+published the dashboard by accident. Alula inverts it: only environments
 *known* to be development (`dev`, `development`, `test`, `local`) get the
 dashboard; everything else — `prod`, `staging`, or anything unrecognized —
 gets the health probe and nothing more. Getting an environment name wrong
 now costs you a dashboard, never leaks one.
 
 The one thing that overrides this is a process environment variable, never
-a `flight.yaml` key — the exposure decision has to be made before
+a `alula.yaml` key — the exposure decision has to be made before
 `Configuration` is even resolvable:
 
 ```bash
-FLIGHT_ACTUATOR_EXPOSURE=full ./App     # dashboard, anywhere
-FLIGHT_ACTUATOR_EXPOSURE=disabled ./App # neither route, anywhere
+ALULA_ACTUATOR_EXPOSURE=full ./App     # dashboard, anywhere
+ALULA_ACTUATOR_EXPOSURE=disabled ./App # neither route, anywhere
 ```
 
 An unrecognized value throws rather than silently picking a side — a typo
@@ -57,10 +57,10 @@ actuator:
   format: json   # or the default, "ssr"
 ```
 
-`actuator.format` is a normal, layered `flight.yaml`/env-var key —
+`actuator.format` is a normal, layered `alula.yaml`/env-var key —
 `.ssr` renders a plain HTML table, no CSS framework, no client-side JS;
 `.json` gives you the same information as a wire format a script can
-consume. This is the one Part 0's `flight.yaml` already showed you,
+consume. This is the one Part 0's `alula.yaml` already showed you,
 before there was anything to say about it yet.
 
 ## Putting something in front of it

@@ -5,14 +5,14 @@ order: 2
 ---
 
 ```swift
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 
 @Controller
 struct GreetingController {
     @GetRoute("/hello")
     func hello(_ context: RequestContext) -> String {
-        "hello, flight"
+        "hello, alula"
     }
 }
 ```
@@ -22,7 +22,7 @@ Run, and open the preview:
 
 ```bash
 curl http://127.0.0.1:8080/hello
-# hello, flight
+# hello, alula
 ```
 
 No registration call, no route table entry, nothing added to `AppModule`.
@@ -44,13 +44,13 @@ struct Greeting: Codable, ResponseEncodable {
 
 @GetRoute("/hello-json")
 func helloJSON(_ context: RequestContext) -> Greeting {
-    Greeting(message: "hello, flight")
+    Greeting(message: "hello, alula")
 }
 ```
 
 ```bash
 curl http://127.0.0.1:8080/hello-json
-# {"message":"hello, flight"}
+# {"message":"hello, alula"}
 ```
 
 `Codable` alone isn't enough, and the compiler says so rather than
@@ -70,7 +70,7 @@ knowing now: a handler returning `Void` answers `204`, and one returning a
 
 ## `RequestContext`
 
-Every handler method takes one as its first parameter (Flight resolves it
+Every handler method takes one as its first parameter (Alula resolves it
 for you — it's never something you construct). It's your access point for
 everything about the current request: path parameters, resolving
 container components scoped to this request, and the logger. The next two

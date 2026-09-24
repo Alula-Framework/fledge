@@ -4,31 +4,31 @@ description: What the composition root wires, and in what order.
 order: 1
 ---
 
-Every Flight app boots the same few steps, in the same order, every time.
-Once you've seen them once, you've seen every Flight app's startup:
+Every Alula app boots the same few steps, in the same order, every time.
+Once you've seen them once, you've seen every Alula app's startup:
 
 ```swift
 @main
 struct Main {
     static func main() async {
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 AppModule.self,
                 ActuatorModule.self,
             ],
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }
 ```
 
-1. **`Configuration.load()`** reads `flight.yaml` plus `FLIGHT_*`
+1. **`Configuration.load()`** reads `alula.yaml` plus `ALULA_*`
    environment variables into one immutable value.
 2. **The modules are composed**, in dependency order — each module's
    `dependencies` form a DAG that's resolved once, not hoped for. `modules:`
-   names which subsystems the app includes; `composedBy: flightComposeModules`
+   names which subsystems the app includes; `composedBy: alulaComposeModules`
    is how they're built.
 3. **Every component is built once, eagerly.** The composition root constructs
    each `@Controller`, `@Service`, `@Repository`, and `@Component` a single
@@ -38,7 +38,7 @@ struct Main {
 4. **The server starts accepting connections.** Not before: there is no window
    where a request could arrive against a half-built graph.
 
-`Flight.run` rather than `main() async throws` is deliberate — an error
+`Alula.run` rather than `main() async throws` is deliberate — an error
 escaping `main` prints a raw runtime backtrace, while `run` prints the reason
 (Postgres down, port already bound) and exits 1.
 
@@ -47,16 +47,16 @@ escaping `main` prints a raw runtime backtrace, while `run` prints the reason
 `AppModule` is the one file that says what your app is made of:
 
 ```swift
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 }
 ```
 
 That's the whole thing — a *value* declaring which subsystems the app is built
 on. There is no `configure` method and no registration call to write.
 Everything else — every `@Component`, `@Controller`, `@Service`, and
-`@Repository` — is wired by `flightComposeModules`, the **composition root**
-the `FlightRegistrationPlugin` (named in `Package.swift`'s `plugins:` list)
+`@Repository` — is wired by `alulaComposeModules`, the **composition root**
+the `AlulaRegistrationPlugin` (named in `Package.swift`'s `plugins:` list)
 generates for you.
 
 That plugin scans your target at *build* time for every annotated type and
@@ -73,12 +73,12 @@ appear in `Main.swift`'s array. You'll see this directly once Part 2 adds a
 database module ahead of your own.
 
 **Try it — this is the exercise.** In a project of your own
-(`flight new --tier skeleton myapp`, from Part 0), add
+(`alula new --tier skeleton myapp`, from Part 0), add
 `Sources/App/Controllers/StatusController.swift`:
 
 ```swift
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 
 @Controller
 struct StatusController {
@@ -98,6 +98,6 @@ wired it in.
 
 `@ConfigValue("app.name")` is a preview of the configuration exercise, but it's
 worth noticing now for a different reason: it has no `default:`, so the build
-plugin checks that `app.name` actually exists in `flight.yaml`. Misspell it and
+plugin checks that `app.name` actually exists in `alula.yaml`. Misspell it and
 the build fails naming the key — a wrong config key is a compile error here,
 not a 3am page.

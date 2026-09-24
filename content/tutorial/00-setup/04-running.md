@@ -20,7 +20,7 @@ curl http://127.0.0.1:8080/
 # App is flying
 ```
 
-That's `HealthController.index`, reading `app.name` out of `flight.yaml`
+That's `HealthController.index`, reading `app.name` out of `alula.yaml`
 and returning it. Change the `app.name` value, restart, curl again — the
 response changes. That round trip is the one you'll repeat, in some form,
 for every exercise in this tutorial.
@@ -32,7 +32,7 @@ swift test
 ```
 
 `Tests/AppTests/HealthControllerTests.swift` exercises the same route
-without a real socket — `FlightWebTesting`'s `TestClient` dispatches
+without a real socket — `AlulaWebTesting`'s `TestClient` dispatches
 through the exact same `Request`/`Response` types your controller does,
 skipping the transport layer entirely rather than routing through an
 in-process stand-in for it. Routing, middleware, and dependency injection
@@ -52,5 +52,5 @@ only where the terminal lives does.
 
 If the in-browser editor is ever unavailable — rate-limited, or simply
 not deployed yet for a given exercise — every exercise is also a
-downloadable `flight new`-shaped project. Reading and running it locally,
+downloadable `alula new`-shaped project. Reading and running it locally,
 the way this page just walked through, always works.

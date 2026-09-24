@@ -1,10 +1,10 @@
-import FlightChannels
-import FlightChannelsClient
-import FlightChannelsProtocol
-import FlightChannelsTesting
-import FlightCore
-import FlightWeb
-import FlightWebTesting
+import AlulaChannels
+import AlulaChannelsClient
+import AlulaChannelsProtocol
+import AlulaChannelsTesting
+import AlulaCore
+import AlulaWeb
+import AlulaWebTesting
 import Foundation
 import Testing
 
@@ -26,7 +26,7 @@ struct ChannelWireTests {
         let (_, client) = InMemoryWebSocket.makeConnectedPair()
         let wire = ChannelWireClient(socket: client)
 
-        try wire.send(ref: "9", topic: "room:locked", event: "flight:join")
+        try wire.send(ref: "9", topic: "room:locked", event: "alula:join")
         let reply: Envelope? = try await wire.nextEnvelope()
         _ = reply
         wire.close()

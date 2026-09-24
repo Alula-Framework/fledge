@@ -11,11 +11,11 @@
 
 <div class="shell">
 	<header>
-		<a class="brand" href="/">Flight School</a>
+		<a class="brand" href="/">Fledge</a>
 		<nav>
 			<a href="/tutorial">Tutorial</a>
 			<a href="/guides">Guides</a>
-			<a href="https://github.com/Flight-Framework/flight">Flight ↗</a>
+			<a href="https://github.com/Alula-Framework/alula">Alula ↗</a>
 		</nav>
 	</header>
 
@@ -25,7 +25,7 @@
 
 	<footer>
 		<p>
-			Flight School is <a href="https://github.com/Flight-Framework/flight-school">open source</a>.
+			Fledge is <a href="https://github.com/Alula-Framework/fledge">open source</a>.
 			Every exercise here is downloadable as a plain SwiftPM package — the site never has to be
 			the only way to learn this.
 		</p>

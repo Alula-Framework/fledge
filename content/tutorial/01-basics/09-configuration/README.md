@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: flight.yaml, environment variables, and @Settings.
+description: alula.yaml, environment variables, and @Settings.
 order: 9
 ---
 
@@ -8,18 +8,18 @@ Bootstrap's first step (§1) was `Configuration.load()`, resolving three
 layers into one immutable value — frozen before the container is even
 built, so nothing downstream can read a config value that changes mid-run:
 
-1. **`flight.yaml`** — defaults shared by every environment.
-2. **`flight-{env}.yaml`** — an overlay for one environment, selected by
-   `FLIGHT_ENV` (`dev` if unset; `test`, `staging`, and `prod` are built in,
-   and an app can define more). `FLIGHT_ENV=staging` loads
-   `flight-staging.yaml` on top of the base file.
-3. **`FLIGHT_*` environment variables** — always win over both files.
+1. **`alula.yaml`** — defaults shared by every environment.
+2. **`alula-{env}.yaml`** — an overlay for one environment, selected by
+   `ALULA_ENV` (`dev` if unset; `test`, `staging`, and `prod` are built in,
+   and an app can define more). `ALULA_ENV=staging` loads
+   `alula-staging.yaml` on top of the base file.
+3. **`ALULA_*` environment variables** — always win over both files.
 
 ## One value: `@ConfigValue`
 
 The anatomy exercise (§3) used the required form —
 `@ConfigValue("app.name")`, a build error if `app.name` is missing from
-`flight.yaml`. A key that's genuinely optional gets a default instead:
+`alula.yaml`. A key that's genuinely optional gets a default instead:
 
 ```swift
 @ConfigValue("app.maintenanceMode", default: false) var maintenanceMode: Bool
@@ -50,7 +50,7 @@ struct ConfigController {
 name=App maintenance=false greeting=hello
 ```
 
-`app.name` came from `flight.yaml`. The other two aren't in any layer at
+`app.name` came from `alula.yaml`. The other two aren't in any layer at
 all — they're their defaults, and the app started anyway, which is the
 entire difference between the two forms.
 
@@ -59,7 +59,7 @@ It doesn't start and then fail; it doesn't build at all:
 
 ```
 error: @ConfigValue key 'app.nam' in ConfigController is missing from
-flight.yaml and has no default. Add the key to flight.yaml (the base
+alula.yaml and has no default. Add the key to alula.yaml (the base
 layer — a ${VAR} placeholder is fine for env-supplied values), or
 provide default:.
 ```
@@ -87,7 +87,7 @@ issues:
 ```
 
 `pageSize` binds `issues.page-size` — every property name is transformed
-`camelCase` → `kebab-case` to build its key, matching `flight.yaml`'s own
+`camelCase` → `kebab-case` to build its key, matching `alula.yaml`'s own
 convention. Resolve it exactly like any other component:
 
 ```swift
@@ -103,24 +103,24 @@ struct IssueController {
 ```
 
 This half is prose rather than something to run here: `@Settings` needs
-its keys in `flight.yaml`, and that file is deliberately not editable in
+its keys in `alula.yaml`, and that file is deliberately not editable in
 these exercises — it carries the host and port the preview pane depends
 on, so a stray edit there would break your own preview with no visible
 cause. You'll write one for real in Part 3, where the project is yours.
 
 A property with no default (no `= value`) is required, checked against
-`flight.yaml`'s base layer at compile time — the same "build error, not a
+`alula.yaml`'s base layer at compile time — the same "build error, not a
 bootstrap surprise" guarantee `@ConfigValue`'s no-default form makes.
 
 ## The environment-variable name a key actually reads
 
 The transform is fixed and one-way: uppercase, `.` → `_`, prefixed
-`FLIGHT_`. `app.name` reads `FLIGHT_APP_NAME`; `issues.max-page-size` reads
-`FLIGHT_ISSUES_MAX-PAGE-SIZE` — note the literal dash. Only dots are
+`ALULA_`. `app.name` reads `ALULA_APP_NAME`; `issues.max-page-size` reads
+`ALULA_ISSUES_MAX-PAGE-SIZE` — note the literal dash. Only dots are
 rewritten, so a `@Settings`-derived key with more than one word in its
 property name keeps its dash straight through into the variable name, and a
 dash is not legal in a variable name most shells can `export`. It's a real
 gap, not a rare one: `pageSize`, `signingKey`, `tokenLifetime` all produce
-one. For a key shaped like that, reach for the `flight-{env}.yaml` overlay
-instead of an environment variable — `FLIGHT_ENV` itself has no such
+one. For a key shaped like that, reach for the `alula-{env}.yaml` overlay
+instead of an environment variable — `ALULA_ENV` itself has no such
 problem, being a single word.

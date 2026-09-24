@@ -7,7 +7,7 @@ name: Exercises
 # cheap, and that is where the bugs actually surfaced.
 #
 # Deliberately not `paths:`-filtered. A break here usually comes from
-# upstream — a Flight or Hangar release changing an API the content
+# upstream — an Alula or Hangar release changing an API the content
 # teaches — rather than from a content edit, and a path filter would make
 # this pass on exactly the pushes least likely to have caused it.
 
@@ -16,7 +16,7 @@ on:
     branches: [main]
   pull_request:
   # Upstream moves without touching this repo, so also check on a
-  # schedule: a Flight release that breaks a tutorial step should break
+  # schedule: an Alula release that breaks a tutorial step should break
   # this, not a learner's morning.
   schedule:
     - cron: '0 6 * * 1'
@@ -34,8 +34,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: flight_school_ci
-          POSTGRES_DB: flight_school_seed
+          POSTGRES_PASSWORD: fledge_ci
+          POSTGRES_DB: fledge_seed
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s
@@ -45,15 +45,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The app tier's exercises are diffs against a real `flight new`
+      # The app tier's exercises are diffs against a real `alula new`
       # template, so the templates have to be present to materialise them.
       # Checked out rather than vendored: the point of the diff format is
       # that the CLI stays the single source of truth for project shape.
-      - name: Check out flight-cli for its templates
+      - name: Check out alula-cli for its templates
         uses: actions/checkout@v4
         with:
-          repository: Flight-Framework/flight-cli
-          path: flight-cli
+          repository: Alula-Framework/alula-cli
+          path: alula-cli
 
       # The swift image carries no python3 and no rsync — both verified
       # missing by running these steps in the real image, not assumed.
@@ -67,17 +67,17 @@ jobs:
       # itself uses, so CI and the real thing can't drift apart.
       - name: Seed the database
         env:
-          PGPASSWORD: flight_school_ci
+          PGPASSWORD: fledge_ci
         run: |
-          psql -h postgres -U postgres -d flight_school_seed -v ON_ERROR_STOP=1 \
+          psql -h postgres -U postgres -d fledge_seed -v ON_ERROR_STOP=1 \
             -f postgres/schema.sql
-          psql -h postgres -U postgres -d flight_school_seed -v ON_ERROR_STOP=1 \
+          psql -h postgres -U postgres -d fledge_seed -v ON_ERROR_STOP=1 \
             -f postgres/seed.sql
 
       - name: Build and run the exercises
         env:
-          DATABASE_URL: postgres://postgres:flight_school_ci@postgres:5432/flight_school_seed
+          DATABASE_URL: postgres://postgres:fledge_ci@postgres:5432/fledge_seed
         run: |
           python3 scripts/check-exercises.py \
-            --templates flight-cli/templates \
+            --templates alula-cli/templates \
             --database-url "$DATABASE_URL"

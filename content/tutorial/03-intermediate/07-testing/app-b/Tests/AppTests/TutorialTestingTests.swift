@@ -1,6 +1,6 @@
-import FlightCore
-import FlightWeb
-import FlightWebTesting
+import AlulaCore
+import AlulaWeb
+import AlulaWebTesting
 import Foundation
 import Testing
 
@@ -30,7 +30,7 @@ struct TutorialTestingTests {
     func controllerGetUser() async throws {
         let controller = UserController(
             users: UserService(repository: MockUserRepository(users: [ada])))
-        let user = try await controller.getUser(.mock(pathParameters: ["id": ada.id.uuidString]))
+        let user = try await controller.getUser(.mock(), id: ada.id)
         #expect(user.id == ada.id)
     }
 
@@ -39,7 +39,7 @@ struct TutorialTestingTests {
     func controllerGetUserMissing() async {
         let controller = UserController(users: UserService(repository: MockUserRepository()))
         await #expect(throws: HTTPError.self) {
-            try await controller.getUser(.mock(pathParameters: ["id": UUID().uuidString]))
+            try await controller.getUser(.mock(), id: UUID())
         }
     }
 
@@ -51,7 +51,7 @@ struct TutorialTestingTests {
     /// returns a `User`, so status, headers and encoded body do not exist yet.
     @Test("GET /user/:id routes and encodes end to end")
     func endToEnd() async throws {
-        let client = try TestClient(routes: UserController.flightRoutes { _ in
+        let client = try TestClient(routes: UserController.alulaRoutes { _ in
             UserController(users: UserService(repository: MockUserRepository(users: [ada])))
         })
         let response = await client.get("/user/\(ada.id)")

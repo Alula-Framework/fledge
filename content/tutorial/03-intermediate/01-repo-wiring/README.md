@@ -1,17 +1,17 @@
 ---
-title: Wiring Hangar into Flight
+title: Wiring Hangar into Alula
 description: Leasing a connection per operation with withRepo, and the connection-affinity bug this guide exists to prevent.
 order: 1
 ---
 
-Every exercise so far constructed a `Repo` by hand. Inside a real Flight app, a
+Every exercise so far constructed a `Repo` by hand. Inside a real Alula app, a
 controller injects the connection *pool* and leases a repo from it for each
 operation:
 
 ```swift
 @Controller
 struct IssueController {
-    // flight:hand-registered — PostgresDataModule provides the pool.
+    // alula:hand-registered — PostgresDataModule provides the pool.
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")
@@ -40,7 +40,7 @@ and lives for the whole process, so if it *held* a `Repo`, it would pin one
 connection for the life of the app — every request funnelling through the same
 connection, or worse, a connection captured by something that outlives the
 request that leased it. That's the connection-affinity bug this exercise exists
-to prevent, and Flight prevents it by not offering a long-lived `Repo` at all.
+to prevent, and Alula prevents it by not offering a long-lived `Repo` at all.
 
 Instead the controller holds the `PostgresDataSource` — the pool — and
 `withRepo` leases a connection, hands you a `Repo` bound to it, and returns the
@@ -48,7 +48,7 @@ connection to the pool when the closure ends. The borrow is exactly as wide as
 the closure: it starts where you can see it and ends when the closure returns.
 
 `PostgresDataModule<PrimaryDataSource>` provides the pool; the
-`// flight:hand-registered` marker acknowledges that `PostgresDataSource` comes
+`// alula:hand-registered` marker acknowledges that `PostgresDataSource` comes
 from that module rather than being scanned as a component in this target.
 
 ## One lease is one connection — so group what must stay together

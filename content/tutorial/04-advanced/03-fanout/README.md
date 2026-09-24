@@ -4,14 +4,14 @@ description: An ordinary POST route, and the socket subscribers it reaches.
 order: 3
 ---
 
-`ChannelBroadcaster` is a plain value the `FlightChannelsModule` provides —
+`ChannelBroadcaster` is a plain value the `AlulaChannelsModule` provides —
 nothing about reaching it requires being inside a channel at all. A controller
 injects it like any other dependency:
 
 ```swift
 @Controller
 struct IssueCreationController {
-    // flight:hand-registered — the broadcaster is provided by FlightChannelsModule.
+    // alula:hand-registered — the broadcaster is provided by AlulaChannelsModule.
     @Inject var broadcaster: ChannelBroadcaster
 
     @PostRoute("/projects/:key/issues")

@@ -16,7 +16,7 @@ func show(_ context: RequestContext) -> String {
 
 `:number` in the route pattern names a path segment;
 `context.pathParam("number")` reads it back. It's always a plain `String?`
-— Flight doesn't guess whether `:number` means a `UUID`, an `Int`, or a
+— Alula doesn't guess whether `:number` means a `UUID`, an `Int`, or a
 slug, so converting it to the type you actually want is your call, made
 explicitly:
 
@@ -34,7 +34,7 @@ Try it: `/issues/42` answers `issue #42`, and `/issues/abc` answers a real
 `400` with your message in it, not a crash and not a `0`.
 
 This shape — extract as `String?`, convert, `guard`-else-throw — is the
-one you'll write for every typed path parameter in every Flight app. It
+one you'll write for every typed path parameter in every Alula app. It
 looks like more code than a framework that guesses your type for you, and
 it is: in exchange, "that wasn't a number" and "no issue has that number"
 stay two different, explicit, named failures instead of one

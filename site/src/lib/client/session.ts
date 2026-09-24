@@ -69,13 +69,13 @@ export async function resetSnippet(): Promise<void> {
 /**
  * Joins `topic` over the Channels socket and calls `onEvent` for every
  * build/run push. Envelope shape (matching SessionService.swift's
- * broadcasts and FlightChannels' wire protocol exactly):
+ * broadcasts and AlulaChannels' wire protocol exactly):
  *
  *     {"ref": null, "topic": "session:<id>", "event": "build_output", "payload": {"data": "..."}}
  *
  * `ref: null` marks a genuine broadcast; `ref` matching the join's own ref
- * ("1") is the join's `flight:reply` acknowledgment, not output, and is
- * ignored. `flight:error` (a join refusal — e.g. the session already
+ * ("1") is the join's `alula:reply` acknowledgment, not output, and is
+ * ignored. `alula:error` (a join refusal — e.g. the session already
  * expired) is surfaced as a synthetic `channel_error` event regardless of
  * `ref`, since it's the one server-originated message this channel ever
  * sends that isn't a plain broadcast. This channel never sends anything
@@ -90,17 +90,17 @@ export function joinChannel(topic: string, onEvent: (event: RunEvent) => void): 
 	const socket = new WebSocket(`${scheme}//${location.host}/socket`);
 
 	socket.addEventListener('open', () => {
-		socket.send(JSON.stringify({ ref: '1', topic, event: 'flight:join', payload: {} }));
+		socket.send(JSON.stringify({ ref: '1', topic, event: 'alula:join', payload: {} }));
 	});
 
 	socket.addEventListener('message', (message) => {
 		const envelope = JSON.parse(message.data as string);
 		if (envelope.topic !== topic) return;
-		if (envelope.event === 'flight:error') {
+		if (envelope.event === 'alula:error') {
 			onEvent({ event: 'channel_error', data: envelope.payload?.reason ?? 'join refused' });
 			return;
 		}
-		if (envelope.ref !== null) return; // the join's own flight:reply — nothing to show
+		if (envelope.ref !== null) return; // the join's own alula:reply — nothing to show
 		onEvent({
 			event: envelope.event,
 			data: envelope.payload?.data ?? envelope.payload?.message ?? ''

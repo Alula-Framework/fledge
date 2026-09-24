@@ -39,7 +39,7 @@ services:
     ports:
       - '3000:3000'
 
-  # The sessions/execution half of the Flight backend (PLAN §4) — leases a
+  # The sessions/execution half of the Alula backend (PLAN §4) — leases a
   # runner per session and streams its build/run output over Channels. The
   # *content* half (serving compiled exercise/guide JSON) isn't built —
   # `site` still reads `content/` directly (see site/src/lib/server/content.ts)
@@ -109,7 +109,7 @@ services:
   runner-4:
     <<: *runner-base
 
-  # The DB tier's shared server (PLAN §3/§4, M2). `flight_school_seed` is
+  # The DB tier's shared server (PLAN §3/§4, M2). `fledge_seed` is
   # built once, at first container start, from `postgres/schema.sql` +
   # `postgres/seed.sql` — copied verbatim from the benchmark suite (PLAN
   # §4: "the issues/projects/users domain reused from the benchmark
@@ -123,8 +123,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=flight_school_seed
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-flight_school_dev}
+      - POSTGRES_DB=fledge_seed
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-fledge_dev}
     volumes:
       - ./postgres/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./postgres/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro

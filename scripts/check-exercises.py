@@ -6,7 +6,7 @@ The interactive runner pool was expensive to serve; *compiling and running
 the exercises* is cheap, and it was the compiling and running, not the
 serving, that actually caught bugs: a `ResponseEncodable` error that had
 been wrong in published prose since M0, an exercise whose payoff nothing
-could observe, and a registration bug in flight-cli's own `basics`
+could observe, and a registration bug in alula-cli's own `basics`
 template. None of those needed a browser.
 
 Two tiers, two shapes:
@@ -17,7 +17,7 @@ Two tiers, two shapes:
   are *run*, not merely built, because "it compiles" says nothing about
   whether the query was right.
 * **app** — `content/tutorial/<part>/<slug>/` holds `meta.json` plus
-  `app-a`/`app-b` diffs against a named `flight new` template (PLAN §6).
+  `app-a`/`app-b` diffs against a named `alula new` template (PLAN §6).
   `app-b` is the solution and must build. `app-a` is the starting state and
   is deliberately allowed not to — it is frequently an empty file.
 
@@ -135,7 +135,7 @@ def check_app_exercises(templates: Path) -> None:
         source = templates / template_name
         if not source.is_dir():
             report(f"template '{template_name}'", False,
-                   f"not found at {source} — pass --templates or check out flight-cli")
+                   f"not found at {source} — pass --templates or check out alula-cli")
             continue
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -169,7 +169,7 @@ def check_app_exercises(templates: Path) -> None:
                 # type (three define `IssueController`, with different routes).
                 # SwiftPM's incremental check is mtime-based, so a stale-but-
                 # newer `.o` gets reused and the app links against the previous
-                # exercise's macro-generated `_flightRoute_*` symbols, failing
+                # exercise's macro-generated `_alulaRoute_*` symbols, failing
                 # with an undefined-reference error for a symbol the *current*
                 # source would have produced. Touching forces a recompile of
                 # whatever changed while leaving the expensive dependency build
@@ -197,8 +197,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--templates", type=Path,
-        default=REPO.parent / "flight-cli" / "templates",
-        help="flight-cli's templates/ directory (default: a sibling checkout)")
+        default=REPO.parent / "alula-cli" / "templates",
+        help="alula-cli's templates/ directory (default: a sibling checkout)")
     parser.add_argument("--tier", choices=["snippet", "app", "all"], default="all")
     parser.add_argument(
         "--database-url", default=os.environ.get("DATABASE_URL"),

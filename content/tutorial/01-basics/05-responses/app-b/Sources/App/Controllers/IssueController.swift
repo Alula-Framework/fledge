@@ -1,5 +1,5 @@
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 
 struct IssueSummary: Codable, ResponseEncodable {
     let number: Int

@@ -1,11 +1,11 @@
-import FlightChannels
-import FlightChannelsProtocol
-import FlightCore
-import FlightDataPostgres
-import FlightPresence
+import AlulaChannels
+import AlulaChannelsProtocol
+import AlulaCore
+import AlulaDataPostgres
+import AlulaPresence
 import Foundation
 
-struct BoardChannel: FlightChannels.Channel {
+struct BoardChannel: AlulaChannels.Channel {
     let repo: Repo
     let broadcaster: ChannelBroadcaster
     let presence: any Presence

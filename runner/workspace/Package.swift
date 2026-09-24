@@ -12,7 +12,7 @@ let package = Package(
     name: "exercise-workspace",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/hangar.git", from: "0.5.0"),
+        .package(url: "https://github.com/Alula-Framework/hangar.git", from: "0.9.2"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0")
     ],
     targets: [

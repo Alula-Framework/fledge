@@ -1,6 +1,6 @@
-import FlightChannels
-import FlightCore
-import FlightWeb
+import AlulaChannels
+import AlulaCore
+import AlulaWeb
 
 /// The WebSocket entry point for the `session:*` channel (PLAN §4), as a route
 /// like any other.
@@ -14,10 +14,10 @@ import FlightWeb
 /// (see `SessionChannel`) gates on the session id itself.
 @Controller
 struct SocketController {
-    /// The channels stack. Provided by `FlightChannelsModule`, matched by type
+    /// The channels stack. Provided by `AlulaChannelsModule`, matched by type
     /// by the composition root — not scanned from an annotation, hence the
     /// marker.
-    // flight:hand-registered
+    // alula:hand-registered
     @Inject var sockets: ChannelSockets
 
     @WebSocketRoute("/socket")

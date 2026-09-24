@@ -1,4 +1,4 @@
-// The full planned curriculum, transcribed from PLAN-flight-school.md §7.
+// The full planned curriculum, transcribed from PLAN-fledge.md §7.
 //
 // This is the site's source of truth for navigation and for distinguishing
 // "not written yet" from "doesn't exist" — a slug listed here with no
@@ -24,7 +24,7 @@ export interface PartOutline {
 	/// `snippet` is the only interactive one: those exercises carry a
 	/// sibling `.swift` file and get the embedded editor. `local` means the
 	/// code is real and CI-verified — each exercise keeps an `app-b`
-	/// solution built against a `flight new` template — but the reader runs
+	/// solution built against a `alula new` template — but the reader runs
 	/// it in their own project rather than in the page. `none` is prose
 	/// with nothing to run.
 	///
@@ -39,23 +39,23 @@ export const curriculum: PartOutline[] = [
 	{
 		slug: '00-setup',
 		title: 'Part 0 — Setup',
-		summary: 'Mirrors flight-cli directly: install, generate, understand what you got.',
+		summary: 'Mirrors alula-cli directly: install, generate, understand what you got.',
 		runtime: 'none',
 		exercises: [
 			{
 				slug: '01-install',
-				title: 'Installing Swift and flight-cli',
-				description: 'Get a Swift toolchain and the flight command on your machine.'
+				title: 'Installing Swift and alula-cli',
+				description: 'Get a Swift toolchain and the alula command on your machine.'
 			},
 			{
-				slug: '02-flight-new',
-				title: 'flight new, and the tier/trait model',
+				slug: '02-alula-new',
+				title: 'alula new, and the tier/trait model',
 				description: 'Three starting points, and how dependencies stay opt-in.'
 			},
 			{
 				slug: '03-anatomy',
 				title: 'Project anatomy',
-				description: 'What flight new skeleton actually generates, file by file.'
+				description: 'What alula new skeleton actually generates, file by file.'
 			},
 			{
 				slug: '04-running',
@@ -66,7 +66,7 @@ export const curriculum: PartOutline[] = [
 	},
 	{
 		slug: '01-basics',
-		title: 'Part 1 — Flight basics',
+		title: 'Part 1 — Alula basics',
 		summary: 'Bootstrap, routing, requests and responses, middleware, configuration.',
 		runtime: 'local',
 		exercises: [
@@ -113,14 +113,14 @@ export const curriculum: PartOutline[] = [
 			{
 				slug: '09-configuration',
 				title: 'Configuration',
-				description: 'flight.yaml, environment variables, and @Settings.'
+				description: 'alula.yaml, environment variables, and @Settings.'
 			}
 		]
 	},
 	{
 		slug: '02-data',
 		title: 'Part 2 — Data with Hangar and Changeset',
-		summary: 'Entities, queries, changesets, associations, transactions, and what flight-data builds on top.',
+		summary: 'Entities, queries, changesets, associations, transactions, and what alula-data builds on top.',
 		runtime: 'snippet',
 		exercises: [
 			{
@@ -174,8 +174,8 @@ export const curriculum: PartOutline[] = [
 				description: 'One statement across every matching row, with the count returned.'
 			},
 			{
-				slug: '11-flight-data',
-				title: 'flight-data: what Flight builds on top of Hangar',
+				slug: '11-alula-data',
+				title: 'alula-data: what Alula builds on top of Hangar',
 				description: 'Migrations, the DataSource/cache seam, and the Valkey drivers.'
 			},
 			{
@@ -193,7 +193,7 @@ export const curriculum: PartOutline[] = [
 		exercises: [
 			{
 				slug: '01-repo-wiring',
-				title: 'Wiring Hangar into Flight',
+				title: 'Wiring Hangar into Alula',
 				description: 'Leasing a connection per operation with withRepo, and the connection-affinity bug this guide exists to prevent.'
 			},
 			{
@@ -262,7 +262,7 @@ export const curriculum: PartOutline[] = [
 			{
 				slug: '06-testing-channels',
 				title: 'Testing channels',
-				description: 'FlightChannelsTesting, and asserting on a protocol instead of a socket.'
+				description: 'AlulaChannelsTesting, and asserting on a protocol instead of a socket.'
 			},
 			{
 				slug: '07-clustering',
@@ -285,13 +285,13 @@ export const curriculum: PartOutline[] = [
 		slug: '05-modules',
 		title: 'Part 5 — Authoring your own modules',
 		summary:
-			'Writing a FlightModule: providing components, values, routes, and a service, all wired by the composition root — the seam every subsystem (yours and the framework’s) is built on.',
+			'Writing a AlulaModule: providing components, values, routes, and a service, all wired by the composition root — the seam every subsystem (yours and the framework’s) is built on.',
 		runtime: 'local',
 		exercises: [
 			{
 				slug: '01-your-first-module',
 				title: 'Your first module',
-				description: 'A FlightModule is a value: what it declares, and how the composition root wires it.'
+				description: 'A AlulaModule is a value: what it declares, and how the composition root wires it.'
 			},
 			{
 				slug: '02-providing-values',
@@ -314,7 +314,7 @@ export const curriculum: PartOutline[] = [
 			{
 				slug: '05-packaging',
 				title: 'Packaging a module for reuse',
-				description: 'Shipping a module in its own package, the way FlightSecurityModule and friends do.'
+				description: 'Shipping a module in its own package, the way AlulaSecurityModule and friends do.'
 			}
 		]
 	}

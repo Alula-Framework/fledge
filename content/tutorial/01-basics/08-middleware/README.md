@@ -30,8 +30,8 @@ lane. That's a separate, explicit step: a module holds the lane as a value,
 listing the middleware *instances* that run in it, outermost first.
 
 ```swift
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane(
         .default, [RequestTiming()])

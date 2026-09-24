@@ -1,5 +1,5 @@
-import FlightChannels
-import FlightCore
+import AlulaChannels
+import AlulaCore
 import Logging
 import ServiceLifecycle
 
@@ -26,7 +26,7 @@ struct SessionReaperService: Service, Sendable {
         broadcaster: ChannelBroadcaster,
         postgres: PostgresAdmin,
         configuration: Configuration,
-        logger: Logger = Logger(label: "flight-school.server.reaper")
+        logger: Logger = Logger(label: "fledge.server.reaper")
     ) {
         self.broker = broker
         self.client = client

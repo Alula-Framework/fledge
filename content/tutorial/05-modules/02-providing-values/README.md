@@ -28,13 +28,13 @@ struct Greeter: Sendable {
     }
 }
 
-struct GreetingModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [ClockModule.self] }
+struct GreetingModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [ClockModule.self] }
 
     let greeter: Greeter
 
     init(configuration: Configuration, clock: Clock) {
-        let name = configuration.get("app.name", default: "Flight")
+        let name = configuration.get("app.name", default: "Alula")
         self.greeter = Greeter(clock: clock, name: name)
     }
 }
@@ -48,7 +48,7 @@ parameter:
 
 - **`configuration: Configuration`** — the loaded `Configuration`, which the
   root always has. Any module can ask for it. (`ModuleHealthRegistry` and the
-  `FlightGraph`, met in later exercises, are the two other values the root
+  `AlulaGraph`, met in later exercises, are the two other values the root
   itself supplies.)
 - **`clock: Clock`** — a value *another module provides*. Here that's
   `ClockModule.clock`. The root finds the one module offering a `Clock` and
@@ -72,7 +72,7 @@ Look at the bootstrap list — `ClockModule` isn't in it:
 
 ```swift
 modules: [
-    FlightWebModule<FlightTransport>.self,
+    AlulaWebModule<AlulaTransport>.self,
     GreetingModule.self,
     ActuatorModule.self,
 ]
@@ -82,11 +82,11 @@ It doesn't need to be. `GreetingModule` names `ClockModule` in its
 `dependencies`, and that's an *inclusion* edge: including a module includes
 everything it depends on, recursively. So the bootstrap list names the modules
 you're deliberately choosing, and their prerequisites arrive on their own —
-the same reason your `AppModule` never had to list `FlightWebModule`'s internals.
+the same reason your `AppModule` never had to list `AlulaWebModule`'s internals.
 
 This is the seam that makes a module *reusable*: a module you install names
 what it needs, and installing it is enough. The next exercises build on it —
-`FlightGraph`, and framework modules like the database and channels layers, all
+`AlulaGraph`, and framework modules like the database and channels layers, all
 reach a consuming module through exactly this init-parameter matching.
 
 ## When two modules provide the same type
@@ -101,11 +101,11 @@ a fixed one you pin in tests — so the answer isn't to rename the type until th
 collision goes away. You nominate a default instead:
 
 ```swift
-struct GreetingModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [ClockModule.self] }
+struct GreetingModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [ClockModule.self] }
     // Which provider an unqualified match resolves to, for types that have more
     // than one. Only ambiguous types consult it.
-    static var defaultProviders: [any FlightModule.Type] { [ClockModule.self] }
+    static var defaultProviders: [any AlulaModule.Type] { [ClockModule.self] }
     ...
 }
 ```
@@ -136,7 +136,7 @@ substituted into them, so you don't have to remember this page.
 
 **Try it.** In a `skeleton` project, add both modules and the
 `GreetingController`, then `curl 127.0.0.1:8080/greeting` — the reply changes
-with the time of day and carries whatever `app.name` your `flight.yaml` sets.
+with the time of day and carries whatever `app.name` your `alula.yaml` sets.
 Then try removing `ClockModule` from `GreetingModule.dependencies` while still
 listing neither in `modules:`: the build fails. With no module providing a
 `Clock`, the root can't fill that initializer parameter, and the generated call

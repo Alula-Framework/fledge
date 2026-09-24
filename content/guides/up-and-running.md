@@ -1,21 +1,21 @@
 ---
 title: Up and Running
-description: From an empty directory to a running Flight app in one page.
+description: From an empty directory to a running Alula app in one page.
 order: 0
-category: Flight
+category: Alula
 ---
 
 ```bash
-flight new MyService
+alula new MyService
 cd MyService
 swift run
 ```
 
-`flight new` generates a complete, buildable project from one of three
+`alula new` generates a complete, buildable project from one of three
 tiers — `skeleton` (the smallest thing that runs), `basics`, or `demo` —
 defaulting to `skeleton`. The alternative most frameworks choose is one
 starting template with everything wired in, disabled by config flags.
-Flight's tiers are a different bet: what you didn't ask for was never
+Alula's tiers are a different bet: what you didn't ask for was never
 resolved, so it can never be a build you have to explain. A `skeleton`
 project's `Package.swift` has exactly one dependency line naming exactly
 one trait — that line is the whole story of what the project depends on.
@@ -25,7 +25,7 @@ one trait — that line is the whole story of what the project depends on.
 ```
 MyService/
   Package.swift
-  flight.yaml
+  alula.yaml
   Sources/App/
     Main.swift
     Controllers/HealthController.swift
@@ -61,7 +61,7 @@ curl http://127.0.0.1:8080/
 
 Two macros doing real work: `@Controller` is what the build-time
 registration plugin looks for — no separate step registers this route
-anywhere. `@ConfigValue("app.name")` reads `flight.yaml`'s `app.name` key,
+anywhere. `@ConfigValue("app.name")` reads `alula.yaml`'s `app.name` key,
 and because there's no `default:` argument, a misspelled key is a
 *build* failure, not a runtime surprise.
 
@@ -79,8 +79,8 @@ composition root does, then dispatches against them:
 ```swift
 @Test("the index route answers with the configured application name")
 func index() async throws {
-    let graph = try FlightGraph(configuration: Configuration(values: ["app.name": "TestApp"]))
-    let client = try TestClient(routes: flightRoutes(graph))
+    let graph = try AlulaGraph(configuration: Configuration(values: ["app.name": "TestApp"]))
+    let client = try TestClient(routes: alulaRoutes(graph))
     let response = await client.get("/")
     #expect(response.bodyText == "TestApp is flying")
 }

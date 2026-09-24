@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.outline.title} — Flight School</title>
+	<title>{data.outline.title} — Fledge</title>
 </svelte:head>
 
 {#if data.doc}
@@ -20,7 +20,7 @@
 		<p class="note">
 			This guide is planned but not written yet. It's tracked in the site's content manifest
 			(<code>src/lib/guides.ts</code>) — see
-			<a href="https://github.com/Flight-Framework/flight-school">the repo</a> if you'd like to write it.
+			<a href="https://github.com/Alula-Framework/fledge">the repo</a> if you'd like to write it.
 		</p>
 	</div>
 {/if}

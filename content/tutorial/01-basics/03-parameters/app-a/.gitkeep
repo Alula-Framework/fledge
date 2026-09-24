@@ -1,5 +1,5 @@
 # app-a is the learner's starting state for this exercise, as a diff
-# against the named `flight new` template (PLAN §6). Empty here: the task
+# against the named `alula new` template (PLAN §6). Empty here: the task
 # is creating the file that app-b holds.
 #
 # Nothing serves these to a browser — the app tier was dropped (see

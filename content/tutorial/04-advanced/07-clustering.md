@@ -58,10 +58,10 @@ testing can never exercise.
 
 ```swift
 // Single node — the default:
-modules: [FlightPubSubModule.self, AppModule.self]
+modules: [AlulaPubSubModule.self, AppModule.self]
 
 // Clustered — one module added, nothing else in the app changes:
-modules: [FlightPubSubValkeyModule.self, AppModule.self]
+modules: [AlulaPubSubValkeyModule.self, AppModule.self]
 ```
 
 ```yaml
@@ -70,7 +70,7 @@ pubsub:
     url: valkey://localhost:6379
 ```
 
-`FlightPubSubModule`'s factory composes *by presence*: it runs once, at
+`AlulaPubSubModule`'s factory composes *by presence*: it runs once, at
 `freeze()`, checks whether some other module registered a
 `DistributedPubSubAdapter`, and hands the application `ClusteredPubSub`
 if one exists or the bare local core otherwise. Every earlier exercise's

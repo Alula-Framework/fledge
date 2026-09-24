@@ -1,6 +1,6 @@
-import FlightChannels
-import FlightCore
-import FlightWeb
+import AlulaChannels
+import AlulaCore
+import AlulaWeb
 import Foundation
 
 struct CreateIssueRequest: Decodable {
@@ -15,8 +15,8 @@ struct IssueResponse: Codable, ResponseEncodable {
 
 @Controller
 struct IssueCreationController {
-    // flight:hand-registered — the broadcaster is provided by
-    // FlightChannelsModule as a value, injected the ordinary way rather than
+    // alula:hand-registered — the broadcaster is provided by
+    // AlulaChannelsModule as a value, injected the ordinary way rather than
     // pulled from the context when the handler runs.
     @Inject var broadcaster: ChannelBroadcaster
 

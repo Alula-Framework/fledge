@@ -1,8 +1,8 @@
-import FlightChannels
-import FlightCore
-import FlightPubSub
-import FlightTransport
-import FlightWeb
+import AlulaChannels
+import AlulaCore
+import AlulaPubSub
+import AlulaTransport
+import AlulaWeb
 import Foundation
 import PostgresNIO
 import ServiceLifecycle
@@ -16,7 +16,7 @@ import ServiceLifecycle
 /// never the template: `CREATE`/`DROP DATABASE` cannot run against a database
 /// something is connected to, and this admin client must never be the thing
 /// holding that lock.
-struct PostgresModule: FlightModule {
+struct PostgresModule: AlulaModule {
     /// The maintenance-database admin surface. Provided to `AppModule` and the
     /// reaper by type; the composition root wires it.
     let postgresAdmin: PostgresAdmin
@@ -38,7 +38,7 @@ struct PostgresModule: FlightModule {
     }
 
     /// Keeps `PostgresClient`'s connection-pool loop alive — the outbound-admin
-    /// analogue of `FlightTransport`'s inbound HTTP service. A value now, built
+    /// analogue of `AlulaTransport`'s inbound HTTP service. A value now, built
     /// from the client this module already holds, rather than a stashed
     /// container resolved at `run()`.
     var service: (any Service)? { PostgresClientService(client: postgresClient) }
@@ -55,12 +55,12 @@ struct PostgresClientService: Service, Sendable {
 /// channel — everything the sessions module needs that depends on neither the
 /// channel broadcaster nor the component graph, so it composes before Channels
 /// and hands its values to `AppModule`.
-struct SessionModule: FlightModule {
+struct SessionModule: AlulaModule {
     /// The lease broker and runner client, provided to `AppModule` by type.
     let broker: SessionBroker
     let client: RunnerClient
     /// The `session:*` channel, collected by the composition root and handed to
-    /// `FlightChannelsModule`. `SessionChannel` needs only the broker to gate
+    /// `AlulaChannelsModule`. `SessionChannel` needs only the broker to gate
     /// joins — the broadcaster arrives per-join — so declaring channels here
     /// creates no dependency on Channels, and therefore no cycle.
     let channels: [ChannelRegistration]
@@ -84,16 +84,16 @@ struct SessionModule: FlightModule {
 }
 
 /// The HTTP-facing half of the sessions module: builds `SessionService` from
-/// the broker/client (`SessionModule`), the broadcaster (`FlightChannelsModule`)
+/// the broker/client (`SessionModule`), the broadcaster (`AlulaChannelsModule`)
 /// and the Postgres admin (`PostgresModule`), all matched by type by the
 /// composition root, and owns the idle-TTL reaper as its service.
 ///
 /// It takes those values and provides `sessionService`; it does not take the
 /// component graph and does not declare channels, so nothing depends on it and
 /// the module graph stays acyclic.
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] {
-        [FlightChannelsModule.self, SessionModule.self, PostgresModule.self]
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] {
+        [AlulaChannelsModule.self, SessionModule.self, PostgresModule.self]
     }
 
     /// Provided to `SessionController` (matched by type). It composes an actor
@@ -136,25 +136,25 @@ private struct PostgresSettings {
         username = try configuration.getIfPresent("postgres.username", as: String.self) ?? "postgres"
         password = try configuration.getIfPresent("postgres.password", as: String.self)
         templateDatabase =
-            try configuration.getIfPresent("postgres.templateDatabase", as: String.self) ?? "flight_school_seed"
+            try configuration.getIfPresent("postgres.templateDatabase", as: String.self) ?? "fledge_seed"
     }
 }
 
 @main
 struct Main {
     static func main() async {
-        // `Flight.run` composes the module DAG, builds every component once, and
+        // `Alula.run` composes the module DAG, builds every component once, and
         // starts the ServiceGroup — request serving begins only after the whole
-        // graph is built. `composedBy: flightComposeModules` is the generated
+        // graph is built. `composedBy: alulaComposeModules` is the generated
         // composition root; `modules:` names which subsystems to include.
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 PostgresModule.self,
                 SessionModule.self,
                 AppModule.self,
             ],
-            composedBy: flightComposeModules)
+            composedBy: alulaComposeModules)
     }
 }

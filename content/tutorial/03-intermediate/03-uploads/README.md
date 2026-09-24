@@ -44,7 +44,7 @@ for a filesystem.
 
 Multipart assumes the request completes. For anything large enough that a
 dropped connection partway through would be expensive to just retry from
-byte zero, Flight ships resumable uploads over
+byte zero, Alula ships resumable uploads over
 [tus](https://tus.io) 1.0 — chosen deliberately over the newer IETF draft,
 which as of this writing no shipped client speaks past an early interop
 version, while tus 1.0 is what every upload library actually in use
@@ -94,7 +94,7 @@ this by fixing the order of two operations: bytes are written and
 recorded, and reopening an upload truncates away anything on disk past the
 recorded offset. Reverse that ordering and a crash could record an offset
 covering bytes that never actually reached the disk — a resuming client
-would then stitch new data onto a hole. Flight goes one step further than
+would then stitch new data onto a hole. Alula goes one step further than
 documenting the ordering: the internal type that's allowed to advance a
 recorded offset can only be constructed by actually performing the
 `fsync` first, which makes "record bytes that were never made durable"

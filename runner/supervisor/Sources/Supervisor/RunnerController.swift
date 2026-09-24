@@ -1,5 +1,5 @@
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 import Foundation
 import HTTPTypes
 
@@ -27,7 +27,7 @@ struct WriteRequest: Decodable {
 /// previous session, or a guess, is rejected, never just "present."
 @Controller
 struct RunnerController {
-    // flight:hand-registered — provided by AppModule (matched by type),
+    // alula:hand-registered — provided by AppModule (matched by type),
     // since it's a plain actor, never scanned as a @Component.
     @Inject var state: WorkspaceState
     @ConfigValue("workspace.live", default: "/workspace") var liveWorkspacePath: String

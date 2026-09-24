@@ -1,7 +1,7 @@
-import FlightActuator
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaActuator
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 import Foundation
 import Logging
 import ServiceLifecycle
@@ -29,8 +29,8 @@ struct HeartbeatService: Service {
 /// A module that *owns* a service. `service` is the one place a module hands a
 /// long-running component to the app-wide lifecycle. Everything else about the
 /// module is unchanged — it is still a value built by the composition root.
-struct HeartbeatModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct HeartbeatModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let heartbeat: HeartbeatService
 
@@ -50,14 +50,14 @@ struct HeartbeatModule: FlightModule {
 @main
 struct Main {
     static func main() async {
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 HeartbeatModule.self,
                 ActuatorModule.self,
             ],
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }

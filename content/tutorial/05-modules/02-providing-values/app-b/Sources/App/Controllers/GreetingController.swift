@@ -1,9 +1,9 @@
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 
 @Controller
 struct GreetingController {
-    // flight:hand-registered — Greeter is built and provided by GreetingModule,
+    // alula:hand-registered — Greeter is built and provided by GreetingModule,
     // not scanned, so the marker tells the build that is deliberate.
     @Inject var greeter: Greeter
 

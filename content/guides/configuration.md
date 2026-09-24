@@ -1,20 +1,20 @@
 ---
 title: Configuration
-description: flight.yaml, environment variables, and @ConfigValue/@Settings.
+description: alula.yaml, environment variables, and @ConfigValue/@Settings.
 order: 3
-category: Flight
+category: Alula
 ---
 
-Every Flight app resolves configuration once, at bootstrap, into an
+Every Alula app resolves configuration once, at bootstrap, into an
 immutable value — frozen before the container is even built, so nothing
 downstream can read a value that changes mid-run. It's built from three
 layers:
 
-1. **`flight.yaml`** — defaults shared by every environment.
-2. **`flight-{env}.yaml`** — an overlay for one environment, selected by
-   `FLIGHT_ENV` (`dev` if unset; `test`, `staging`, `prod` are built in, and
+1. **`alula.yaml`** — defaults shared by every environment.
+2. **`alula-{env}.yaml`** — an overlay for one environment, selected by
+   `ALULA_ENV` (`dev` if unset; `test`, `staging`, `prod` are built in, and
    an app can define more).
-3. **`FLIGHT_*` environment variables** — always win over both files.
+3. **`ALULA_*` environment variables** — always win over both files.
 
 ## One value: `@ConfigValue`
 
@@ -23,7 +23,7 @@ layers:
 ```
 
 No default means required: the build plugin checks this key against
-`flight.yaml`'s base layer at *compile* time, so a missing or misspelled
+`alula.yaml`'s base layer at *compile* time, so a missing or misspelled
 key is a build error naming the site, not a bootstrap-time surprise. A key
 that's genuinely optional gets a default instead:
 
@@ -66,12 +66,12 @@ like `@ConfigValue`'s no-default form.
 ## The environment-variable name a key actually reads
 
 The transform is fixed and one-way: uppercase, `.` → `_`, prefixed
-`FLIGHT_`. `app.name` reads `FLIGHT_APP_NAME`. Only dots are rewritten,
+`ALULA_`. `app.name` reads `ALULA_APP_NAME`. Only dots are rewritten,
 so a `@Settings`-derived key with more than one word in its property name
 carries its dash straight into the variable name —
-`posts.max-page-size` reads `FLIGHT_POSTS_MAX-PAGE-SIZE`, which most shells
+`posts.max-page-size` reads `ALULA_POSTS_MAX-PAGE-SIZE`, which most shells
 can't `export`. For a key shaped like that, reach for the
-`flight-{env}.yaml` overlay instead.
+`alula-{env}.yaml` overlay instead.
 
 ## Where to go next
 

@@ -3,15 +3,15 @@
 </script>
 
 <svelte:head>
-	<title>Flight School</title>
+	<title>Fledge</title>
 </svelte:head>
 
 <section class="hero">
-	<h1>Learn Flight by building with it.</h1>
+	<h1>Learn Alula by building with it.</h1>
 	<p class="lead">
-		An interactive tutorial and reference for <a href="https://github.com/Flight-Framework/flight"
-			>Flight</a
-		>, <a href="https://github.com/Flight-Framework/hangar">Hangar</a>, and Changeset — from your
+		An interactive tutorial and reference for <a href="https://github.com/Alula-Framework/alula"
+			>Alula</a
+		>, <a href="https://github.com/Alula-Framework/hangar">Hangar</a>, and Changeset — from your
 		first route to a working realtime app, and a plain-documentation track written at the level
 		of detail Phoenix and Ecto readers expect.
 	</p>

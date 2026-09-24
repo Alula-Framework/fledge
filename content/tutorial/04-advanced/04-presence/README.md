@@ -42,13 +42,13 @@ try to set it yourself.
 ## State, then diffs — never the reverse
 
 ```
-flight:presence_state   {"alice": {"metas": [{"ref": "w1", "status": "online"}]}}
-flight:presence_diff    {"joins": {"bob": {...}}, "leaves": {}}
+alula:presence_state   {"alice": {"metas": [{"ref": "w1", "status": "online"}]}}
+alula:presence_diff    {"joins": {"bob": {...}}, "leaves": {}}
 ```
 
 A newly joined socket gets the *whole* current list once, as
-`flight:presence_state` — then every subsequent change arrives as a
-`flight:presence_diff`, never the full list again. The ordering is
+`alula:presence_state` — then every subsequent change arrives as a
+`alula:presence_diff`, never the full list again. The ordering is
 enforced, not just documented: `sendState` only fires once the join is
 fully admitted (reply enqueued, subscription live), so a diff published in
 the gap between "admitted" and "state sent" can never be missed — the

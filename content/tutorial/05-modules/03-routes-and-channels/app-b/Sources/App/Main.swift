@@ -1,7 +1,7 @@
-import FlightActuator
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaActuator
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 import Foundation
 import HTTPTypes
 
@@ -19,8 +19,8 @@ struct StampMiddleware: Middleware {
 /// A module that contributes to the web layer with *values*, not annotations:
 /// a couple of routes and a middleware lane. Nothing here is scanned — the
 /// composition root gathers these arrays from every module and folds them in.
-struct PingModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct PingModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let routes: [RouteRegistration]
     let middleware: [MiddlewareRegistration]
@@ -45,14 +45,14 @@ struct PingModule: FlightModule {
 @main
 struct Main {
     static func main() async {
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 PingModule.self,
                 ActuatorModule.self,
             ],
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }

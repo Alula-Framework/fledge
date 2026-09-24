@@ -1,4 +1,4 @@
-# Set FLIGHT_SCHOOL_DOMAIN to a bare domain (e.g. flight-school.dev) once
+# Set FLEDGE_DOMAIN to a bare domain (e.g. fledge.dev) once
 # there's a real one to deploy to — Caddy's automatic HTTPS (a real Let's
 # Encrypt cert, zero other config) takes over for any address that isn't
 # explicitly http://. The default below includes the scheme specifically
@@ -7,7 +7,7 @@
 # self-signed cert, and 308-redirects all of :80 to :443 — which just
 # breaks a plain `curl http://localhost` with no explanation. Verified
 # against a real `docker compose up` run, not assumed.
-{$FLIGHT_SCHOOL_DOMAIN:http://localhost} {
+{$FLEDGE_DOMAIN:http://localhost} {
 	# /api/* and /socket → the sessions/execution backend (PLAN §4). Must
 	# come before the catch-all `reverse_proxy site:3000` below — Caddy
 	# matches in file order, and the catch-all has no path condition, so a

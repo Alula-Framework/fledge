@@ -2,27 +2,27 @@
 title: Routing and Controllers
 description: "@Controller, path parameters, and how the registration plugin finds your routes."
 order: 1
-category: Flight
+category: Alula
 ---
 
 A route is a method, marked, on a type, marked:
 
 ```swift
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 
 @Controller
 struct GreetingController {
     @GetRoute("/hello")
     func hello(_ context: RequestContext) -> String {
-        "hello, flight"
+        "hello, alula"
     }
 }
 ```
 
 That's the whole registration. No route table to find and edit, no call
 that lists this path anywhere else — `@Controller` marks the type,
-`@GetRoute` marks the method, and `FlightRegistrationPlugin` (a build
+`@GetRoute` marks the method, and `AlulaRegistrationPlugin` (a build
 plugin, not a runtime scan) finds both at compile time and generates the
 wiring. Adding a route means writing a method; it never means finding
 where routes are registered.
@@ -38,7 +38,7 @@ struct Greeting: Codable { let message: String }
 
 @GetRoute("/hello-json")
 func helloJSON(_ context: RequestContext) -> Greeting {
-    Greeting(message: "hello, flight")
+    Greeting(message: "hello, alula")
 }
 ```
 
@@ -62,10 +62,10 @@ func show(_ context: RequestContext) async throws -> Post {
 ```
 
 `:id` in the pattern names a path segment; `context.pathParam("id")` reads
-it back as a plain `String?` — Flight never guesses whether `:id` means a
+it back as a plain `String?` — Alula never guesses whether `:id` means a
 `UUID`, an `Int`, or a slug, so converting it is always your own explicit
 call. The shape above — extract as `String?`, convert, `guard`-else-throw —
-is the one you'll write for every typed path parameter in every Flight app.
+is the one you'll write for every typed path parameter in every Alula app.
 
 Query parameters read the same way, from the request rather than the
 route's match:

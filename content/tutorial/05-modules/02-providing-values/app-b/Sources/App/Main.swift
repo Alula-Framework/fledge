@@ -1,7 +1,7 @@
-import FlightActuator
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaActuator
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 import Foundation
 
 // A module you already know how to write: it provides one value, a Clock.
@@ -9,8 +9,8 @@ struct Clock: Sendable {
     let now: @Sendable () -> Date
 }
 
-struct ClockModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct ClockModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
     let clock: Clock = Clock(now: { Date() })
 }
 
@@ -29,10 +29,10 @@ struct Greeter: Sendable {
     }
 }
 
-struct GreetingModule: FlightModule {
+struct GreetingModule: AlulaModule {
     // Naming ClockModule here pulls it into the application whether or not the
     // bootstrap list mentions it — depending on a module includes its stack.
-    static var dependencies: [any FlightModule.Type] { [ClockModule.self] }
+    static var dependencies: [any AlulaModule.Type] { [ClockModule.self] }
 
     let greeter: Greeter
 
@@ -40,7 +40,7 @@ struct GreetingModule: FlightModule {
     // parameter to something it can supply, by type: `configuration` is the
     // loaded Configuration, and `clock` is the value ClockModule provides.
     init(configuration: Configuration, clock: Clock) {
-        let name = configuration.get("app.name", default: "Flight")
+        let name = configuration.get("app.name", default: "Alula")
         self.greeter = Greeter(clock: clock, name: name)
     }
 }
@@ -48,16 +48,16 @@ struct GreetingModule: FlightModule {
 @main
 struct Main {
     static func main() async {
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             // ClockModule is absent here on purpose: GreetingModule depends on
             // it, so it comes along.
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 GreetingModule.self,
                 ActuatorModule.self,
             ],
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }

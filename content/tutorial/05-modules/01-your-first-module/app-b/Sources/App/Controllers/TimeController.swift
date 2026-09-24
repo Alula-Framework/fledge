@@ -1,10 +1,10 @@
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 import Foundation
 
 @Controller
 struct TimeController {
-    // flight:hand-registered — Clock is provided by AppModule, not scanned
+    // alula:hand-registered — Clock is provided by AppModule, not scanned
     // from an annotation, so the marker tells the build not to warn.
     @Inject var clock: Clock
 

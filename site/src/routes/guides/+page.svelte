@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Guides — Flight School</title>
+	<title>Guides — Fledge</title>
 </svelte:head>
 
 <h1>Guides</h1>

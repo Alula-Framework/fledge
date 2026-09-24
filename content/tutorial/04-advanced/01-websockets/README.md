@@ -50,14 +50,14 @@ project — and it's been measured, not guessed at.
 ## What building it by hand actually costs
 
 A benchmark project built the same realtime issue board twice: once on
-Flight's `Channel` protocol (the next exercise), once hand-rolled directly
+Alula's `Channel` protocol (the next exercise), once hand-rolled directly
 on `WebSocketUpgradeHandler`, against Hummingbird. Both versions ship the
 identical feature — join a project's board, post an issue, see it appear
 live for everyone else watching. The measured line counts:
 
 | | infrastructure | feature | total |
 |---|---|---|---|
-| Flight | 0 | 80 | 129 (incl. wiring) |
+| Alula | 0 | 80 | 129 (incl. wiring) |
 | hand-rolled | 315 | 73 | 449 |
 
 "Infrastructure" is the envelope codec, the topic router, join/leave
@@ -66,15 +66,15 @@ fan-out subscriber registry — everything a real app needs *before* it can
 write a single feature line. "Feature" is the board itself: authorizing a
 join, handling an update, shaping the payload. The feature layers are
 within seven lines of each other — 80 against 73 — which is the actual
-claim this measurement supports: **Flight doesn't make application logic
+claim this measurement supports: **Alula doesn't make application logic
 shorter. It removes the layer underneath it.** The 315 hand-rolled lines
 went into three files — a session handler, a wire-protocol codec, and a
 topic/subscriber registry — each one a concurrency-sensitive piece of
 infrastructure a hand-rolled app has to get right on its own, that a
-Flight app never writes at all.
+Alula app never writes at all.
 
 One honesty caveat worth keeping, since it's exactly the kind of thing
 this tutorial tries not to skip: the hand-rolled version was written with
-Flight's own implementation available as a design reference, which
+Alula's own implementation available as a design reference, which
 materially favors its line count and its correctness — a team building
 this cold, with no reference, should expect to spend more, not less.

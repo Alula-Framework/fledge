@@ -1,20 +1,20 @@
 ---
 title: Packaging a module for reuse
-description: Shipping a module in its own package, the way FlightSecurityModule and friends do.
+description: Shipping a module in its own package, the way AlulaSecurityModule and friends do.
 order: 5
 ---
 
 Everything you've built so far has lived in the application. But a module is
 just a value with a small public surface, and nothing ties it to the app it
 started in. Move it into its own package and it becomes installable — the
-exact shape `FlightWebModule`, `FlightSecurityModule`, and every other
+exact shape `AlulaWebModule`, `AlulaSecurityModule`, and every other
 framework module already ship in. There is no separate "library module"
 concept; the framework's modules and yours are the same kind of thing, resolved
 the same way.
 
 ## The library package
 
-A reusable module is an ordinary Swift library that depends on `flight`:
+A reusable module is an ordinary Swift library that depends on `alula`:
 
 ```swift
 // GreetKit/Package.swift
@@ -23,13 +23,13 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [.library(name: "GreetKit", targets: ["GreetKit"])],
     dependencies: [
-        .package(url: "https://github.com/Flight-Framework/flight.git",
-                 from: "0.21.2", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git",
+                 from: "0.36.0", traits: ["Web"])
     ],
     targets: [
         .target(name: "GreetKit", dependencies: [
-            .product(name: "FlightCore", package: "flight"),
-            .product(name: "FlightWeb", package: "flight"),
+            .product(name: "AlulaCore", package: "alula"),
+            .product(name: "AlulaWeb", package: "alula"),
         ])
     ]
 )
@@ -38,7 +38,7 @@ let package = Package(
 Two things are notably *absent*, and both follow from one fact — a library
 starts nothing:
 
-- **No `FlightRegistrationPlugin`.** The plugin generates a composition root
+- **No `AlulaRegistrationPlugin`.** The plugin generates a composition root
   from a bootstrap list, and a library has none. The *application* that
   installs GreetKit runs the plugin, and its scan reaches across into GreetKit's
   source to find your module. A library that ran the plugin would just generate
@@ -51,13 +51,13 @@ everything the composition root touches must be `public`.
 
 ```swift
 // GreetKit/Sources/GreetKit/GreetingModule.swift
-public struct GreetingModule: FlightModule {
-    public static var dependencies: [any FlightModule.Type] { [] }
+public struct GreetingModule: AlulaModule {
+    public static var dependencies: [any AlulaModule.Type] { [] }
 
     public let routes: [RouteRegistration]
 
     public init(configuration: Configuration) {
-        let name = configuration.get("app.name", default: "Flight")
+        let name = configuration.get("app.name", default: "Alula")
         self.routes = [
             RouteRegistration(method: .get, path: "/greeting") { context in
                 try "Hello from \(name)".response(for: context)
@@ -84,7 +84,7 @@ An application adds the package and names the module. Nothing else:
 ```swift
 // the app's Package.swift
 dependencies: [
-    .package(url: "https://github.com/Flight-Framework/flight.git", from: "0.21.2", traits: ["Web"]),
+    .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.36.0", traits: ["Web"]),
     .package(url: "https://github.com/you/GreetKit.git", from: "1.0.0"),
 ],
 // ...and on the App target:
@@ -96,7 +96,7 @@ dependencies: [
 import GreetKit
 
 modules: [
-    FlightWebModule<FlightTransport>.self,
+    AlulaWebModule<AlulaTransport>.self,
     GreetingModule.self,   // the installed module, listed by name
     AppModule.self,
     ActuatorModule.self,
@@ -108,7 +108,7 @@ builds `GreetingModule`, sees it needs `configuration`, supplies it, and folds
 the routes it brings into the web layer. If the module had declared
 `dependencies`, those would come along too, exactly as in the earlier
 exercises. From the outside, your module is indistinguishable from a framework
-one: `FlightSecurityModule` is a `public struct FlightModule` in a package,
+one: `AlulaSecurityModule` is a `public struct AlulaModule` in a package,
 providing `public let middleware`, installed by listing it. You've been using
 modules packaged this way since Part 1 — now you can ship your own.
 

@@ -41,15 +41,15 @@ There's no separate middleware step for "should this socket be allowed
 into this topic" — `join` is that check, every time, per topic:
 `.ok`, `.ok(initialState:)`, or `.reject(.unauthenticated)` /
 `.reject(.forbidden)` / `.reject(JoinRejection("..."))`. A rejection
-answers `flight:error` correlated to the join's own `ref`. Membership is
+answers `alula:error` correlated to the join's own `ref`. Membership is
 established *before* the reply is sent, which is what makes a broadcast
 racing the join structurally unable to slip through the gap between
 "admitted" and "actually receiving."
 
 ## `handle` answers three ways
 
-`.reply(payload)` (answers `flight:reply`, echoing the inbound `ref`),
-`.error(reason:)` (`flight:error`, same correlation), or `.none` — sends
+`.reply(payload)` (answers `alula:reply`, echoing the inbound `ref`),
+`.error(reason:)` (`alula:error`, same correlation), or `.none` — sends
 nothing, so a `ref`-carrying message's own await on that ref times out on
 the client's side. Whether an event replies is part of the channel's
 contract with its client, not something the transport papers over with a

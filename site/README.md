@@ -1,6 +1,6 @@
 # site
 
-The Flight School frontend — SvelteKit 5, `adapter-node`. See the
+The Fledge frontend — SvelteKit 5, `adapter-node`. See the
 [repo root README](../README.md) for the full picture; this is
 site-specific development notes only.
 

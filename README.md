@@ -1,8 +1,8 @@
-# Flight School
+# Fledge
 
 An interactive tutorial and documentation site for
-[Flight](https://github.com/Flight-Framework/flight),
-[Hangar](https://github.com/Flight-Framework/hangar), and Changeset — in the
+[Alula](https://github.com/Alula-Framework/alula),
+[Hangar](https://github.com/Alula-Framework/hangar), and Changeset — in the
 mold of [Svelte's tutorial](https://svelte.dev/tutorial), with a parallel
 plain-documentation track written at the level of detail Phoenix and Ecto
 readers expect.
@@ -18,7 +18,7 @@ content/    Markdown: tutorial exercises and plain-doc guides
 scripts/    Content integrity checks, the DocC → Pages index generator
 ```
 
-`server/` (a Flight backend for the interactive execution tiers) and
+`server/` (an Alula backend for the interactive execution tiers) and
 `runner/` (the sandboxed code-execution pool) are both real — see
 `STATUS.md` for what's actually been verified end to end and what's still
 open.
@@ -65,16 +65,16 @@ compile, real output. That tier is one file and a ~2s rebuild, and
 `debugSQL` printing the SQL beside the Swift that produced it is the whole
 reason it exists.
 
-Everything else is prose plus code you run locally with `flight new`. An
-`app` tier that ran whole Flight applications in the browser was built and
+Everything else is prose plus code you run locally with `alula new`. An
+`app` tier that ran whole Alula applications in the browser was built and
 then removed — it worked, but it needed a permanently warm pool of large
 containers and ~25-minute cold starts to show a learner something
-`flight new` shows them in two minutes. STATUS.md has the full reasoning.
+`alula new` shows them in two minutes. STATUS.md has the full reasoning.
 
 ### Reach it on port 80, not the site's own port
 
 `/api/*` and `/socket` are not SvelteKit routes — they belong to the
-Flight backend in `server/`, and Caddy is what puts the two behind a
+Alula backend in `server/`, and Caddy is what puts the two behind a
 single origin. Open `http://localhost/`. Hitting the site container's own
 port instead gets you perfectly working *pages* and a failure on every API
 call, which reads as a broken endpoint rather than a wrong port; those
@@ -99,12 +99,12 @@ hand-testing trap rather than something clients hit.
 the ones that can be run:
 
 ```bash
-# needs a sibling flight-cli checkout for the app-tier templates
+# needs a sibling alula-cli checkout for the app-tier templates
 python3 scripts/check-exercises.py
 
 # with a seeded database, the db-tier snippets run rather than just build
 python3 scripts/check-exercises.py \
-  --database-url postgres://postgres:pw@127.0.0.1:5432/flight_school_seed
+  --database-url postgres://postgres:pw@127.0.0.1:5432/fledge_seed
 ```
 
 Running matters more than building, and that isn't a stylistic preference:

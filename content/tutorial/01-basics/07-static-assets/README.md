@@ -8,8 +8,8 @@ A built frontend (an SPA's `dist/`, a prerendered site) mounts as a fallback,
 not a route:
 
 ```swift
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane("assets", [])
 

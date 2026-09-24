@@ -29,5 +29,5 @@ postgres:
   host: postgres
   port: 5432
   username: postgres
-  password: flight_school_dev
-  templateDatabase: flight_school_seed
+  password: fledge_dev
+  templateDatabase: fledge_seed

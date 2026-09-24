@@ -36,11 +36,11 @@ FIN the transport sees quickly; a genuinely half-open connection (nothing
 at the network layer ever fires) is caught by nothing here at all — which
 is exactly why the fourth path exists.
 
-**Explicit leave** — `flight:leave` on one topic, socket otherwise
+**Explicit leave** — `alula:leave` on one topic, socket otherwise
 unaffected:
 
 ```json
-{"ref": "1", "topic": "room:1", "event": "flight:leave", "payload": {}}
+{"ref": "1", "topic": "room:1", "event": "alula:leave", "payload": {}}
 ```
 
 Only that topic's membership ends; other topics the same socket joined
@@ -63,16 +63,16 @@ while !Task.isCancelled {
 ```
 
 *Any* inbound frame counts as liveness, not only an explicit
-`flight:heartbeat` — a socket that's actively sending real messages never
+`alula:heartbeat` — a socket that's actively sending real messages never
 needs to heartbeat at all to stay alive. Worst-case detection latency is
 the timeout plus one check interval, so a socket can go unnoticed for up
 to 75 seconds under the defaults before this path closes it.
 
-## A fifth name worth knowing: `flight:close`
+## A fifth name worth knowing: `alula:close`
 
-The wire protocol also has `flight:close` — a message, sent while the
+The wire protocol also has `alula:close` — a message, sent while the
 socket is still open, that means "end this whole connection gracefully,"
-distinct from both a bare peer-sent close frame and from `flight:leave`'s
+distinct from both a bare peer-sent close frame and from `alula:leave`'s
 single-topic scope. It exists because a server can't always rely on the
 transport noticing a connection is done: a half-open socket never
 acknowledges an ordinary close handshake, which is the same category of

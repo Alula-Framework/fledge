@@ -2,10 +2,10 @@
 title: Deployment
 description: systemd, Docker, stripping your release binary, and a reverse proxy.
 order: 5
-category: Flight
+category: Alula
 ---
 
-A Flight app is a single statically-linkable executable once built for
+An Alula app is a single statically-linkable executable once built for
 release — nothing about deploying it is specific to this framework except
 one thing worth knowing before the rest: bootstrap already listens for
 the signals a process manager sends.
@@ -15,7 +15,7 @@ gracefulShutdownSignals: [.sigterm, .sigint]
 ```
 
 `SIGTERM` is exactly what `systemctl stop` and `docker stop` send by
-default, so a Flight app under either one drains in-flight requests and
+default, so an Alula app under either one drains in-flight requests and
 stops cleanly with no extra configuration.
 
 ## Building a release binary
@@ -50,14 +50,14 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/app
 Restart=on-failure
-Environment=FLIGHT_ENV=prod
+Environment=ALULA_ENV=prod
 User=app
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-`systemctl stop app` sends exactly the `SIGTERM` Flight's bootstrap is
+`systemctl stop app` sends exactly the `SIGTERM` Alula's bootstrap is
 already listening for — nothing in this unit file does anything special
 for graceful shutdown; that part is earned by the framework itself.
 
@@ -79,8 +79,8 @@ placeholder swapped in.
 
 ## Where to go next
 
-- [Configuration](/guides/configuration) — `flight.yaml`,
-  `flight-{env}.yaml`, and the `FLIGHT_ENV` this systemd unit sets.
+- [Configuration](/guides/configuration) — `alula.yaml`,
+  `alula-{env}.yaml`, and the `ALULA_ENV` this systemd unit sets.
 - [The actuator](/tutorial/03-intermediate/06-actuator) — the health
   endpoint a load balancer or orchestrator should actually probe.
 

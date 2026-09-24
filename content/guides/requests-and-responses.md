@@ -2,7 +2,7 @@
 title: "Requests & Responses"
 description: Content negotiation, status codes, and shaping errors on purpose.
 order: 2
-category: Flight
+category: Alula
 ---
 
 Returning a plain `String` or `Codable` value covers the common case; a

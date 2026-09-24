@@ -1,11 +1,11 @@
-import FlightCore
-import FlightPubSub
-import FlightWeb
+import AlulaCore
+import AlulaPubSub
+import AlulaWeb
 import Foundation
 
 @Controller
 struct ActivityController {
-    // flight:hand-registered — the bus is provided by FlightPubSubModule as a
+    // alula:hand-registered — the bus is provided by AlulaPubSubModule as a
     // value, not scanned as a @Component.
     @Inject var pubsub: any PubSub
 

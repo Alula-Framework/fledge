@@ -20,8 +20,8 @@ build them directly, which is what you reach for when the routes are computed
 rather than from your own annotated controllers:
 
 ```swift
-struct PingModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct PingModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let routes: [RouteRegistration]
 
@@ -79,9 +79,9 @@ Read the generated composition root and the aggregation is right there:
 
 ```swift
 let pingModule = PingModule(configuration: configuration)
-let flightWebModule = try FlightWebModule<FlightTransport>(
+let alulaWebModule = try AlulaWebModule<AlulaTransport>(
     configuration: configuration,
-    routes: flightRoutes(flightGraph) + pingModule.routes + actuatorModule.routes,
+    routes: alulaRoutes(alulaGraph) + pingModule.routes + actuatorModule.routes,
     middleware: pingModule.middleware)
 ```
 
@@ -90,7 +90,7 @@ The root finds every module that exposes a `[RouteRegistration]`, a
 kind — matched by the array's *element* type, the same by-type rule that wires
 single values. Two details worth seeing:
 
-- **Your application's own routes come first.** `flightRoutes(flightGraph)` —
+- **Your application's own routes come first.** `alulaRoutes(alulaGraph)` —
   the routes generated from your `@Controller`s — precede the modules'
   contributions in the table, so an app route and a module route at the same
   path resolve the way you'd expect.
@@ -106,7 +106,7 @@ let channels: [ChannelRegistration]
 ```
 
 and the root gathers those from every module exactly as it gathers routes and
-middleware, handing the combined list to `FlightChannelsModule`. Realtime
+middleware, handing the combined list to `AlulaChannelsModule`. Realtime
 topics, HTTP routes, and middleware lanes are not three different extension
 mechanisms; they are one — a stored array the composition root aggregates by
 element type. That uniformity is the whole reason "add a subsystem" is the same

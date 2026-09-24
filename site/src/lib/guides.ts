@@ -1,5 +1,5 @@
 // The planned plain-documentation track, transcribed from
-// PLAN-flight-school.md §8. Same "coming soon vs. 404" role as
+// PLAN-fledge.md §8. Same "coming soon vs. 404" role as
 // curriculum.ts — see the comment there.
 
 export interface GuideOutline {
@@ -13,26 +13,26 @@ export const guides: GuideOutline[] = [
 	{
 		slug: 'up-and-running',
 		title: 'Up and Running',
-		description: 'From an empty directory to a running Flight app in one page.',
-		category: 'Flight'
+		description: 'From an empty directory to a running Alula app in one page.',
+		category: 'Alula'
 	},
 	{
 		slug: 'routing-and-controllers',
 		title: 'Routing and Controllers',
 		description: '@Controller, path parameters, and how the registration plugin finds your routes.',
-		category: 'Flight'
+		category: 'Alula'
 	},
 	{
 		slug: 'requests-and-responses',
 		title: 'Requests & Responses',
 		description: 'Content negotiation, status codes, and shaping errors on purpose.',
-		category: 'Flight'
+		category: 'Alula'
 	},
 	{
 		slug: 'configuration',
 		title: 'Configuration',
-		description: 'flight.yaml, environment variables, and @ConfigValue/@Settings.',
-		category: 'Flight'
+		description: 'alula.yaml, environment variables, and @ConfigValue/@Settings.',
+		category: 'Alula'
 	},
 	{
 		slug: 'hangar-getting-started',
@@ -67,8 +67,8 @@ export const guides: GuideOutline[] = [
 	{
 		slug: 'testing',
 		title: 'Testing',
-		description: 'FlightWebTesting, FlightChannelsTesting, and three sizes of test.',
-		category: 'Flight'
+		description: 'AlulaWebTesting, AlulaChannelsTesting, and three sizes of test.',
+		category: 'Alula'
 	},
 	{
 		slug: 'channels',
@@ -86,7 +86,7 @@ export const guides: GuideOutline[] = [
 		slug: 'deployment',
 		title: 'Deployment',
 		description: 'systemd, Docker, stripping your release binary, and a reverse proxy.',
-		category: 'Flight'
+		category: 'Alula'
 	}
 ];
 

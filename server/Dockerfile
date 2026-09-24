@@ -1,4 +1,4 @@
-# The server (PLAN §4): the sessions/execution Flight app that leases
+# The server (PLAN §4): the sessions/execution Alula app that leases
 # runners and streams their output over Channels. Unlike runner/Dockerfile,
 # this one never invokes `swift build` at runtime — it only ever makes
 # outbound HTTP calls to the runner pool — so, unlike the runner, the
@@ -15,7 +15,7 @@ RUN groupadd --gid 10002 server && \
     useradd --uid 10002 --gid server --create-home --shell /usr/sbin/nologin server
 
 COPY --from=build /build/.build/release/Server /app/server
-COPY flight.yaml /app/flight.yaml
+COPY alula.yaml /app/alula.yaml
 RUN chown -R server:server /app
 
 USER server

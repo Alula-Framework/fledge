@@ -1,15 +1,15 @@
-# Flight School — interactive tutorial + documentation site
+# Fledge — interactive tutorial + documentation site
 
-**Status: plan, not implementation.** Own repo under the Flight-Framework org.
-Proposed name: `flight-school` (alternatives: `flight-learn`, `learn-flight`).
+**Status: plan, not implementation.** Own repo under the Alula-Framework org.
+Proposed name: `fledge` (alternatives: `alula-learn`, `learn-alula`).
 The name matters less than reserving it before content links bake it in.
 
-The ask: a docs/tutorial site for Flight in the mold of Svelte's
+The ask: a docs/tutorial site for Alula in the mold of Svelte's
 learn.svelte.dev — interactive, embedded editor, step-by-step descriptions —
 covering setup → basics → intermediate → advanced, including Hangar and
 Changeset, *plus* a parallel plain-documentation track written at the
 expression/detail bar of the Phoenix and Ecto guides. Svelte 5 frontend,
-Flight backend, easy to deploy.
+Alula backend, easy to deploy.
 
 ---
 
@@ -17,9 +17,9 @@ Flight backend, easy to deploy.
 
 **Goals**
 
-1. A learner can go from "never seen Flight" to a working realtime app
+1. A learner can go from "never seen Alula" to a working realtime app
    entirely in the browser — no local toolchain — and at any point eject to
-   a local project that matches what they built (`flight new` emits it).
+   a local project that matches what they built (`alula new` emits it).
 2. Every interactive exercise has a narrative worth reading on its own: the
    site degrades to excellent static documentation when the execution
    backend is down, unfunded, or rate-limited.
@@ -28,9 +28,9 @@ Flight backend, easy to deploy.
    queries, preloading, changesets, Multi, transactions, bulk writes, soft
    delete, CTEs, diagnostics) maps almost one-to-one onto Ecto's guide
    topics.
-4. The site itself is the best Flight demo in existence: the backend is
-   Flight, build/run output streams over Flight Channels, the session
-   presence indicator is Flight Presence. Dogfooding is a feature, not a
+4. The site itself is the best Alula demo in existence: the backend is
+   Alula, build/run output streams over Alula Channels, the session
+   presence indicator is Alula Presence. Dogfooding is a feature, not a
    flourish.
 5. One-command deploy on one machine. Scale later, if ever.
 
@@ -69,20 +69,20 @@ we have measured numbers proving it works for Swift (§3).
 track: narrative guides that teach a concept end-to-end with runnable
 snippets and honest "why," separate from per-symbol API reference. Ecto's
 "Getting Started" and its changeset/preloading guides are the direct
-models for the Hangar track. Flight/Hangar already have DocC catalogs for
+models for the Hangar track. Alula/Hangar already have DocC catalogs for
 API reference; the site links to statically-hosted DocC rather than
 duplicating it (§8).
 
-**flight-cli** (`flight new MyService --tier skeleton|basics|demo`,
+**alula-cli** (`alula new MyService --tier skeleton|basics|demo`,
 `--with postgres,valkey,security`). Templates are embedded in the binary
 and CI-tested. **Decision: the CLI templates are the single source of
 truth for tutorial workspaces.** The tutorial's starting workspaces are
 generated from the same tiers, so "eject to local" is literally
-`flight new` plus the diffs the learner has made — and template drift
+`alula new` plus the diffs the learner has made — and template drift
 between CLI and tutorial becomes structurally impossible.
 
 **The audit this section deferred has now been done, and it changes the
-plan materially (see §7a).** `flight-cli/TUTORIAL.md` is not a stub — it
+plan materially (see §7a).** `alula-cli/TUTORIAL.md` is not a stub — it
 is a real, ~47KB, 8-stage-per-part tutorial (skeleton → persistence →
 realtime, including auth, caching, and scheduled jobs), and it is
 **CI-enforced today**, not aspirational: `CI/verify-tutorial.sh` greps
@@ -92,19 +92,19 @@ references and fails the build if either has drifted, specifically
 ecosystem drifted until seven of the nine files it told you to create no
 longer existed. Nothing caught that, because prose does not compile."
 That check, and the failure mode it responds to, is direct prior art for
-Flight School's own content-CI (§6) and should be adopted as a first,
+Fledge's own content-CI (§6) and should be adopted as a first,
 cheap gate ahead of the heavier build-and-run one already planned there.
 
-**A second repo surfaced in the same audit: `flight-data`** — persistence
+**A second repo surfaced in the same audit: `alula-data`** — persistence
 *and* caching, deliberately one package ("the abstractions and the
-drivers live together because they break together"): `FlightDataCore`/
-`FlightCacheCore` always resolve; `traits: ["Postgres"]` adds
-`FlightDataPostgres`, `FlightMigrate`, `FlightMigrateCLI` — **and pulls in
+drivers live together because they break together"): `AlulaDataCore`/
+`AlulaCacheCore` always resolve; `traits: ["Postgres"]` adds
+`AlulaDataPostgres`, `AlulaMigrate`, `AlulaMigrateCLI` — **and pulls in
 Hangar as a dependency of the Postgres driver itself.** Hangar is not a
-freestanding alternative sitting beside flight-data in the curriculum;
-flight-data's Postgres story is built on it. §7a corrects Part 2's framing
-accordingly. `traits: ["Valkey"]` adds `FlightCacheValkey`/
-`FlightDataValkey`. flight-data also ships its own `Docs/*.md` (one file
+freestanding alternative sitting beside alula-data in the curriculum;
+alula-data's Postgres story is built on it. §7a corrects Part 2's framing
+accordingly. `traits: ["Valkey"]` adds `AlulaCacheValkey`/
+`AlulaDataValkey`. alula-data also ships its own `Docs/*.md` (one file
 per driver — `cache.md`, `data-postgres.md`, `migrate.md`, …) and a
 `Snippets/` convention, both directly reusable for the plain-docs track.
 
@@ -120,9 +120,9 @@ assumed. Probes run on the dev machine (Linux, Swift 6.3.3, Swiftly):
 | `swift repl` headless on Linux | **works** (evaluated piped input; lldb ships in toolchain) | bare-REPL tier is real |
 | `swift run --repl` on a macro-bearing package (Hangar) | **broken** — duplicate modulemap between host `-tool` and target builds | package-REPL is not the v1 path |
 | Warm one-file rebuild in a prebuilt package (imports Hangar + PostgresNIO, `@Entity` macros expanding) | **1.81s measured** | snippet tier is comfortably interactive |
-| Flight app warm incremental rebuild | **7–8s** (measured repeatedly across the benchmark sessions) | app tier is Run-button, not keystroke |
-| Flight app debug clean build | ~73s | cold builds must never happen in a session |
-| Flight app release clean build | ~470s (22 SwiftSyntax modules) | runner images bake `.build` at image-build time, debug config only |
+| Alula app warm incremental rebuild | **7–8s** (measured repeatedly across the benchmark sessions) | app tier is Run-button, not keystroke |
+| Alula app debug clean build | ~73s | cold builds must never happen in a session |
+| Alula app release clean build | ~470s (22 SwiftSyntax modules) | runner images bake `.build` at image-build time, debug config only |
 
 **Decision: a tiered execution model, declared per exercise in metadata.**
 
@@ -136,12 +136,12 @@ assumed. Probes run on the dev machine (Linux, Swift 6.3.3, Swiftly):
   the interesting output — rendered SQL and binds — with no database at
   all, and Changeset validation is pure computation.
 - **`db`** — snippet + a session database. Postgres sidecar; each session
-  gets `CREATE DATABASE s_<id> TEMPLATE flight_school_seed` (~100ms),
+  gets `CREATE DATABASE s_<id> TEMPLATE fledge_seed` (~100ms),
   dropped on session end/TTL. This unlocks the second half of the Hangar
   curriculum: real inserts, preloading against real rows, transactions,
   `EXPLAIN`.
-- **`app`** — the learner's edits are files in a full Flight application
-  (a `flight new` tier); Run rebuilds (~7–8s) and restarts the app on the
+- **`app`** — the learner's edits are files in a full Alula application
+  (a `alula new` tier); Run rebuilds (~7–8s) and restarts the app on the
   runner's assigned port; an iframe previews it through the proxy (§4).
   Routes, controllers, middleware, cookies, forms, static assets.
 - **`app+db`** — the above plus the session database. Auth, uploads, and
@@ -173,19 +173,19 @@ the last output; show diffs of output when re-running.
 ┌─────────────────────────────────────────────────────────────┐
 │ Caddy (TLS, static assets, routing)                         │
 │   /            → site (SvelteKit, adapter-static or node)   │
-│   /api, /ws    → server (Flight)                            │
+│   /api, /ws    → server (Alula)                            │
 │   /preview/N/* → runner-N (fixed pool → static routes,      │
 │                  WebSocket pass-through included)           │
 └─────────────────────────────────────────────────────────────┘
    site/      Svelte 5 frontend: docs + tutorial UI
-   server/    Flight app: content API, session broker, channels
+   server/    Alula app: content API, session broker, channels
    runner-N/  N identical sandboxed workers (compose scale)
    postgres/  one server: site DB (sessions) + template DBs
    content/   exercises + guides (markdown + workspace files)
 ```
 
 **Frontend (`site/`, Svelte 5 + SvelteKit).** Runes throughout; this is
-also implicitly a Svelte 5 showcase given the Flightdeck prior art. Editor:
+also implicitly a Svelte 5 showcase given the Aluladeck prior art. Editor:
 **CodeMirror 6** (what learn.svelte.dev uses; Monaco is heavier and worse
 on mobile) with the community Swift legacy-mode for highlighting —
 lightweight, no LSP in v1 (an LSP-over-websocket to sourcekit-lsp on the
@@ -197,11 +197,11 @@ a diff view. Progress in `localStorage`. The plain-docs pages are the same
 SvelteKit app rendering `content/guides/*.md` — one deploy, one design
 system.
 
-**Backend (`server/`, Flight).** Modules: content (serves compiled exercise
+**Backend (`server/`, Alula).** Modules: content (serves compiled exercise
 + guide JSON; content is compiled to a manifest at build time, not parsed
 per request), sessions (lease a runner from the pool, mint session id,
 TTL reaper), execution (forwards run requests to the leased runner,
-**streams stdout/stderr/compiler diagnostics back over a Flight Channel**
+**streams stdout/stderr/compiler diagnostics back over an Alula Channel**
 — topic `session:<id>`, events `build_output`, `build_done`, `run_output`,
 `exited`), presence on the exercise topic ("N people on this exercise
 right now" — tasteful, optional, pure dogfood). The browser talks to it
@@ -232,7 +232,7 @@ degraded mode and the accessibility story).
 **Databases.** One Postgres server. Seeded template DBs per curriculum
 stage (e.g., the issues/projects/users domain reused from the benchmark
 suite — learners meet the same domain in tutorials, benchmarks, and
-Flightdeck). `CREATE DATABASE ... TEMPLATE` per session; `DROP` on scrub.
+Aluladeck). `CREATE DATABASE ... TEMPLATE` per session; `DROP` on scrub.
 Connection limits per session role.
 
 ---
@@ -281,10 +281,10 @@ content/
 ```
 
 Exercises store *diffs against a named CLI template*, not whole apps —
-that is what keeps flight-cli the single source of truth and keeps 60+
-exercises maintainable when Flight's API moves. CI materializes
+that is what keeps alula-cli the single source of truth and keeps 60+
+exercises maintainable when Alula's API moves. CI materializes
 template+diff into full workspaces, **builds and runs every `app-b`
-solution, and executes every snippet solution**, so a Flight release that
+solution, and executes every snippet solution**, so an Alula release that
 breaks a tutorial step breaks the tutorial's CI, not a learner's morning.
 (The benchmark suite's lesson, applied: the conformance check exists
 before the content ships.)
@@ -305,12 +305,12 @@ built and then removed (see STATUS.md), so the shipped runtimes are
 of truth for what actually exists.
 
 **Part 0 — Setup** *(mirrors the CLI; runtime: none/snippet)*
-Installing Swift and flight-cli · `flight new` and the tier/trait model ·
-project anatomy (Package.swift, flight.yaml, the module list) · running
+Installing Swift and alula-cli · `alula new` and the tier/trait model ·
+project anatomy (Package.swift, alula.yaml, the module list) · running
 locally, and how the in-browser workspace corresponds to it.
 
-**Part 1 — Flight basics** *(runtime: local)*
-Bootstrap, modules, and the composition root (what `flightComposeModules`
+**Part 1 — Alula basics** *(runtime: local)*
+Bootstrap, modules, and the composition root (what `alulaComposeModules`
 wires, in what order) ·
 first route with `@Controller`/`@GetRoute` · path/query parameters ·
 request bodies and content negotiation (JSON *and* forms out of the box —
@@ -318,7 +318,7 @@ the round-1 benchmark finding, taught as a feature) · responses, status
 codes, `HTTPError` · cookies and redirects (the progressive-enhancement
 login built this session becomes the exercise) · static assets and the
 asset pipeline (ETags) · middleware and pipeline lanes · configuration
-(flight.yaml, env, `@Settings`).
+(alula.yaml, env, `@Settings`).
 
 **Part 2 — Data with Hangar and Changeset** *(runtime: snippet → db)*
 The Ecto-guides arc, adapted: `@Entity`/`@ID`/`@Column` and what the macro
@@ -336,12 +336,12 @@ pagination · CTEs · streaming · diagnostics and `EXPLAIN` (the N+1
 detector closes the loop on the preloading lesson).
 
 **Part 3 — Intermediate web** *(runtime: app+db)*
-Wiring Hangar into Flight (request-scoped repos, `Repo(connection:inTransaction:)`
+Wiring Hangar into Alula (request-scoped repos, `Repo(connection:inTransaction:)`
 — the guide the silent-wrong-answer bug demands) · authentication: the
 TokenValidator seam, sessions vs. bearer, the login flow end-to-end ·
 file uploads, multipart, resumable (tus) · server-sent events · scheduled
 jobs (`@Scheduler`) · the actuator (health/metrics) · error handling and
-logging conventions · **testing** (FlightWebTesting's in-memory transport;
+logging conventions · **testing** (AlulaWebTesting's in-memory transport;
 test-first exercises — a differentiator no comparable tutorial does well).
 
 **Part 4 — Advanced: realtime and beyond** *(runtime: app+db)*
@@ -360,8 +360,8 @@ health checks).
 
 **Part 5 — Authoring your own modules** *(runtime: local)*
 The seam every subsystem (yours and the framework's) is built on, taught by
-writing one. A `FlightModule` is a value: your first module and providing a
-value by type (the `// flight:hand-registered` marker, the required explicit
+writing one. A `AlulaModule` is a value: your first module and providing a
+value by type (the `// alula:hand-registered` marker, the required explicit
 type annotation) · modules that depend on modules (`dependencies` as an
 inclusion edge, an `init` the composition root satisfies by type,
 configuration and another module's value; ambiguity is a build error) ·
@@ -370,7 +370,7 @@ contributing routes, channels, and middleware as `[RouteRegistration]` /
 aggregates · a module that runs something (`var service:`,
 `cancelWhenGracefulShutdown`, shutdown phases, the provide-vs-take-the-graph
 cycle rule) · packaging a module in its own library package, installed by
-listing it — the shape `FlightSecurityModule` and friends already ship in.
+listing it — the shape `AlulaSecurityModule` and friends already ship in.
 
 Changeset appears both inside Part 2 (its natural home, Ecto-style) and as
 a standalone guide in the plain-docs track for direct linking.
@@ -382,15 +382,15 @@ a standalone guide in the plain-docs track for direct linking.
 Asked directly and checked against source rather than answered from
 impression. **No — narrower than the plan first implied, and by design:
 the benchmark app was built to measure a specific capability's cost, not
-for curriculum breadth.** Verified by grepping every `import Flight*` in
-`benchmark/flight-app/Sources/App/*.swift`:
+for curriculum breadth.** Verified by grepping every `import Alula*` in
+`benchmark/alula-app/Sources/App/*.swift`:
 
 | Actually exercised | Never exercised |
 |---|---|
-| `FlightCore`, `FlightWeb`, `FlightTransport` | `FlightConfig`/`FlightConfigCore` (hand-rolled `ProcessInfo` env lookup *on purpose* — see the code comment) |
-| `FlightChannels`, `FlightPubSub` (**local only** — never `ClusteredPubSub`) | `FlightSecurityCore` (hand-rolled `TokenService` *on purpose*, specifically to keep `FlightSecurityModule` from resolving) |
-| `FlightPresence` (**single-node only** — never gossip/membership-monitor) | `FlightActuator`, `FlightScheduler`/`FlightCronCore` — never registered |
-| | `FlightWebTesting`/`FlightChannelsTesting`/`FlightPubSubTesting` — the app is validated by an *external* Node harness, not Flight's own in-process test doubles |
+| `AlulaCore`, `AlulaWeb`, `AlulaTransport` | `AlulaConfig`/`AlulaConfigCore` (hand-rolled `ProcessInfo` env lookup *on purpose* — see the code comment) |
+| `AlulaChannels`, `AlulaPubSub` (**local only** — never `ClusteredPubSub`) | `AlulaSecurityCore` (hand-rolled `TokenService` *on purpose*, specifically to keep `AlulaSecurityModule` from resolving) |
+| `AlulaPresence` (**single-node only** — never gossip/membership-monitor) | `AlulaActuator`, `AlulaScheduler`/`AlulaCronCore` — never registered |
+| | `AlulaWebTesting`/`AlulaChannelsTesting`/`AlulaPubSubTesting` — the app is validated by an *external* Node harness, not Alula's own in-process test doubles |
 | | SSE, multipart/resumable uploads — absent entirely |
 
 That is 7 of ~19 library products, and two of those seven are themselves
@@ -399,34 +399,34 @@ suite — round 2's whole methodology depended on a narrow, precisely
 measured surface — but it means **the benchmark app cannot be the sole
 proof-of-work backing Parts 1, 3, and the non-realtime half of 4.**
 
-**The good news, found in the same audit that found the gap:** flight-cli's
+**The good news, found in the same audit that found the gap:** alula-cli's
 `demo` tier already closes essentially all of it, and — per §2 — its
 tutorial is CI-verified against real code today:
 
 ```
-import FlightActuator    import FlightDataPostgres   import FlightScheduler
-import FlightCache       import FlightMigrate        import FlightSchedulerPostgres
-import FlightChannels    import FlightMigrateCLI     import FlightSecurityCore
-import FlightCore        import FlightPresence       import FlightTransport
-                          import FlightPubSub         import FlightWeb
+import AlulaActuator    import AlulaDataPostgres   import AlulaScheduler
+import AlulaCache       import AlulaMigrate        import AlulaSchedulerPostgres
+import AlulaChannels    import AlulaMigrateCLI     import AlulaSecurityCore
+import AlulaCore        import AlulaPresence       import AlulaTransport
+                          import AlulaPubSub         import AlulaWeb
 ```
 
 And `TUTORIAL.md` narrates exactly the parts the benchmark app skips —
 Stage 3.2 "Authentication, brought rather than built" (real
-`FlightSecurityCore`, not a hand-rolled `TokenService`), Stage 3.6
-"Caching the expensive reads" (`FlightCache`), Stage 3.7 "Work on a
+`AlulaSecurityCore`, not a hand-rolled `TokenService`), Stage 3.6
+"Caching the expensive reads" (`AlulaCache`), Stage 3.7 "Work on a
 schedule" including "running once when there really are several
-servers" (`FlightScheduler`'s multi-server story — prose-level, matching
+servers" (`AlulaScheduler`'s multi-server story — prose-level, matching
 this plan's own no-live-cluster stance, not a contradiction of it).
 
 **Correction to Parts 2 and 3 above, and to §2's "prior art":**
 
 - **Part 2's framing was wrong in relationship, not in content.** Hangar
-  is not a peer of flight-data in the curriculum — flight-data's Postgres
+  is not a peer of alula-data in the curriculum — alula-data's Postgres
   driver is *built on* Hangar. Part 2 should teach Hangar first (as
-  planned) and then introduce flight-data as "the seam Flight itself
+  planned) and then introduce alula-data as "the seam Alula itself
   builds on top of what you just learned" — migrations
-  (`FlightMigrate`/`FlightMigrateCLI`), the `DataSource`/cache protocols,
+  (`AlulaMigrate`/`AlulaMigrateCLI`), the `DataSource`/cache protocols,
   and the Valkey drivers — rather than treating persistence as closed
   once Hangar is covered.
 - **Part 3 is not "design curriculum from scratch"; it is "adapt an
@@ -441,12 +441,12 @@ this plan's own no-live-cluster stance, not a contradiction of it).
   the 5× preload ratio, build-time/size numbers, the round-2 LOC deltas)
   and (b) the channels+presence capstone specifically *because* it has a
   hand-built comparison stack (Hummingbird) proving what the framework is
-  worth — a teaching angle neither the CLI tutorial nor `flight-data`'s
+  worth — a teaching angle neither the CLI tutorial nor `alula-data`'s
   docs can offer, since neither was built to be compared against a
   hand-rolled alternative.
 - Testing content (Part 3) still has no proven exercise source in either
-  place at the depth wanted — `FlightWebTesting`/`FlightChannelsTesting`
-  are used in Flight's *own* test suite but not walked through
+  place at the depth wanted — `AlulaWebTesting`/`AlulaChannelsTesting`
+  are used in Alula's *own* test suite but not walked through
   pedagogically anywhere yet. Flagged as a genuine open item, not papered
   over: this section needs fresh exercise-writing, verified against the
   testing modules directly before publishing, the same way every other
@@ -484,16 +484,16 @@ already-strong Hangar README/DocC prose.)
 ### 8a. DocC → GitHub Pages: current state, and what's actually missing
 
 Asked directly: is this already a CI step? **Half of it is — and the half
-that exists lives in `flight`/`flight-data`'s CI today, not anywhere that
+that exists lives in `alula`/`alula-data`'s CI today, not anywhere that
 publishes.** Checked against the real workflow
-(`flight/.github/workflows/ci.yml`, `docs` job):
+(`alula/.github/workflows/ci.yml`, `docs` job):
 
 ```yaml
 - name: Generate documentation
-  env: { FLIGHT_BUILD_DOCS: "1" }
+  env: { ALULA_BUILD_DOCS: "1" }
   run: |
     mkdir -p ./docs
-    for target in FlightCore FlightConfig … FlightScheduler; do
+    for target in AlulaCore AlulaConfig … AlulaScheduler; do
       swift package --enable-all-traits \
         --allow-writing-to-directory "./docs/$target" \
         generate-documentation --target "$target" \
@@ -509,16 +509,16 @@ build artifact. No `--transform-for-static-hosting`, no
 `--hosting-base-path`, no `actions/upload-pages-artifact` /
 `actions/deploy-pages`, no `gh-pages` branch push, and each target lands
 in its own disconnected folder with no combined index tying the ~19
-modules into one navigable site. `flight-data` is in the same state.
+modules into one navigable site. `alula-data` is in the same state.
 **Nobody is publishing these anywhere today.**
 
-**What Flight School actually needs to add** (worth upstreaming to
-`flight`/`flight-data`'s own CI too, independent of this project):
+**What Fledge actually needs to add** (worth upstreaming to
+`alula`/`alula-data`'s own CI too, independent of this project):
 
 1. Regenerate with the static-hosting flags:
    `generate-documentation --target "$target" \
    --transform-for-static-hosting \
-   --hosting-base-path "flight/$target" \
+   --hosting-base-path "alula/$target" \
    --output-path "./site/$target"` — the base path must match the
    published URL's path segment or every relative asset link 404s; this
    is the most common DocC-on-Pages mistake and worth a CI smoke-check
@@ -526,7 +526,7 @@ modules into one navigable site. `flight-data` is in the same state.
    discovering it live.
 2. **A combined landing page.** DocC's per-module archives don't
    self-assemble into a site; write a small generated `index.html`
-   (module list → each `./FlightCore/documentation/flightcore/` etc.) or
+   (module list → each `./AlulaCore/documentation/alulacore/` etc.) or
    adopt DocC's combined-archive support if the pinned toolchain's
    `swift-docc-plugin` version has matured it by implementation time —
    verify the current flag name/stability against the plugin's own
@@ -542,12 +542,12 @@ modules into one navigable site. `flight-data` is in the same state.
    Pages) and a `pages: write` / `id-token: write` permissions block on
    the job.
 4. **Hosting split, deliberately:** reference docs deploy to GitHub
-   Pages (`flight-framework.github.io/flight-school/` or per-repo — decide
-   whether Flight School aggregates `flight` + `flight-data` + Hangar's
+   Pages (`alula-framework.github.io/fledge/` or per-repo — decide
+   whether Fledge aggregates `alula` + `alula-data` + Hangar's
    docs into one Pages site or links out to each repo's own), fully
    decoupled from the tutorial site's self-hosted VM (§9). This is a
    *better* fit than the plan's original "`/reference/` under the same
-   origin" idea: API docs update on Flight's release cadence, not the
+   origin" idea: API docs update on Alula's release cadence, not the
    tutorial site's; GitHub Pages is free and needs no runner/compose
    involvement at all. The plain-docs guides (§8) link out to the Pages
    URLs rather than embedding the archives.
@@ -566,7 +566,7 @@ CLI tutorial audit above almost was.
 One VM, `docker compose up -d`, five services: caddy, site, server,
 postgres, runner (×N via `deploy.replicas` or compose scale; N templated
 into Caddy's static preview routes). CI (GitHub Actions): build runner
-image weekly + on Flight/Hangar releases (bakes fresh warm `.build`),
+image weekly + on Alula/Hangar releases (bakes fresh warm `.build`),
 materialize+test all content, build site, push images. `.env` holds the
 two or three real secrets. Backups: none needed beyond content (sessions
 are disposable; progress is client-side). This is deliberately the most
@@ -634,7 +634,7 @@ Each milestone ships; none blocks the previous from being deployed.
    monitor lease patterns from launch.
 8. **Content maintenance cost.** 60+ exercises against a moving framework
    is the real long-term cost. The template+diff+CI design is the
-   mitigation; treat any exercise CI failure as a Flight release blocker,
+   mitigation; treat any exercise CI failure as an Alula release blocker,
    same as a test.
 
 ---
@@ -645,7 +645,7 @@ Each milestone ships; none blocks the previous from being deployed.
   latencies make the tiers honest: ~2s snippet, ~8s app run.
 - Warm leased pool over spawn-per-session for v1; scrub + recycle +
   no-egress as the compensating controls.
-- flight-cli templates are the single source of truth for workspaces;
+- alula-cli templates are the single source of truth for workspaces;
   exercises are diffs against them.
 - Snippet tier (not REPL) is the workhorse; REPL is a stretch console.
 - CodeMirror 6, not Monaco. SvelteKit for the whole site including guides.
@@ -653,16 +653,16 @@ Each milestone ships; none blocks the previous from being deployed.
 - Content CI executes every solution and every guide snippet.
 - Same teaching domain (users/projects/issues) across tutorial, benchmark
   suite, and capstone.
-- **flight-cli's `TUTORIAL.md` + `demo` tier, not the benchmark app, is
+- **alula-cli's `TUTORIAL.md` + `demo` tier, not the benchmark app, is
   the primary reference for Parts 1 and 3** (basics, auth, caching,
   scheduling) — audited in §7a after the benchmark app was found to cover
-  only 7 of ~19 Flight modules, single-node only. The benchmark app's
+  only 7 of ~19 Alula modules, single-node only. The benchmark app's
   remaining unique role: the measured numbers the curriculum cites, and
   the channels+presence capstone's hand-built-comparison narrative.
-- Hangar and `flight-data` are not peer curricula — `flight-data`'s
+- Hangar and `alula-data` are not peer curricula — `alula-data`'s
   Postgres driver depends on Hangar. Teach Hangar first, then
-  `flight-data` as what Flight itself builds on top of it (§7a).
-- DocC → GitHub Pages is new work, not existing automation (§8a): Flight's
+  `alula-data` as what Alula itself builds on top of it (§7a).
+- DocC → GitHub Pages is new work, not existing automation (§8a): Alula's
   own CI generates and validates docs (`--warnings-as-errors`) but
   publishes nothing today. Separate hosting from the tutorial site's VM
   entirely — Pages for reference docs, self-hosted for the interactive
@@ -672,5 +672,5 @@ Each milestone ships; none blocks the previous from being deployed.
 the dev machine (headless `swift repl` ✅; `swift run --repl` vs. Hangar ❌
 duplicate modulemaps; 1.81s warm one-file rebuild with macros; 7–8s app
 incremental; ~73s/~470s clean debug/release) — and the benchmark suite's
-RESULTS files in `SwiftFlight/benchmark/` for the framework-level numbers
+RESULTS files in `SwiftAlula/benchmark/` for the framework-level numbers
 the curriculum cites.*

@@ -1,13 +1,13 @@
-import FlightCore
-import FlightWeb
+import AlulaCore
+import AlulaWeb
 import Foundation
 
 /// The name PLAN §4's "anonymous id (cookie)" actually travels under.
 ///
 /// Previously a plain `X-Session-Id` header: `Cookie`/`Set-Cookie` support
-/// (`flight@8997a5a`) landed on `main` after the `v0.8.0` tag this package
+/// (`alula@8997a5a`) landed on `main` after the `v0.8.0` tag this package
 /// resolved against at the time, so it wasn't reachable by a normal semver
-/// pin. Fixed by cutting `flight` `v0.9.0` and bumping the pin — see
+/// pin. Fixed by cutting `alula` `v0.9.0` and bumping the pin — see
 /// `CHANGELOG.md` there. A real cookie is strictly better here than the
 /// header was: `HttpOnly` (on by default) keeps the value out of reach of
 /// any injected script, whereas a header the client's own JS had to attach
@@ -29,7 +29,7 @@ struct WriteRequest: Decodable {
 /// an `HttpOnly` cookie is by design unreadable from the client's own JS.
 @Controller
 struct SessionController {
-    // flight:hand-registered — provided by AppModule (matched by type); it
+    // alula:hand-registered — provided by AppModule (matched by type); it
     // composes an actor and two value types, so it isn't itself a scanned
     // @Service.
     @Inject var sessionService: SessionService

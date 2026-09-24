@@ -5,7 +5,7 @@ order: 5
 ---
 
 ```swift
-import FlightScheduler
+import AlulaScheduler
 import Foundation          // the expansion references Date — see below
 
 @Scheduler
@@ -46,7 +46,7 @@ that silently never fires.
 Run two instances of this app and, with nothing else configured, both fire
 `nightlyRollup` at 03:00 — every scheduled job runs on every node by
 default, which is correct on exactly one server and wrong on a fleet.
-Flight's answer isn't a distributed cron library bolted on top; it's one
+Alula's answer isn't a distributed cron library bolted on top; it's one
 narrow seam, `JobCoordinator`:
 
 ```swift
@@ -68,7 +68,7 @@ that assumption you're currently on.
 
 ## The Postgres coordinator, and why it isn't an advisory lock
 
-`flight-data`'s `PostgresJobCoordinator` is the shipped implementation —
+`alula-data`'s `PostgresJobCoordinator` is the shipped implementation —
 and it deliberately isn't built on `pg_try_advisory_lock`, for the same
 reason the first exercise of this part cared about connection affinity: an
 advisory lock is scoped to the *session* that took it and must be released
@@ -77,7 +77,7 @@ a claim and its release would routinely land on two different ones. A
 lease row sidesteps that entirely:
 
 ```sql
-INSERT INTO flight_job_leases (job, scheduled_for, claimed_by, claimed_at)
+INSERT INTO alula_job_leases (job, scheduled_for, claimed_by, claimed_at)
 VALUES ($1, $2, $3, now())
 ON CONFLICT (job, scheduled_for) DO NOTHING
 RETURNING job
@@ -91,20 +91,20 @@ clocks differ by a second still agree on which *firing* they're contending
 for, since the scheduler passes the schedule's own instant rather than
 each server's local idea of "now." You wire it in by *providing* it — a
 stored property on a module, which the composition root matches to
-`FlightSchedulerModule` by type:
+`AlulaSchedulerModule` by type:
 
 ```swift
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] {
-        [PostgresDataModule<PrimaryDataSource>.self, FlightSchedulerModule.self]
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] {
+        [PostgresDataModule<PrimaryDataSource>.self, AlulaSchedulerModule.self]
     }
 
-    /// Handed to `FlightSchedulerModule`, matched by the `any JobCoordinator`
+    /// Handed to `AlulaSchedulerModule`, matched by the `any JobCoordinator`
     /// type. Built from the datasource the composition root already wired, so
     /// the module reads it off the graph.
     let jobCoordinator: any JobCoordinator
 
-    init(graph: FlightGraph) {
+    init(graph: AlulaGraph) {
         self.jobCoordinator = PostgresJobCoordinator(dataSource: graph.postgresDataSource)
     }
 }
@@ -113,7 +113,7 @@ struct AppModule: FlightModule {
 The explicit `any JobCoordinator` annotation is what makes the match work:
 the composition root reads source text, not a conformance table, so
 `let jobCoordinator = PostgresJobCoordinator(...)` — inferred type — wouldn't
-be recognized as the coordinator `FlightSchedulerModule` is looking for. This
+be recognized as the coordinator `AlulaSchedulerModule` is looking for. This
 used to be a `container.register((any JobCoordinator).self)` the scheduler
 resolved at runtime, which meant a deployment that forgot it degraded
 silently; providing it as a value means the missing-coordinator warning at

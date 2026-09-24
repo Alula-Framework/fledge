@@ -12,8 +12,8 @@ now. This capstone is that app — a live issue tracker, one project per
 board, built from nothing this tutorial hasn't already covered.
 
 ```swift
-// `FlightChannels.Channel`, qualified — see the note below the code
-struct BoardChannel: FlightChannels.Channel {
+// `AlulaChannels.Channel`, qualified — see the note below the code
+struct BoardChannel: AlulaChannels.Channel {
     let repo: Repo
     let broadcaster: ChannelBroadcaster
     let presence: any Presence
@@ -60,7 +60,7 @@ Two things in that first line are worth pausing on, because the capstone is
 the first exercise where they can bite at all — both come from combining
 realtime with data in one file.
 
-`Channel` has to be written `FlightChannels.Channel`. `FlightDataPostgres`
+`Channel` has to be written `AlulaChannels.Channel`. `AlulaDataPostgres`
 transitively re-exports NIO, and `NIOCore` has a `Channel` of its own (a
 socket, not a topic), so a file importing both sees two and refuses to
 guess: *'Channel' is ambiguous for type lookup in this context*. Qualifying
@@ -75,20 +75,20 @@ is a type error rather than a nicety.
 
 Every test this tutorial has shown so far — `TestClient`,
 `ChannelWireClient`, `InMemoryChannelTransport` — runs *inside* the
-process, against Flight's own test doubles. A capstone this size deserves
+process, against Alula's own test doubles. A capstone this size deserves
 a different kind of proof: a plain client, in a different language,
 speaking only the wire protocol, against a real running server over a
 real socket. Something like:
 
 ```javascript
 const ws = new WebSocket(`ws://localhost:8090/socket?token=${token}`);
-ws.send(JSON.stringify({ref: "1", topic: "project:BENCH", event: "flight:join", payload: {}}));
-// assert: flight:reply with {key, name}, then flight:presence_state,
+ws.send(JSON.stringify({ref: "1", topic: "project:BENCH", event: "alula:join", payload: {}}));
+// assert: alula:reply with {key, name}, then alula:presence_state,
 // before anything else arrives
 ```
 
 That's "conformance-tested from outside": nothing about the check cares
-that the server happens to be written in Swift, or that it's Flight
+that the server happens to be written in Swift, or that it's Alula
 underneath rather than something hand-rolled — it asserts on the protocol
 itself, the same envelope shape and reserved events this whole part has
 been teaching, from a client with no special access to the server's
@@ -100,13 +100,13 @@ which is the whole point of routing both through one broadcaster.
 ## What building this twice actually showed
 
 The first exercise of this part cited a measurement built exactly this
-way: the same board, built once on Flight, once by hand against a lower-
+way: the same board, built once on Alula, once by hand against a lower-
 level framework, both checked by the identical outside harness. The
 verdict from that comparison is worth restating now that you've built
-the Flight side yourself: the feature code — everything in `BoardChannel`
+the Alula side yourself: the feature code — everything in `BoardChannel`
 above — came out within single digits of line-count either way. The gap
 was entirely in the roughly 300 lines of join/heartbeat/fan-out
 infrastructure a hand-rolled version has to write, get concurrency-safe,
-and maintain, that a Flight app never writes at all. Building this
+and maintain, that an Alula app never writes at all. Building this
 capstone is, in a real sense, building only the half of that comparison
 that was ever actually about your application.

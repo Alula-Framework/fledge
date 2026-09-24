@@ -31,7 +31,7 @@ is injected the same way any dependency is:
 ```swift
 @Controller
 struct ActivityController {
-    // flight:hand-registered — the bus is provided by FlightPubSubModule.
+    // alula:hand-registered — the bus is provided by AlulaPubSubModule.
     @Inject var pubsub: any PubSub
 
     @GetRoute("/activity")

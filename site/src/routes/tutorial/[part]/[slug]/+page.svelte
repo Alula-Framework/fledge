@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.exercise.title} — Flight School</title>
+	<title>{data.exercise.title} — Fledge</title>
 </svelte:head>
 
 <p class="crumb">

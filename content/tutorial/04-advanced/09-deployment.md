@@ -4,7 +4,7 @@ description: systemd, Docker, stripping your release binary, and a reverse proxy
 order: 9
 ---
 
-A Flight app is a single statically-linkable executable once built for
+An Alula app is a single statically-linkable executable once built for
 release — nothing about deploying it is specific to this framework except
 one thing worth knowing before the rest: bootstrap already listens for
 the signals a process manager sends.
@@ -13,9 +13,9 @@ the signals a process manager sends.
 gracefulShutdownSignals: [.sigterm, .sigint]
 ```
 
-That's Flight's own bootstrap, handing shutdown to `ServiceLifecycle`
+That's Alula's own bootstrap, handing shutdown to `ServiceLifecycle`
 rather than reinventing it. `SIGTERM` is exactly what `systemctl stop` and
-`docker stop` send by default, so a Flight app under either one drains
+`docker stop` send by default, so an Alula app under either one drains
 in-flight requests and stops cleanly with no extra configuration — the
 same graceful-shutdown path this tutorial's streaming and SSE exercises
 already relied on when a client disconnected mid-response.
@@ -55,20 +55,20 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/app
 Restart=on-failure
-Environment=FLIGHT_ENV=prod
+Environment=ALULA_ENV=prod
 User=app
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-`systemctl stop app` sends exactly the `SIGTERM` Flight's bootstrap is
+`systemctl stop app` sends exactly the `SIGTERM` Alula's bootstrap is
 already listening for — nothing in this unit file does anything special
 for graceful shutdown; that part was earned back in `Bootstrap.swift`.
 
 ## A reverse proxy in front
 
-Flight binds a plain HTTP port; TLS and a public hostname are a proxy's
+Alula binds a plain HTTP port; TLS and a public hostname are a proxy's
 job, not this process's:
 
 ```

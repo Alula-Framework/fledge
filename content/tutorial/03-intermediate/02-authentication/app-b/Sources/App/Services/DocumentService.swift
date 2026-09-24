@@ -1,5 +1,5 @@
-import FlightCore
-import FlightSecurityCore
+import AlulaCore
+import AlulaSecurityCore
 
 /// Service code that shouldn't take a principal parameter reads the *ambient*
 /// identity — `Principal.current`, the task-local a handler binds for the

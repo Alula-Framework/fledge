@@ -1,4 +1,4 @@
-import FlightChannels
+import AlulaChannels
 import Foundation
 
 /// The execution module (PLAN §4): bridges HTTP session/run requests to the
@@ -72,7 +72,7 @@ struct SessionService: Sendable {
     /// calling the runner itself (not a build/run failure — those arrive
     /// as ordinary `build_output`/`exited` events) surfaces as a
     /// `run_error` event on the same topic rather than a channel-protocol
-    /// `flight:error`, which is reserved for join/handle failures, not
+    /// `alula:error`, which is reserved for join/handle failures, not
     /// side-channel work triggered outside the channel entirely.
     func run(sessionID: String) async throws {
         guard let lease = await broker.touch(sessionID: sessionID) else {

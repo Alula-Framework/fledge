@@ -4,32 +4,32 @@ description: The TokenValidator seam, sessions vs. bearer tokens, a real login f
 order: 2
 ---
 
-Flight does not ship passwords, a login form, or a session store — on
+Alula does not ship passwords, a login form, or a session store — on
 purpose. Rolling your own auth is how applications get broken, and a
 framework can't make that safe by trying harder; what it can do is turn a
 *real* identity provider into configuration:
 
 ```yaml
-# flight.yaml
+# alula.yaml
 security:
   oidc:
     issuer: "https://example.descope.com"
-    audience: "my-flight-app"
+    audience: "my-alula-app"
 ```
 
 ```swift
 modules: [
-    FlightWebModule<FlightTransport>.self,
-    FlightOIDCModule.self,
+    AlulaWebModule<AlulaTransport>.self,
+    AlulaOIDCModule.self,
     AppModule.self,
 ]
 ```
 
 That's the entire integration for any OIDC-compliant provider — Descope,
 Keycloak, Auth0, Entra are the same validator with different
-configuration values, not separate packages. `FlightOIDCModule` pulls
-`FlightSecurityModule` in with it — the security module wires the machinery
-but provides no validator on purpose, and `FlightOIDCModule` is the value
+configuration values, not separate packages. `AlulaOIDCModule` pulls
+`AlulaSecurityModule` in with it — the security module wires the machinery
+but provides no validator on purpose, and `AlulaOIDCModule` is the value
 that fills that seam with an `OIDCTokenValidator` built from the config
 above. The JWKS endpoint is resolved by OIDC discovery automatically;
 cryptographic verification is JWTKit's, not hand-rolled here.
@@ -87,16 +87,16 @@ A `struct`, not a `final class`: `@Service`'s expansion requires
 `Sendable`, and a class holding a mutable `@Inject` property cannot be
 — the error names `Sendable` at the macro rather than at the property, so
 it reads more mysteriously than it is. Value types are the default shape
-for components across Flight for exactly this reason.
+for components across Alula for exactly this reason.
 
 `DocumentService` injects only `DocumentRepository` — a scanned
 `@Repository` the build plugin can see. When a component instead injects a
 value a *module* provides rather than a scanned annotation — the
 `any TokenValidator` a WebSocket upgrade handler needs, say — mark that one
-`// flight:hand-registered`:
+`// alula:hand-registered`:
 
 ```swift
-// flight:hand-registered
+// alula:hand-registered
 @Inject var validator: any TokenValidator
 ```
 
@@ -131,33 +131,33 @@ struct OpaqueTokenValidator: TokenValidator {
 ```
 
 Both shapes end at the same place — a `Principal`, read the same way by
-every handler and service — which is the actual design: Flight standardizes
+every handler and service — which is the actual design: Alula standardizes
 *what a validated identity looks like once you have one*, and stays
 deliberately agnostic about whether that identity came from a signed
 bearer token or a server-side session lookup.
 
-You supply that validator the same way `FlightOIDCModule` supplies its own:
+You supply that validator the same way `AlulaOIDCModule` supplies its own:
 as a module value with an *explicit* type annotation, which the composition
-root matches to `FlightSecurityModule`'s `validator:` parameter by type:
+root matches to `AlulaSecurityModule`'s `validator:` parameter by type:
 
 ```swift
-struct AuthModule: FlightModule {
+struct AuthModule: AlulaModule {
     let tokenValidator: any TokenValidator = OpaqueTokenValidator()
 }
 ```
 
 ```swift
 modules: [
-    FlightWebModule<FlightTransport>.self,
-    FlightSecurityModule.self,   // the machinery, minus the validator
+    AlulaWebModule<AlulaTransport>.self,
+    AlulaSecurityModule.self,   // the machinery, minus the validator
     AuthModule.self,             // your validator, provided as a value
     AppModule.self,
 ]
 ```
 
-List `FlightSecurityModule` itself here rather than `FlightOIDCModule` — the
+List `AlulaSecurityModule` itself here rather than `AlulaOIDCModule` — the
 security module wires the middleware and takes whatever `(any TokenValidator)`
-the composition finds, and `FlightSecurityModule` cannot even be built
+the composition finds, and `AlulaSecurityModule` cannot even be built
 without one, so a forgotten validator fails loudly at startup rather than at
 the first request. The annotation is required: `let tokenValidator = OpaqueTokenValidator()`
 leaves the source scanner nothing to match against `validator: any TokenValidator`,
@@ -165,7 +165,7 @@ so it must read `let tokenValidator: any TokenValidator = …`.
 
 ## Enforcement is a separate decision from authentication
 
-`FlightSecurityModule` installs its `Authentication` middleware
+`AlulaSecurityModule` installs its `Authentication` middleware
 automatically — but that middleware always continues, whether or not a
 token was presented, so a public route stays public even with the module
 installed. Requiring a principal is something the application opts into,
@@ -180,7 +180,7 @@ struct AdminController {
 }
 ```
 
-`.authenticated` is one of two canonical lanes `FlightSecurityModule`
+`.authenticated` is one of two canonical lanes `AlulaSecurityModule`
 declares. A lane *is* the whole middleware stack for a route naming it, so
 this one starts with `Authentication` and ends with `RequireAuthentication`:
 the route establishes the identity it then requires, without depending on
@@ -191,11 +191,11 @@ anonymous callers differently.
 There's no ordering to get right by hand anymore. Lanes are declared with
 `MiddlewareRegistration.lane(_:_:)` and *compose* across modules rather than
 running in whatever order the `modules:` list happened to name them:
-`FlightSecurityModule` contributes `Authentication` and
+`AlulaSecurityModule` contributes `Authentication` and
 `RequireAuthentication` to the `.authenticated` lane, a module of your own
 can add to it, and the composition root folds every contribution into one
 stack. The old `container.pipeline { RequireAuthentication.self }` — which
-worked only because `FlightSecurityModule.configure` had registered
+worked only because `AlulaSecurityModule.configure` had registered
 `Authentication` before `AppModule.configure` ran — is gone with the
 container.
 

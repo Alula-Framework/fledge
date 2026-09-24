@@ -1,6 +1,6 @@
-import FlightCore
-import FlightDataPostgres
-import FlightWeb
+import AlulaCore
+import AlulaDataPostgres
+import AlulaWeb
 import Foundation
 
 @Controller
@@ -11,7 +11,7 @@ struct IssueController {
     /// prevent). The controller injects the pool and *leases* a repo per
     /// request with `withRepo`, which hands the connection back at the end of
     /// the bracket.
-    // flight:hand-registered — PostgresDataModule provides the pool.
+    // alula:hand-registered — PostgresDataModule provides the pool.
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")

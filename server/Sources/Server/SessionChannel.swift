@@ -1,4 +1,4 @@
-import FlightChannels
+import AlulaChannels
 
 /// Gate for the `session:*` topic (PLAN §4). The client never sends
 /// anything over this channel — build/run output is pushed from

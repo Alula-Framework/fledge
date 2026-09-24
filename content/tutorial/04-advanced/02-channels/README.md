@@ -48,7 +48,7 @@ into this topic" — `join` *is* that check, every time, per topic:
 .reject(.unauthenticated)              // .forbidden also built in; JoinRejection(_:) for anything else
 ```
 
-A rejection answers `flight:error` on the wire, correlated to the join's
+A rejection answers `alula:error` on the wire, correlated to the join's
 own `ref` if the client sent one — the client's `join()` call throws,
 never silently hangs. Membership is established *before* the reply is
 sent, which matters more than it looks: it's what makes a broadcast that
@@ -60,9 +60,9 @@ races the join structurally unable to slip through the gap between
 `InboundEvent` carries `topic`, `event`, `payload`, and the inbound `ref`
 (present when the client wants a reply). `HandleResult` is one of:
 
-- **`.reply(payload)`** — answers `flight:reply`, echoing the inbound
+- **`.reply(payload)`** — answers `alula:reply`, echoing the inbound
   `ref`, straight back to the sender.
-- **`.error(reason:)`** — answers `flight:error`, same correlation.
+- **`.error(reason:)`** — answers `alula:error`, same correlation.
 - **`.none`** — sends nothing. On a `ref`-carrying message this means the
   client's own await on that ref times out on its side; whether an event
   replies at all is part of the channel's contract with its client, not
@@ -99,8 +99,8 @@ after the write already succeeded is what `excluding:` is for.
 `registerChannel("room:*")` matches any topic starting with `room:`, so one
 `Channel` type serves every room — `event.topic`/the `topic` parameter
 tells you which one a given join or message was actually for. Reserved,
-framework-owned events all share a `flight:` prefix (`flight:join`,
-`flight:reply`, `flight:error`, `flight:heartbeat`, among others) and
-`"flight"` itself can never be joined as an ordinary topic — broadcasting
-under a `flight:`-prefixed event name from your own code is refused
+framework-owned events all share a `alula:` prefix (`alula:join`,
+`alula:reply`, `alula:error`, `alula:heartbeat`, among others) and
+`"alula"` itself can never be joined as an ordinary topic — broadcasting
+under a `alula:`-prefixed event name from your own code is refused
 rather than colliding with the protocol's own control channel.

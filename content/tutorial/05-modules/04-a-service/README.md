@@ -6,8 +6,8 @@ order: 4
 
 Everything a module has provided so far is *inert* — a value someone else calls
 into. Some modules own something that runs on its own: a queue consumer, a
-cache warmer, a reaper that sweeps expired rows on a timer. Flight has one seam
-for that, and it's the last member of the `FlightModule` protocol you haven't
+cache warmer, a reaper that sweeps expired rows on a timer. Alula has one seam
+for that, and it's the last member of the `AlulaModule` protocol you haven't
 used: `var service: (any Service)?`.
 
 ## The service seam
@@ -40,8 +40,8 @@ right for a crash, wrong for a clean stop.
 A module hands its service over by holding it and exposing it:
 
 ```swift
-struct HeartbeatModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct HeartbeatModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 
     let heartbeat: HeartbeatService
 
@@ -90,13 +90,13 @@ component graph. A module can do one of two things with the graph, never both:
 - **Provide a value the graph is built from.** A `TokenValidator`, a
   `JobCoordinator` — a *root* of the graph. The graph is assembled from these,
   so it can't exist yet when your module is built.
-- **Take the finished graph.** A module that declares `init(graph: FlightGraph)`
+- **Take the finished graph.** A module that declares `init(graph: AlulaGraph)`
   is handed the fully-built graph and can reach into it — but then it cannot
   also provide a root, because that would mean the graph depends on a module
   that depends on the graph. A cycle.
 
 The build refuses that cycle *by name* rather than deadlocking at runtime. It's
-why Flight's own demo splits its authentication into a `DemoAuthModule` (which
+why Alula's own demo splits its authentication into a `DemoAuthModule` (which
 *provides* the `TokenValidator` root) separate from the `AppModule` (which
 *takes* the graph): one module trying to do both would be rejected at build
 time, and the split says the true thing anyway — choosing how tokens are

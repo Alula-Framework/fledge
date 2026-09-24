@@ -4,6 +4,16 @@ What's actually built, verified, and running, versus what's still just in
 `PLAN.md`. Updated as milestones land — see `PLAN.md` §10 for the full
 milestone list this maps onto.
 
+## 2026-09-24 — Flight School is now Fledge
+
+The site was renamed Fledge (repo `Alula-Framework/fledge`), and the
+framework it teaches was renamed Flight → Alula (alula D45). Every
+exercise, the server and the runner now pin alula 0.36.0, alula-data
+0.11.0 and hangar 0.9.2, because older tags lack the `alula` product
+names. The DocC base paths moved to `fledge/…`, and the databases are
+`fledge_seed`, `fledge_dev` and `fledge_ci`. The entries below describe the
+same work in the current names.
+
 ## Done — M0 fully closed, this time confirmed by real content, not status codes
 
 Per `PLAN.md` §10, M0 is "SvelteKit site rendering guides + tutorial
@@ -12,8 +22,8 @@ The tutorial (40 of 41 exercises) and all 13 guides are real and
 confirmed working — see below, unchanged from before. The DocC-on-Pages
 half is now genuinely confirmed too: after the fix below, checked that
 the baked-in `baseUrl` on real deployed pages for all three repos
-(`.../flight/FlightCore/`, `.../hangar/Hangar/`,
-`.../flight-data/FlightCache/`) matches the real served path, and that
+(`.../alula/AlulaCore/`, `.../hangar/Hangar/`,
+`.../alula-data/AlulaCache/`) matches the real served path, and that
 the actual JS asset each page requests resolves with 200 — not just the
 top-level document. swift-changeset has since been added as a fourth
 repo (a user noticed it was missing — Changeset/ValidationRule/
@@ -27,8 +37,8 @@ directly by a user, not caught by anything in this file's own process.
 Root cause: DocC's `--transform-for-static-hosting` output is a
 client-rendered SPA shell (`<div id="app"></div>`, empty until JS
 populates it); the `--hosting-base-path` passed to DocC
-(`flight-school/reference/flight/$target`) didn't match where the
-artifact actually gets served (`flight-school/flight/$target` — no
+(`fledge/reference/alula/$target`) didn't match where the
+artifact actually gets served (`fledge/alula/$target` — no
 `/reference/` segment, confirmed by checking the real generated file
 layout and the index page's own links, both of which agreed with each
 other and disagreed with the flag). Every JS/CSS asset the page needed
@@ -61,29 +71,29 @@ correctly with the "coming soon" placeholder below (a pager can point at
 an unwritten exercise; that page still renders, with correct prev/next of
 its own).
 
-**Content, real and verified** — grounded directly in flight source and
-flight-cli's actual templates/README, not invented:
-- Part 0 (Setup), all four exercises: install, `flight new`, project
+**Content, real and verified** — grounded directly in alula source and
+alula-cli's actual templates/README, not invented:
+- Part 0 (Setup), all four exercises: install, `alula new`, project
   anatomy, running locally.
-- Part 1 (Flight basics), 8 of 9 exercises: bootstrap/modules, first
+- Part 1 (Alula basics), 8 of 9 exercises: bootstrap/modules, first
   route, path/query parameters, request bodies, responses/HTTPError,
   static assets, middleware, configuration. **`06-cookies` is deliberately
-  unwritten** — cookie support landed in flight's source (commit
+  unwritten** — cookie support landed in alula's source (commit
   `8997a5a`) but no release tag includes it yet (`v0.8.0` predates it), and
-  `flight new`'s `Package.swift` resolves `from: "0.7.0"` to the latest
+  `alula new`'s `Package.swift` resolves `from: "0.7.0"` to the latest
   *tagged* release. Writing this exercise now would document an API a
-  learner's own `flight new` can't reach. Revisit once flight cuts its next
-  tag; don't write it against `flight`'s HEAD in the meantime.
+  learner's own `alula new` can't reach. Revisit once alula cuts its next
+  tag; don't write it against `alula`'s HEAD in the meantime.
 - Part 2 (Data with Hangar and Changeset), all 12 exercises: entities,
   queries, predicates/`debugSQL`, changesets, associations/`Loadable`,
   preloading, joins/aliases/self-joins, transactions/isolation/retry,
-  `Multi`, bulk writes, `flight-data` (migrations/cache/Valkey), and
+  `Multi`, bulk writes, `alula-data` (migrations/cache/Valkey), and
   diagnostics/`EXPLAIN`. Verified against Hangar `v0.2.1` and
   swift-changeset `v0.1.0` (tagged releases, not their working trees —
   both repos had unrelated in-progress uncommitted changes while this was
   written; tagged-source reads avoided depending on either).
 - Part 3 (Intermediate web), all 7 exercises: wiring Hangar's `Repo` into
-  Flight's request scope (and the connection-affinity bug that motivates
+  Alula's request scope (and the connection-affinity bug that motivates
   it), authentication via `TokenValidator`/OIDC, multipart + resumable
   (tus 1.0) uploads, server-sent events, `@Scheduler`/fleet-wide-once
   scheduling, the actuator's real health/dashboard split, and the three
@@ -102,13 +112,13 @@ flight-cli's actual templates/README, not invented:
   findings were cross-checked before anything got written from them,
   same bar as everywhere else in this file. Part 4 specifically used a
   real, unique source: a benchmark project
-  (`/home/sinner/swift/SwiftFlight/benchmark/`) that built the same
-  realtime issue board twice — once on Flight, once hand-rolled against
+  (`/home/sinner/swift/SwiftAlula/benchmark/`) that built the same
+  realtime issue board twice — once on Alula, once hand-rolled against
   Hummingbird — specifically to measure what Channels is worth. Real
   numbers from it are cited directly in `04-advanced/01-websockets.md`
   and `08-capstone.md` (infrastructure: 0 lines vs. 315; feature layers
   within 7 lines of each other). That benchmark directory is **not a git
-  repo** and its own `Package.swift` uses a path dependency on `flight`
+  repo** and its own `Package.swift` uses a path dependency on `alula`
   rather than a pinned tag (its own comment already flags this as "wrong
   for a citable result") — the Channels/Presence/PubSub source files it
   exercises haven't changed since well before the tag this tutorial
@@ -117,7 +127,7 @@ flight-cli's actual templates/README, not invented:
   version-controlled safety net the way every other cited repo is.
 - **All 13 planned guides**, every one in `guides.ts` now real: Up and
   Running (Part 0), Routing and Controllers, Requests & Responses,
-  Configuration, Testing, Deployment (Flight); Hangar Getting Started,
+  Configuration, Testing, Deployment (Alula); Hangar Getting Started,
   Queries, Changesets, Associations & Preloading, Transactions & Multi
   (Hangar); Channels, Presence (Realtime) — repackaging tutorial material
   already verified while writing Parts 1–4, not separately re-verified.
@@ -129,8 +139,8 @@ flight-cli's actual templates/README, not invented:
 scope — those repos have their own in-progress work and their docs
 aren't this repo's to edit; this repo's own content was written against
 the verified-correct shape in every case). The count is high enough to
-name a pattern rather than treat each as a one-off: across `flight`,
-Hangar, and `flight-data`, doc comments, docc catalogues, and READMEs
+name a pattern rather than treat each as a one-off: across `alula`,
+Hangar, and `alula-data`, doc comments, docc catalogues, and READMEs
 drift from the code they describe often enough that none of them should
 be trusted as a citation on their own — grep the actual declaration, the
 actual diagnostic message, or the actual route registration instead.
@@ -139,22 +149,22 @@ Specific instances found:
   requires a string-literal name whenever it's used at all) and
   `@BelongsTo(\.authorID)` (requires the `foreignKey:` label; no
   positional overload exists).
-- `flight-data`'s `Docs/migrate.md`: an old standalone-package install
-  path (`flight-server/flight-migrate`) contradicting the current
+- `alula-data`'s `Docs/migrate.md`: an old standalone-package install
+  path (`alula-server/alula-migrate`) contradicting the current
   trait-based one in its own top-level `README.md`.
-- `flight`'s `FlightSecurityCore.docc`: a `security: { issuer, audience }`
+- `alula`'s `AlulaSecurityCore.docc`: a `security: { issuer, audience }`
   example missing the `oidc:` nesting the actual `@Settings`-bound keys
   require (`security.oidc.issuer`, confirmed by grepping
   `OIDCSecurityConfiguration.swift`'s literal `configuration.get(...)`
   calls).
 - The same package's archived standalone README (pre-merge) demonstrates
-  enforcement via `registerMiddleware(...)`, which current `flight`
+  enforcement via `registerMiddleware(...)`, which current `alula`
   marks `@available(*, deprecated, ...)` in favor of `@Middleware` +
   `container.pipeline { }`.
-- `flight`'s `FlightWeb.docc`: references a `.stream { }` response
+- `alula`'s `AlulaWeb.docc`: references a `.stream { }` response
   constructor that doesn't exist in source — the real API is
   `.serverSentEvents(_:)` / `.streaming(contentType:)`.
-- `flight`'s `FlightActuator.docc` and top-level `README.md`: both
+- `alula`'s `AlulaActuator.docc` and top-level `README.md`: both
   describe `/actuator/info`, `/actuator/beans`, `/actuator/routes`, and
   `/actuator/config` endpoints that were never implemented — only
   `/actuator/health` and `/actuator` exist. `ActuatorModule.swift`'s own
@@ -170,9 +180,9 @@ the manifest before assuming it's written.
 
 **CI**, all passing on real GitHub Actions runs (not just locally):
 - `site.yml` — content link-checking (`scripts/check-content-links.py`,
-  modeled on flight-cli's `verify-tutorial.sh`) + site type-check + build,
+  modeled on alula-cli's `verify-tutorial.sh`) + site type-check + build,
   on every push/PR.
-- `docs.yml` — DocC → GitHub Pages for flight/hangar/flight-data. **Run
+- `docs.yml` — DocC → GitHub Pages for alula/hangar/alula-data. **Run
   for real** (GitHub Pages enabled via the API, `gh workflow run`
   triggered) — and caught three real bugs across four attempts, none of
   which a local test could have: (1) the `swift:6.3.3` container image
@@ -181,23 +191,23 @@ the manifest before assuming it's written.
   step. (2) The workflow only ever checked out the three *external*
   repos it clones for DocC generation (`repository:`/`path:` on every
   `actions/checkout@v4` call) — there was never a plain checkout of
-  `flight-school` itself, so `scripts/generate-docs-index.py` never
+  `fledge` itself, so `scripts/generate-docs-index.py` never
   existed in the workspace at all. Every DocC-generation step worked
   fine regardless (they only touch the three cloned repos), which is
   exactly why this stayed invisible until the one step that needed this
   repo's own `scripts/` actually ran. Fixed by adding an initial bare
   `actions/checkout@v4` before the three named ones. Also fixed in the
-  same pass: the generated index page linked to `flight-school.dev`, a
+  same pass: the generated index page linked to `fledge.dev`, a
   domain that isn't configured (confirmed via the Pages API — no CNAME;
-  the real URL is `flight-framework.github.io/flight-school/`, and the
+  the real URL is `alula-framework.github.io/fledge/`, and the
   actual SvelteKit site has no fixed production domain yet either) —
   now links to the GitHub repository instead of a guessed-at domain.
   (3) **The serious one, found by a user, not by this process**: the
   third attempt was declared successful after only checking HTTP status
   codes on the index and one target page. Every DocC page was actually
   rendering blank — the `--hosting-base-path` baked into DocC's output
-  (`flight-school/reference/flight/$target`) didn't match where the
-  artifact is really served (`flight-school/flight/$target`, no
+  (`fledge/reference/alula/$target`) didn't match where the
+  artifact is really served (`fledge/alula/$target`, no
   `/reference/`), so every JS/CSS asset the page's client-rendered shell
   needs 404'd and `<div id="app">` never filled in. The workflow's own
   "Smoke-check hosting base path" step existed specifically to catch
@@ -221,7 +231,7 @@ Per `PLAN.md` §10, M1 is "Snippet tier + Hangar/Changeset curriculum" —
 the runner pool and channel-streamed output. Both halves of PLAN §4's
 architecture now exist and have been verified talking to each other for
 real: `runner/` (the sandboxed workspace + supervisor) below, and
-`server/` (the sessions/execution Flight app that leases from the pool
+`server/` (the sessions/execution Alula app that leases from the pool
 and streams output to the browser over Channels) in the section after
 it. `site/` still isn't wired to any of this yet — nothing here is
 reachable by a learner through the actual deployed site, only through
@@ -230,7 +240,7 @@ direct HTTP/WebSocket calls to `server`, which is what verification used.
 **What exists**: `runner/workspace` (a plain SwiftPM package — one
 dependency, Hangar `0.2.1` — whose `exercise` executable target is the
 one file a session is ever allowed to write to,
-`Sources/exercise/main.swift`), `runner/supervisor` (a Flight app — yes,
+`Sources/exercise/main.swift`), `runner/supervisor` (an Alula app — yes,
 this project dogfoods the framework it teaches even here — exposing
 `/lease`, `/write`, `/run` (SSE-streamed build/run output), `/reset`,
 `/release`), and `runner/Dockerfile` + `runner/entrypoint.sh` packaging
@@ -343,27 +353,27 @@ worth doing before trusting this at real learner-facing scale.
 
 ## M1 continued — the server
 
-The sessions/execution half of PLAN §4: `server/` is a Flight app —
+The sessions/execution half of PLAN §4: `server/` is an Alula app —
 `SessionBroker` (an actor holding pure in-memory pool/lease state: which
 runners are free, which session holds which lease, when it was last
 touched), `RunnerClient` (an `AsyncHTTPClient`-based caller of one
 runner's `/lease`/`/write`/`/run`/`/reset`/`/release`, including a
-from-scratch SSE parser for `/run`'s streamed output — nothing in Flight
+from-scratch SSE parser for `/run`'s streamed output — nothing in Alula
 consumes an SSE stream, only produces one, so this had to be written
 against `ServerSentEvent.encoded`'s wire format directly), `SessionService`
 (composes the two and fans `/run`'s output out to a `session:<id>`
 Channel topic via `ChannelBroadcaster`, resolved with
 `context.resolve(ChannelBroadcaster.self)` exactly the way
-`benchmark/flight-app`'s `IssueController` already does it), a
+`benchmark/alula-app`'s `IssueController` already does it), a
 `SessionController` (`@Controller`, `/api/session`, `/api/session/write`,
 `/api/session/run`, `/api/session/reset`), a `SessionChannel` (join gate
 for `session:*` — rejects a socket unless the topic's session id is
 currently live), and `SessionReaperService` (the idle-TTL/hard-cap
 reaper PLAN §4 calls for, structured the same way
-`FlightPresenceModule`/`PresenceService` are: a `final class` module that
+`AlulaPresenceModule`/`PresenceService` are: a `final class` module that
 stashes the post-freeze container so its `Service` can resolve from it —
 the shape any service-owning module needs, confirmed by reading that
-real precedent rather than guessing at the `FlightModule.service` seam).
+real precedent rather than guessing at the `AlulaModule.service` seam).
 
 **Verified end to end against a real runner container**, not just
 compiled: created a session, wrote a real `@Entity`-bearing Hangar
@@ -375,7 +385,7 @@ hand-written `Order.where { $0.total > 100 }` snippet, streamed live,
 not polled. Also verified: reusing an existing session id is idempotent;
 `/write`/`/run`/`/reset` without a session id is rejected (400); joining
 a channel topic for an unknown session id is rejected
-(`flight:error`/`forbidden`); a failed runner lease correctly returns
+(`alula:error`/`forbidden`); a failed runner lease correctly returns
 the claimed runner to the free pool rather than losing it
 (`SessionBroker.unclaim`); and, with the idle timeout and reap interval
 turned down to a few seconds for the test, the reaper actually expires
@@ -387,19 +397,19 @@ the runner for a brand new session to claim immediately after.
 the first has since been fixed, not just worked around:**
 
 1. **PLAN §4's "anonymous id (cookie)" wasn't reachable at first.**
-   `Cookie`/`Set-Cookie` support landed on flight's `main`
+   `Cookie`/`Set-Cookie` support landed on alula's `main`
    (`8997a5a`, "Add cookie support") *after* the `v0.8.0` tag this
    package resolved against at the time — checked directly (`git log
-   v0.8.0..HEAD` in the flight checkout, plus confirming that checkout
+   v0.8.0..HEAD` in the alula checkout, plus confirming that checkout
    had *other* uncommitted changes sitting in its working tree, which is
    exactly the "don't read a dependency's mid-edit working tree" trap
    the tutorial-content work below already learned once). Landed
    temporarily on an `X-Session-Id` header instead, then actually fixed
-   rather than left as a workaround: cut `flight` `v0.9.0` at that
+   rather than left as a workaround: cut `alula` `v0.9.0` at that
    commit, which surfaced two more things worth knowing before trusting
    a release —
-   - `FLIGHT_STRICT_WARNINGS=1 swift build --enable-all-traits` (CI's own
-     build step) had been broken on flight's `main` since **before**
+   - `ALULA_STRICT_WARNINGS=1 swift build --enable-all-traits` (CI's own
+     build step) had been broken on alula's `main` since **before**
      `v0.6.0`, silently, through three tagged releases (`v0.6.0`,
      `v0.7.0`, `v0.8.0`) that all shipped without it ever passing —
      `DiskUploadStore.create(_:)` discarded `createFile`'s result (a
@@ -419,7 +429,7 @@ the first has since been fixed, not just worked around:**
      least `v0.8.0` — confirmed by checking that release's own CI run,
      not assumed. None of the three touch anything this session changed;
      none were chased further, since "fix the cookie issue" didn't scope
-     in a macOS build environment (unavailable here anyway) or flight's
+     in a macOS build environment (unavailable here anyway) or alula's
      doc-generation pipeline. Flagged, not fixed.
    `server/Package.swift` now pins `from: "0.9.0"`, `SessionController`
    uses real `Set-Cookie`/`request.cookie(_:)`, and the full lease →
@@ -632,7 +642,7 @@ site-wide domain consistency is ever explicitly wanted.
 `content/`'s debugSQL claims if the benchmark schema ever changes). A new
 `postgres` service in `docker-compose.yml` loads them via the official
 image's `docker-entrypoint-initdb.d` convention into a database named
-`flight_school_seed`, on `runner-internal` only (no `ports:`/`expose:` —
+`fledge_seed`, on `runner-internal` only (no `ports:`/`expose:` —
 only `server` and the runners will ever need to reach it).
 
 **Verified against a real container, not assumed from the compose
@@ -643,7 +653,7 @@ claim), queried real distributions (30 users, 200 issues, 40 with a
 `NULL assignee_id` — the real nullable-FK case `05-associations` and
 `hangar-preloading.md` now teach against), and — the actual mechanism
 M2's session provisioning depends on — confirmed `CREATE DATABASE s_test1
-TEMPLATE flight_school_seed` clones instantly with all 200 rows, a
+TEMPLATE fledge_seed` clones instantly with all 200 rows, a
 `DELETE` inside the clone doesn't touch the template (confirmed the
 template still has its row afterward), and `DROP DATABASE` cleans up
 completely. `docker compose config` also validates the full service
@@ -681,7 +691,7 @@ bookkeeping for a savings that was never shown to matter.
 **The plumbing, end to end**: `server`'s new `PostgresAdmin` (backed by a
 `PostgresNIO.PostgresClient` connected to Postgres's own always-present
 `postgres` maintenance database, never the template) does
-`CREATE DATABASE s_<sessionID> TEMPLATE flight_school_seed` in
+`CREATE DATABASE s_<sessionID> TEMPLATE fledge_seed` in
 `SessionService.getOrCreateSession`, before the runner is even leased.
 The resulting connection string travels to the runner over a new
 `X-Database-Url` header on `/lease` (a header, not a JSON body, so
@@ -717,8 +727,8 @@ reading the code back**:
   way: `container.resolve(PostgresClient.self)` called directly in the
   getter, which runs in the *same* pre-freeze pass as `configure()` —
   confirmed directly by the crash trace pointing at
-  `_flightAssemble`'s per-module loop, before its later `freeze()` call.
-  `FlightPresenceModule`'s `PresenceService` and this app's own
+  `_alulaAssemble`'s per-module loop, before its later `freeze()` call.
+  `AlulaPresenceModule`'s `PresenceService` and this app's own
   `SessionReaperService` both already avoid this by storing the
   `Container` and resolving lazily *inside* `run()` (called much later,
   once the app's `ServiceGroup` actually starts services) — the fix was
@@ -771,10 +781,10 @@ exercise to migrate and wire.
 issues/projects/users domain and wired to the `db` tier — `06-preloading`'s
 pattern (migrate, write a real starting snippet, verify against real
 runner+server+Postgres, fix what breaks) repeated six more times.
-`11-flight-data` needed no domain migration at all — its code blocks were
+`11-alula-data` needed no domain migration at all — its code blocks were
 already generic (`users`/`PricingService`/`Price`), not tied to the old
 `Post`/`Comment`/`Author` domain, and it stays prose-only by nature (what
-`flight-data` builds on top of Hangar, not a snippet to run).
+`alula-data` builds on top of Hangar, not a snippet to run).
 
 **Four real things found only by actually running the snippets, not by
 reading them back:**
@@ -896,13 +906,13 @@ here, not estimated:
   be retargeted off a database the `skeleton` template doesn't have.
   `08-middleware`'s payoff was invisible until it was redesigned around a
   response header, because app logs don't stream anywhere.
-  `09-configuration` can only be half-taught while `flight.yaml` stays
+  `09-configuration` can only be half-taught while `alula.yaml` stays
   unwritable — and it has to stay unwritable, since it carries the host
   binding the preview depends on. `07-static-assets` was blocked outright
   by prefix-stripping, which needs per-runner hostnames to fix.
 - **The payoff was thinnest exactly where the cost was highest.** Part 1's
-  interactive value is watching "hello, flight" appear in an iframe;
-  `flight new` gets a learner there in two minutes on their own machine.
+  interactive value is watching "hello, alula" appear in an iframe;
+  `alula new` gets a learner there in two minutes on their own machine.
 
 Contrast the snippet/db tier, which stays: one file, ~1.8s rebuilds, no
 proxy, no ports, no HTML — and `debugSQL` printing real SQL beside the
@@ -922,15 +932,15 @@ VM. Same idea, completely different bill.
 - **The bug-catching, which is where the value actually was.** Running the
   content caught a `ResponseEncodable` error that had been wrong in
   published prose since M0, an invisible-payoff exercise, and a genuine
-  upstream bug in flight-cli's `basics` template (fixed there, `be90caa`).
+  upstream bug in alula-cli's `basics` template (fixed there, `be90caa`).
   **None of that needed a live runner pool** — and it is now
   `scripts/check-exercises.py` plus `.github/workflows/exercises.yml`,
   which is PLAN §6's promise ("builds and runs every `app-b` solution, and
   executes every snippet solution") actually delivered.
 
   All 18 exercises pass: 11 snippets built *and run* against real seeded
-  Postgres, 7 `app-b` solutions built against a real `flight new` template
-  checked out from flight-cli rather than vendored, so the CLI stays the
+  Postgres, 7 `app-b` solutions built against a real `alula new` template
+  checked out from alula-cli rather than vendored, so the CLI stays the
   single source of truth for project shape.
 
   It was verified the only way a test suite can honestly be verified — by
@@ -967,7 +977,7 @@ be the right *primary* mode for anything bigger than a snippet.
 ## Parts 3 and 4 verified — five more bugs in published prose
 
 Every exercise in Parts 3 and 4 that carries user-written Swift now has an
-`app-b` compiled against the real `flight-cli` template, so CI covers it.
+`app-b` compiled against the real `alula-cli` template, so CI covers it.
 This was the largest remaining risk: 16 exercises of the hardest material
 — auth, uploads, SSE, scheduling, channels, presence, the capstone — whose
 code had never once been through a compiler.
@@ -982,10 +992,10 @@ It found five things, all of which had shipped:
   `@Inject` property cannot be one. The error names `Sendable` at the
   macro rather than the property, which makes it read as stranger than it
   is. A `struct` is the shape the templates use everywhere.
-- **`Channel` is ambiguous in the capstone.** `FlightDataPostgres`
+- **`Channel` is ambiguous in the capstone.** `AlulaDataPostgres`
   transitively re-exports NIO, and `NIOCore.Channel` is a socket, not a
   topic — so a file importing both halves must write
-  `FlightChannels.Channel`. Nothing earlier hits this, because the capstone
+  `AlulaChannels.Channel`. Nothing earlier hits this, because the capstone
   is the first exercise to combine realtime with data, which is its whole
   purpose. Its presence payload is also `[String: String]`, so wrapping a
   value in `.string(…)` is a type error.
@@ -1003,7 +1013,7 @@ Where an article quotes a framework declaration rather than user code, the
 check was different — compare it to the real source. `PresenceEntry`,
 `PubSub`, `DistributedPubSubAdapter`, `onTopicTerminated`,
 `heartbeatCheckInterval`, `heartbeatTimeout`, `gracefulShutdownSignals` and
-`FlightPubSubValkeyModule` all match what is printed. `05-teardown`,
+`AlulaPubSubValkeyModule` all match what is printed. `05-teardown`,
 `07-clustering`, `09-deployment` and `06-actuator` stay prose because that
 is all they contain.
 
@@ -1016,15 +1026,15 @@ a pass while never being compiled.
 
 **19 `app-b` solutions and 11 snippets: 30 of 41 exercises now verified.**
 The remainder are prose by nature (Part 0's four, `06-actuator`,
-`11-flight-data`, and the three above) plus `07-static-assets` and the
+`11-alula-data`, and the three above) plus `07-static-assets` and the
 still-unwritten `06-cookies`.
 
 ## 41 of 41 written; a framework bug found by the last one
 
 `06-cookies` — the exercise deliberately left unwritten since M0 because
-cookie support was unreleased — is written and verified. flight `v0.9.0`
+cookie support was unreleased — is written and verified. alula `v0.9.0`
 carries it (`8997a5a`), and the templates' `from: "0.7.0"` resolves there,
-so a reader's own `flight new` can reach it now. The article covers the
+so a reader's own `alula new` can reach it now. The article covers the
 whole progressive-enhancement login loop: `Response.seeOther` for the
 POST-redirect-GET, `settingCookie`, `request.cookie`, and clearing by
 overwriting with `Max-Age=0`. Verified by running it — logging in returns
@@ -1038,7 +1048,7 @@ plain HTTP is silently never set, which looks exactly like broken login
 logic on a loopback dev server.
 
 `07-static-assets` stays prose for now, and the reason is a **real bug in
-flight, found by trying to compile the article's own code**:
+alula, found by trying to compile the article's own code**:
 `container.pipeline("assets") { }` with an empty block did not declare the
 lane, so the asset mount naming it failed at bootstrap — with an error
 that itself says "an empty block is legal". `pipeline(_:_:)` registered
@@ -1048,7 +1058,7 @@ left no trace. The empty lane is not a curiosity here: it is precisely
 what an asset mount wants, so a request for `app.js` pays for none of the
 auth and transaction binding the default lane carries.
 
-Fixed upstream in flight (`bd300c4`): `pipeline(_:_:)` now registers a
+Fixed upstream in alula (`bd300c4`): `pipeline(_:_:)` now registers a
 marker per named lane, filtered out of `collectMiddleware(lane:)` so a
 request through an empty lane still runs nothing. The first attempt broke
 the existing two-modules-concatenate test — a fixed marker qualifier made
@@ -1057,7 +1067,7 @@ carries a per-call token. A regression test asserts the route serves and
 the lane composes to an empty chain; it was confirmed to fail without the
 fix, with exactly the original error. Full suite green at 970 tests.
 
-flight `v0.9.1` was cut carrying that fix, and a fresh `flight new --tier
+alula `v0.9.1` was cut carrying that fix, and a fresh `alula new --tier
 skeleton` resolves to it, so `07-static-assets` is now verified too —
 with the empty lane the article actually teaches, not a workaround.
 
@@ -1091,7 +1101,7 @@ starting code (`03-predicates.md` / `03-predicates.swift`). Not
 no project structure around it, so a `meta.json` naming an "editable
 file allowlist" and an `app-a` *directory* would be describing a project
 that doesn't exist for this tier. `app-a`/`app-b`'s real shape — a
-project-structured directory diffed against a `flight new` template —
+project-structured directory diffed against a `alula new` template —
 still doesn't exist anywhere, because nothing has reached the `app`/
 `app+db` tiers yet, where a learner actually edits files inside a
 project. Revisit when that tier is built; don't assume the sibling-file
@@ -1107,7 +1117,7 @@ shape generalizes to it.
   `app`/`app+db` execution tiers (PLAN §3) — the `db` tier's own tutorial
   content (Part 2, `01-entities` through `12-diagnostics`) is now fully
   migrated and wired; `app`/`app+db` (a learner editing files in a full
-  Flight application, not one snippet file) are a different, larger
+  Alula application, not one snippet file) are a different, larger
   architecture problem, genuinely M3+, not something left unfinished here.
 - `03-intermediate/01-repo-wiring` — still references the old
   `Post`/`Comment`/`Author` domain and isn't wired to the `db` tier;
@@ -1131,15 +1141,15 @@ actually checking a claim against source rather than trusting the first
 draft. The tutorial curriculum itself is now fully written (see above),
 so the immediate next work here is more likely to be M1+ (the execution
 tiers) than new tutorial content — but if a gap does turn up (a new
-flight/Hangar/flight-data release unblocking `06-cookies`, a curriculum
+alula/Hangar/alula-data release unblocking `06-cookies`, a curriculum
 correction, a new guide), the same pattern that got the rest of this
 content right still applies: don't assume a config/CLI flag/API shape
 without grepping the real source first — this plan has already been
 wrong twice in ways that only source-checking caught, and the "real bugs
 found upstream" list above has grown to seven instances since. Note that
-`flight-cli` itself carries no tags at all (`git tag --list` is empty
+`alula-cli` itself carries no tags at all (`git tag --list` is empty
 there) — there's no release boundary to check its templates/`TUTORIAL.md`
-against the way there is for `flight`/Hangar/`flight-data`; treat its
+against the way there is for `alula`/Hangar/`alula-data`; treat its
 `main` as the only version that exists.
 
 Parts 3 and 4's verification used parallel research agents, one per

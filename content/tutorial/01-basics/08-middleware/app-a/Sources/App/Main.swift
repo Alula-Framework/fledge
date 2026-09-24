@@ -1,7 +1,7 @@
-import FlightActuator
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaActuator
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 
 /// Your application's module: one place that says what this app is made of.
 ///
@@ -9,10 +9,10 @@ import FlightWeb
 /// `@Controller`, `@Service`, `@Repository`, and `@Component` the registration
 /// plugin scans — is wired by the generated composition root, so adding a
 /// controller does not mean editing this file.
-struct AppModule: FlightModule {
+struct AppModule: AlulaModule {
     /// Modules that must be built before this one. The list is a DAG resolved
     /// once at bootstrap, so ordering is checked rather than hoped for.
-    static var dependencies: [any FlightModule.Type] { [] }
+    static var dependencies: [any AlulaModule.Type] { [] }
 }
 
 @main
@@ -23,22 +23,22 @@ struct Main {
         // the server start accepting requests. Nothing serves traffic against
         // a half-built graph.
         //
-        // `Flight.run` rather than `main() async throws`: an error escaping
+        // `Alula.run` rather than `main() async throws`: an error escaping
         // `main` is reported by the Swift runtime as "Fatal error: Error
         // raised at top level" followed by a register dump and a backtrace —
         // which is what a new project sees when Postgres is not running or the
         // port is already bound. `run` prints the reason and exits 1.
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 AppModule.self,
                 ActuatorModule.self,
             ],
             // Built by the plugin, in dependency order, from the list above:
             // `modules:` says which subsystems this application includes, and
             // this is how they are constructed.
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }

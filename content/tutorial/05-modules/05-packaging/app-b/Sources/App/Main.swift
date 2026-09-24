@@ -1,20 +1,20 @@
-import FlightActuator
-import FlightCore
-import FlightTransport
-import FlightWeb
+import AlulaActuator
+import AlulaCore
+import AlulaTransport
+import AlulaWeb
 import GreetKit
 
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] { [] }
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
 }
 
 @main
 struct Main {
     static func main() async {
-        await Flight.run(
+        await Alula.run(
             configuration: try Configuration.load(),
             modules: [
-                FlightWebModule<FlightTransport>.self,
+                AlulaWebModule<AlulaTransport>.self,
                 // The installed module, listed by name. The composition root
                 // finds it in the GreetKit package, builds it, and folds in
                 // the routes it brings.
@@ -22,7 +22,7 @@ struct Main {
                 AppModule.self,
                 ActuatorModule.self,
             ],
-            composedBy: flightComposeModules
+            composedBy: alulaComposeModules
         )
     }
 }

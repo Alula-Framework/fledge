@@ -53,7 +53,7 @@ RUN mkdir -p /workspace-pristine/Sources/exercise && \
     cp Sources/exercise/main.swift /workspace-pristine/Sources/exercise/main.swift
 
 COPY --from=supervisor-build /supervisor-src/.build/release/Supervisor /app/supervisor
-COPY supervisor/flight.yaml /app/flight.yaml
+COPY supervisor/alula.yaml /app/alula.yaml
 COPY entrypoint.sh /app/entrypoint.sh
 
 # /workspace itself is created empty here — either the tmpfs mount takes

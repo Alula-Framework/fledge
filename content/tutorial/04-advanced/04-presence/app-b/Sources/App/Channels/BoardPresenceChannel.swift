@@ -1,7 +1,7 @@
-import FlightChannels
-import FlightChannelsProtocol
-import FlightCore
-import FlightPresence
+import AlulaChannels
+import AlulaChannelsProtocol
+import AlulaCore
+import AlulaPresence
 import Foundation
 
 /// The join half of a presence-aware channel: track, then send state.

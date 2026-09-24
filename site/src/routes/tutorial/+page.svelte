@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Tutorial — Flight School</title>
+	<title>Tutorial — Fledge</title>
 </svelte:head>
 
 <h1>The tutorial</h1>

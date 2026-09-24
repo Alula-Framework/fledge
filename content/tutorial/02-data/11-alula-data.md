@@ -1,17 +1,17 @@
 ---
-title: "flight-data: what Flight builds on top of Hangar"
+title: "alula-data: what Alula builds on top of Hangar"
 description: Migrations, the DataSource/cache seam, and the Valkey drivers.
 order: 11
 ---
 
 Everything so far has been Hangar directly — a `Repo`, a `Configuration`,
-a live connection, assembled by hand. A real Flight app instead names a
+a live connection, assembled by hand. A real Alula app instead names a
 whole store as a module, and lets the composition root wire it — this is the
 database module the bootstrap exercise promised you'd meet in Part 2:
 
 ```swift
-struct AppModule: FlightModule {
-    static var dependencies: [any FlightModule.Type] {
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] {
         [PostgresDataModule<PrimaryDataSource>.self]
     }
 }
@@ -22,7 +22,7 @@ struct AppModule: FlightModule {
 `PostgresDataSource` in its own initializer, so a bad URL or pool size fails
 at *composition* — startup — rather than at the first query. `PostgresDataSource`
 is Hangar underneath: everything from `@Entity` through bulk writes is the
-same API, reached through a pool Flight now owns the lifecycle of.
+same API, reached through a pool Alula now owns the lifecycle of.
 
 The module *provides* that pool, and its liveness probe, as values. The
 composition root reads them and wires the pool by type into whatever
@@ -93,13 +93,13 @@ Both the data source and the cache are traits away from a distributed
 backend, and switching is a module choice, never a code change:
 
 ```swift
-.package(url: "https://github.com/Flight-Framework/flight-data.git",
-         from: "0.7.0", traits: ["Postgres", "Valkey"])
+.package(url: "https://github.com/Alula-Framework/alula-data.git",
+         from: "0.11.0", traits: ["Postgres", "Valkey"])
 ```
 
 ```swift
 modules: [
-    FlightCacheValkeyModule.self,   // was FlightCacheModule.self
+    AlulaCacheValkeyModule.self,   // was AlulaCacheModule.self
     // ...
 ]
 ```
@@ -107,7 +107,7 @@ modules: [
 `PricingService` above doesn't change at all — `@Cacheable` talks to
 whichever cache module the app composed. The trait matters at the
 `Package.swift` level for a different reason than convenience: a plain
-`FlightCache` consumer that never asks for the `Valkey` trait never
+`AlulaCache` consumer that never asks for the `Valkey` trait never
 resolves `valkey-swift` or `NIOSSL` at all, so an application that only
 ever uses the in-memory cache pays nothing — not even at dependency
 resolution — for a driver it never named.

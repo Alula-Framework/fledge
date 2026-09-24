@@ -1,6 +1,6 @@
 name: Reference docs → GitHub Pages
 
-# PLAN §8a: flight/flight-data/hangar/swift-changeset's own CI already
+# PLAN §8a: alula/alula-data/hangar/swift-changeset's own CI already
 # *generates* DocC with --warnings-as-errors (a verification gate), but
 # nothing publishes it anywhere today. This workflow is the missing half,
 # built here rather than in those repos so it doesn't touch their CI on
@@ -20,14 +20,14 @@ name: Reference docs → GitHub Pages
 on:
   workflow_dispatch:
     inputs:
-      flight_ref:
-        description: 'flight tag/branch to document'
+      alula_ref:
+        description: 'alula tag/branch to document'
         default: 'main'
       hangar_ref:
         description: 'hangar tag/branch to document'
         default: 'main'
-      flight_data_ref:
-        description: 'flight-data tag/branch to document'
+      alula_data_ref:
+        description: 'alula-data tag/branch to document'
         default: 'main'
       swift_changeset_ref:
         description: 'swift-changeset tag/branch to document'
@@ -60,34 +60,34 @@ jobs:
       # every step that only touches the three cloned repos (the DocC
       # generation loops) worked fine regardless, right up until the one
       # step that needed this repo's own `scripts/`.
-      - name: Checkout flight-school
+      - name: Checkout fledge
         uses: actions/checkout@v4
 
-      - name: Checkout flight
+      - name: Checkout alula
         uses: actions/checkout@v4
         with:
-          repository: Flight-Framework/flight
-          ref: ${{ inputs.flight_ref || 'main' }}
-          path: flight
+          repository: Alula-Framework/alula
+          ref: ${{ inputs.alula_ref || 'main' }}
+          path: alula
 
       - name: Checkout hangar
         uses: actions/checkout@v4
         with:
-          repository: Flight-Framework/hangar
+          repository: Alula-Framework/hangar
           ref: ${{ inputs.hangar_ref || 'main' }}
           path: hangar
 
-      - name: Checkout flight-data
+      - name: Checkout alula-data
         uses: actions/checkout@v4
         with:
-          repository: Flight-Framework/flight-data
-          ref: ${{ inputs.flight_data_ref || 'main' }}
-          path: flight-data
+          repository: Alula-Framework/alula-data
+          ref: ${{ inputs.alula_data_ref || 'main' }}
+          path: alula-data
 
       - name: Checkout swift-changeset
         uses: actions/checkout@v4
         with:
-          repository: Flight-Framework/swift-changeset
+          repository: Alula-Framework/swift-changeset
           ref: ${{ inputs.swift_changeset_ref || 'main' }}
           path: swift-changeset
 
@@ -95,26 +95,26 @@ jobs:
       # served, or every relative asset link in the generated pages 404s —
       # the single most common DocC-on-Pages mistake, and worth this
       # explicit variable rather than a literal repeated per invocation.
-      - name: Generate flight docs
-        working-directory: flight
+      - name: Generate alula docs
+        working-directory: alula
         env:
-          FLIGHT_BUILD_DOCS: '1'
+          ALULA_BUILD_DOCS: '1'
         run: |
-          mkdir -p ../site-out/flight
-          for target in FlightCore FlightConfig FlightConfigCore FlightWeb \
-                        FlightChannels FlightChannelsProtocol \
-                        FlightChannelsClient FlightChannelsTesting \
-                        FlightPubSub FlightPubSubTesting FlightPresence \
-                        FlightPresenceProtocol FlightPresenceClient \
-                        FlightActuator FlightSecurityCore FlightWebTesting \
-                        FlightTransport FlightScheduler; do
-            echo "::group::flight/$target"
+          mkdir -p ../site-out/alula
+          for target in AlulaCore AlulaConfig AlulaConfigCore AlulaWeb \
+                        AlulaChannels AlulaChannelsProtocol \
+                        AlulaChannelsClient AlulaChannelsTesting \
+                        AlulaPubSub AlulaPubSubTesting AlulaPresence \
+                        AlulaPresenceProtocol AlulaPresenceClient \
+                        AlulaActuator AlulaSecurityCore AlulaWebTesting \
+                        AlulaTransport AlulaScheduler; do
+            echo "::group::alula/$target"
             swift package --enable-all-traits \
-              --allow-writing-to-directory "../site-out/flight/$target" \
+              --allow-writing-to-directory "../site-out/alula/$target" \
               generate-documentation --target "$target" \
               --transform-for-static-hosting \
-              --hosting-base-path "flight-school/flight/$target" \
-              --output-path "../site-out/flight/$target"
+              --hosting-base-path "fledge/alula/$target" \
+              --output-path "../site-out/alula/$target"
             echo "::endgroup::"
           done
 
@@ -130,29 +130,29 @@ jobs:
               --allow-writing-to-directory "../site-out/hangar/$target" \
               generate-documentation --target "$target" \
               --transform-for-static-hosting \
-              --hosting-base-path "flight-school/hangar/$target" \
+              --hosting-base-path "fledge/hangar/$target" \
               --output-path "../site-out/hangar/$target"
             echo "::endgroup::"
           done
 
-      - name: Generate flight-data docs
-        working-directory: flight-data
+      - name: Generate alula-data docs
+        working-directory: alula-data
         env:
-          FLIGHT_BUILD_DOCS: '1'
+          ALULA_BUILD_DOCS: '1'
         run: |
-          mkdir -p ../site-out/flight-data
-          for target in FlightCache FlightCacheTesting FlightDataCore \
-                        FlightDataTesting FlightMigrateCore \
-                        FlightDataPostgres FlightMigrate \
-                        FlightSchedulerPostgres FlightCacheValkey \
-                        FlightDataValkey FlightPubSubValkey; do
-            echo "::group::flight-data/$target"
+          mkdir -p ../site-out/alula-data
+          for target in AlulaCache AlulaCacheTesting AlulaDataCore \
+                        AlulaDataTesting AlulaMigrateCore \
+                        AlulaDataPostgres AlulaMigrate \
+                        AlulaSchedulerPostgres AlulaCacheValkey \
+                        AlulaDataValkey AlulaPubSubValkey; do
+            echo "::group::alula-data/$target"
             swift package --enable-all-traits \
-              --allow-writing-to-directory "../site-out/flight-data/$target" \
+              --allow-writing-to-directory "../site-out/alula-data/$target" \
               generate-documentation --target "$target" \
               --transform-for-static-hosting \
-              --hosting-base-path "flight-school/flight-data/$target" \
-              --output-path "../site-out/flight-data/$target"
+              --hosting-base-path "fledge/alula-data/$target" \
+              --output-path "../site-out/alula-data/$target"
             echo "::endgroup::"
           done
 
@@ -168,7 +168,7 @@ jobs:
               --allow-writing-to-directory "../site-out/swift-changeset/$target" \
               generate-documentation --target "$target" \
               --transform-for-static-hosting \
-              --hosting-base-path "flight-school/swift-changeset/$target" \
+              --hosting-base-path "fledge/swift-changeset/$target" \
               --output-path "../site-out/swift-changeset/$target"
             echo "::endgroup::"
           done
@@ -199,14 +199,14 @@ jobs:
           # or not, so that check passed even while every page was blank
           # in production. This instead extracts the baked-in baseUrl and
           # confirms a directory actually exists where it points.
-          BASE_URL=$(grep -o 'var baseUrl = "[^"]*"' site-out/flight/FlightCore/documentation/flightcore/index.html | sed 's/var baseUrl = "//; s/"$//')
+          BASE_URL=$(grep -o 'var baseUrl = "[^"]*"' site-out/alula/AlulaCore/documentation/alulacore/index.html | sed 's/var baseUrl = "//; s/"$//')
           # Strip the GitHub Pages project-site prefix (this repo's own
           # name) — real once deployed, but not part of the artifact
           # itself, which becomes Pages' served root.
-          RELATIVE=${BASE_URL#/flight-school/}
+          RELATIVE=${BASE_URL#/fledge/}
           RELATIVE=${RELATIVE%/}
           if [ ! -d "site-out/$RELATIVE" ]; then
-            echo "::error::hosting-base-path baked into FlightCore's docs ($BASE_URL) has no matching directory at site-out/$RELATIVE — every asset on every generated page will 404."
+            echo "::error::hosting-base-path baked into AlulaCore's docs ($BASE_URL) has no matching directory at site-out/$RELATIVE — every asset on every generated page will 404."
             exit 1
           fi
           echo "hosting-base-path OK: site-out/$RELATIVE exists, matching baked-in baseUrl $BASE_URL"
