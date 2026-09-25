@@ -58,14 +58,17 @@ Now break it on purpose: change `"app.name"` to `"app.nam"` and rebuild.
 It doesn't start and then fail; it doesn't build at all:
 
 ```
-error: @ConfigValue key 'app.nam' in ConfigController is missing from
-alula.yaml and has no default. Add the key to alula.yaml (the base
-layer — a ${VAR} placeholder is fine for env-supplied values), or
-provide default:.
+Sources/App/Controllers/ConfigController.swift:6:1: error: [ALU-CONFIG-5004] configuration key 'app.nam' is not in alula.yaml, and ConfigController has no default for it
+    Without the key or a default, the application would fail at startup.
+    help: add 'app.nam' to alula.yaml — a ${VAR} placeholder is fine for a value the environment supplies —
+          or give the @ConfigValue a `default:`.
+    docs: https://github.com/Alula-Framework/alula/blob/main/Diagnostics/ALU-CONFIG-5004.md
 ```
 
 That's the build plugin, not the runtime — a misspelled config key is a
-compile error that names the key and both ways to fix it.
+compile error that names the key and both ways to fix it. The code in
+brackets is stable: `alula explain ALU-CONFIG-5004` prints its page, and
+[When the Build Says No](/guides/diagnostics) explains how to read these.
 
 ## A related group: `@Settings`
 
