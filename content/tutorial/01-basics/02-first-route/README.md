@@ -17,8 +17,8 @@ struct GreetingController {
 }
 ```
 
-Create this as `Sources/App/Controllers/GreetingController.swift`, press
-Run, and open the preview:
+Create this as `Sources/MyService/Controllers/GreetingController.swift` in
+your project, `swift run MyService`, and ask for it:
 
 ```bash
 curl http://127.0.0.1:8080/hello
@@ -72,6 +72,7 @@ knowing now: a handler returning `Void` answers `204`, and one returning a
 
 Every handler method takes one as its first parameter (Alula resolves it
 for you — it's never something you construct). It's your access point for
-everything about the current request: path parameters, resolving
-container components scoped to this request, and the logger. The next two
-exercises are both about what you can pull out of it.
+everything about the current request: the request itself, its path
+parameters, and the logger. What a handler *depends on* — a service, a
+repository — isn't on it: those are `@Inject` properties of the controller,
+built once. The next two exercises are about what a request brings with it.

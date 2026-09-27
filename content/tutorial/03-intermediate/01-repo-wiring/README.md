@@ -15,11 +15,8 @@ struct IssueController {
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")
-    func show(_ context: RequestContext) async throws -> Issue {
-        guard let idText = context.pathParam("id"), let id = UUID(uuidString: idText) else {
-            throw HTTPError(.badRequest, "malformed id")
-        }
-        return try await pool.withRepo { repo in
+    func show(_ context: RequestContext, id: UUID) async throws -> Issue {
+        try await pool.withRepo { repo in
             guard let issue = try await repo.one(Issue.where { $0.id == id }) else {
                 throw HTTPError(.notFound, "no such issue")
             }
@@ -31,7 +28,9 @@ struct IssueController {
 
 This is the same `Issue` you queried directly in Part 2 — the entity and the
 predicate haven't changed at all, only where the `Repo` comes from. Inside the
-`withRepo` closure it's exactly the `repo` you already know.
+`withRepo` closure it's exactly the `repo` you already know. (`id: UUID` is
+Part 1's typed path parameter: `/issues/not-a-uuid` is a `400` before the
+pool is ever touched.)
 
 ## Why the pool, and not a `Repo`, is what you hold
 
@@ -47,9 +46,16 @@ Instead the controller holds the `PostgresDataSource` — the pool — and
 connection to the pool when the closure ends. The borrow is exactly as wide as
 the closure: it starts where you can see it and ends when the closure returns.
 
-`PostgresDataModule<PrimaryDataSource>` provides the pool; the
-`// alula:hand-registered` marker acknowledges that `PostgresDataSource` comes
-from that module rather than being scanned as a component in this target.
+`PostgresDataModule<PrimaryDataSource>` provides the pool, and the composition
+root wires it by type. The `// alula:hand-registered` comment records that
+`PostgresDataSource` comes from that module rather than from a scanned
+annotation; the build doesn't need it — were no module providing the pool,
+the build would fail with `ALU-DI-1001`, comment or not.
+
+The lease is also where an outage shows up, and it shows up as what it is. A
+database that can't be reached, or a pool with no free connection, throws an
+error Alula answers as `503 Service Unavailable` with a `Retry-After`, not an
+opaque `500` — so a client, or a load balancer, knows to try again.
 
 ## One lease is one connection — so group what must stay together
 
@@ -67,8 +73,8 @@ try await pool.withRepo { repo in
 
 // Two leases: the audit row could be written on a different connection, so
 // these are NOT one atomic unit even though they look adjacent.
-try await pool.withRepo { repo in try await repo.insert(newIssue) }
-try await pool.withRepo { repo in try await repo.insert(auditEntry) }
+let issue = try await pool.withRepo { repo in try await repo.insert(newIssue) }
+_ = try await pool.withRepo { repo in try await repo.insert(auditEntry(for: issue)) }
 ```
 
 When those statements must also be atomic, open a transaction on that one

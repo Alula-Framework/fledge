@@ -1,49 +1,64 @@
 ---
 title: The actuator
-description: Health, info, and metrics — absent entirely in production unless you ask.
+description: Health probes everywhere; the dashboard only where you ask for it.
 order: 6
 ---
 
-`ActuatorModule.self` in a bootstrap's `modules:` list (§0) registers two
-routes — but which of them actually answer depends on where the app is
-running, and not in the way "absent in production" makes it sound at
-first.
+`ActuatorModule.self` in a bootstrap's `modules:` list (§0) registers the
+actuator's routes — but which of them actually answer depends on where the app
+is running, and not in the way "absent in production" makes it sound at first.
 
 ```
-GET /actuator/health   → {"status": "UP", "modules": 3, "failed": 0, "notStarted": 0}
-GET /actuator          → the full topology: every module's health, every registered bean
+GET /actuator/health         → {"failed":0,"modules":3,"notStarted":0,"status":"UP"}
+GET /actuator/health/live    → is the process wedged?
+GET /actuator/health/ready   → can it take traffic right now?
+GET /actuator                → the dashboard: every module's health, every component, each readiness check
+GET /actuator/info           → which build is running, and since when
 ```
 
-`/actuator/health` is registered **everywhere**, prod included — an
-orchestrator needs something to probe no matter the environment, and it's
-deliberately minimal enough to be safe unauthenticated: an overall status
-and per-module up/down counts, no component list, no type names, no
-failure text. It answers `200` when every module started and stayed up,
-`503` otherwise, so a probe can read the status code alone.
+The three health probes are registered **everywhere** the actuator is
+enabled, prod included — an orchestrator needs something to probe no matter
+the environment, and they're deliberately minimal enough to be safe
+unauthenticated: a status and counts, no component list, no type names, no
+failure text. Each answers `200` when it's `UP` and `503` otherwise, so a probe
+can read the status code alone.
 
-`/actuator` — the full dashboard, every registered bean grouped by layer —
-is the one that's genuinely gone outside development. *That's* the "unless
-you ask" part.
+They answer different questions on purpose. **Liveness** fails only when a
+module's service has thrown — the thing a restart can clear; a module still
+starting doesn't count, or a slow start would be killed into the same slow
+start forever. **Readiness** is strict: a module still starting or failed, a
+dependency check failing (alula-data's pools contribute a ping, so a database
+that stops answering takes the instance out of rotation), or a process that has
+begun shutting down all mean no. Point a load balancer at `ready`, a restart
+policy at `live`.
+
+The dashboard and `/actuator/info` are the ones that are genuinely gone
+outside development. *That's* the "unless you ask" part.
 
 ## An allowlist, not a `.prod` check
 
 The obvious gate — "publish the dashboard unless the environment is
-`.prod`" — has a real failure mode: an unset `ALULA_ENV` resolves to
-`dev`, and any environment name the code doesn't recognize (a typo,
-`production` instead of `prod`) is *also* not `.prod`, so both would have
-published the dashboard by accident. Alula inverts it: only environments
-*known* to be development (`dev`, `development`, `test`, `local`) get the
-dashboard; everything else — `prod`, `staging`, or anything unrecognized —
-gets the health probe and nothing more. Getting an environment name wrong
-now costs you a dashboard, never leaks one.
+`.prod`" — fails open twice. Any environment name the code doesn't recognize
+(a typo, `production` instead of `prod`) is not `.prod`, and neither is a
+deployment that never set `ALULA_ENV` at all. Alula inverts it: only
+environments *named* as development — `ALULA_ENV` set to `dev`,
+`development`, `test` or `local` — get the dashboard. Everything else —
+`prod`, `staging`, anything unrecognized, **and an unset `ALULA_ENV`** — gets
+the health probes and nothing more. Everywhere else in Alula an unset
+`ALULA_ENV` means `dev`; here the question is whether to publish your
+topology, and "nobody set the variable" isn't an answer worth acting on. On
+your own machine, `ALULA_ENV=dev swift run MyService` shows the dashboard.
+
+Getting an environment name wrong now costs you a dashboard, never leaks one.
 
 The one thing that overrides this is a process environment variable, never
-a `alula.yaml` key — the exposure decision has to be made before
-`Configuration` is even resolvable:
+an `alula.yaml` key — writing `actuator: exposure:` into the file does
+nothing:
 
 ```bash
-ALULA_ACTUATOR_EXPOSURE=full ./App     # dashboard, anywhere
-ALULA_ACTUATOR_EXPOSURE=disabled ./App # neither route, anywhere
+ALULA_ACTUATOR_EXPOSURE=full ./MyService          # probes and dashboard, anywhere
+ALULA_ACTUATOR_EXPOSURE=health_only ./MyService   # probes only, even in dev
+ALULA_ACTUATOR_EXPOSURE=disabled ./MyService      # no actuator routes at all
 ```
 
 An unrecognized value throws rather than silently picking a side — a typo
@@ -58,20 +73,30 @@ actuator:
 ```
 
 `actuator.format` is a normal, layered `alula.yaml`/env-var key —
-`.ssr` renders a plain HTML table, no CSS framework, no client-side JS;
-`.json` gives you the same information as a wire format a script can
+`ssr` renders a plain HTML table, no CSS framework, no client-side JS;
+`json` gives you the same information as a wire format a script can
 consume. This is the one Part 0's `alula.yaml` already showed you,
 before there was anything to say about it yet.
 
 ## Putting something in front of it
 
-The dashboard, wherever it's enabled, is unauthenticated by design — this
-module reports what your application is made of, and disclosure is a
-decision the actuator deliberately leaves to you rather than guessing at.
-It doesn't authenticate anything itself, and doesn't pretend to: running
-`full` somewhere reachable by anyone else means putting something in front
-of it yourself — `RequireAuthentication` in the default pipeline, a
-reverse proxy rule scoped to the path, or a network boundary that never
-routes `/actuator` past your own edge at all. Which one fits depends on
-whether anything else on the default lane should stay open to the public;
-the module's only promise is that it won't decide that for you.
+The dashboard is open unless you say otherwise — which is why it isn't
+published outside development by default. Running it with `full` somewhere
+anyone else can reach means requiring someone, and two keys do it:
+
+```yaml
+actuator:
+  dashboard-pipelines: authenticated   # the lanes /actuator runs through
+  dashboard-roles: operator, sre       # any one of these; optional
+```
+
+`dashboard-pipelines` names lanes exactly as a route's `pipelines:` does;
+`authenticated` is the lane `AlulaSecurityModule` declares (see
+[Authentication](/tutorial/03-intermediate/02-authentication)), so a signed-in
+principal is required before the dashboard renders. `dashboard-roles` is the
+same check a `roles:` route makes — `401` with no credential, `403` with the
+wrong one. The health probes are never gated: an orchestrator has no
+credential to present, and a probe that answers `401` restarts a healthy pod.
+Startup warns about `full` outside a development environment until the
+dashboard requires someone. A reverse proxy rule scoped to the path, or a
+network boundary that never routes `/actuator` past your own edge, works too.

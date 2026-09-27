@@ -14,8 +14,7 @@ shares one shape:
 `ref` correlates a client's message with its reply; `ref: null` on
 anything server-initiated. All four keys are always present — one
 well-designed shape, no optional-field dialects to branch on. A `Channel`
-implements three methods against that shape, only one of them required in
-practice:
+implements `join` and `handle` against that shape, and optionally `leave`:
 
 ```swift
 struct RoomChannel: Channel {
@@ -27,7 +26,7 @@ struct RoomChannel: Channel {
     }
 
     func handle(_ event: InboundEvent, socket: Socket) async -> HandleResult {
-        guard event.event == "new_msg", let body = event.payload["body"]?.stringValue else {
+        guard event.event == "new_msg", event.payload["body"]?.stringValue != nil else {
             return .error(reason: "unknown_event")
         }
         await broadcaster.broadcast(topic: event.topic, event: "new_msg", payload: event.payload,
@@ -50,7 +49,28 @@ into this topic" — `join` *is* that check, every time, per topic:
 
 A rejection answers `alula:error` on the wire, correlated to the join's
 own `ref` if the client sent one — the client's `join()` call throws,
-never silently hangs. Membership is established *before* the reply is
+never silently hangs.
+
+A join frame carries a payload like any other message, and a join that needs
+it — a cursor ("I have everything up to 812"), a filter, a client version —
+adopts `PayloadJoinChannel` instead and implements the one `join` that
+receives it:
+
+```swift
+struct TimelineChannel: PayloadJoinChannel {
+    func join(_ topic: String, payload: JSONValue, socket: Socket) async -> JoinResult {
+        let after = payload["after"]?.intValue ?? 0
+        return .ok(initialState: ["events": await timeline(topic, after: after)])
+    }
+    func handle(_ event: InboundEvent, socket: Socket) async -> HandleResult { .none }
+}
+```
+
+That saves the second message and the round trip a catch-up would otherwise
+take. On the Swift client, `join(payload:)` sends a fixed payload, and
+`join(payloadForEachJoin:)` computes one for every join *and* every automatic
+rejoin — so a reconnecting client says what it holds now, not what it held
+when it first joined. Membership is established *before* the reply is
 sent, which matters more than it looks: it's what makes a broadcast that
 races the join structurally unable to slip through the gap between
 "admitted" and "actually receiving."
@@ -96,9 +116,27 @@ after the write already succeeded is what `excluding:` is for.
 
 ## Topics can be patterns
 
-`registerChannel("room:*")` matches any topic starting with `room:`, so one
-`Channel` type serves every room — `event.topic`/the `topic` parameter
-tells you which one a given join or message was actually for. Reserved,
+A module declares its channels as values, and a pattern can be a prefix:
+
+```swift
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [AlulaChannelsModule.self] }
+
+    let channels: [ChannelRegistration] = [
+        ChannelRegistration("room:*") { channel in
+            RoomChannel(broadcaster: channel.broadcaster)
+        }
+    ]
+}
+```
+
+`"room:*"` matches any topic starting with `room:`, so one `Channel` type
+serves every room — `event.topic`/the `topic` parameter tells you which one a
+given join or message was actually for. Patterns are exact (`"lobby"`),
+prefix (`"room:*"`) or catch-all (`"*"`); the most specific wins, and a
+duplicate or malformed pattern fails startup, not a join. Each join builds one
+`Channel` instance per socket and topic, so an instance may keep state for
+that membership. Reserved,
 framework-owned events all share a `alula:` prefix (`alula:join`,
 `alula:reply`, `alula:error`, `alula:heartbeat`, among others) and
 `"alula"` itself can never be joined as an ordinary topic — broadcasting

@@ -10,7 +10,7 @@ Tracking who's here is two calls, made from `join`:
 func join(_ topic: String, socket: Socket) async -> JoinResult {
     guard let principal = socket.principal else { return .reject(.unauthenticated) }
     await presence.track(topic: topic, key: principal.subject,
-                          payload: ["displayName": .string(principal.subject), "since": Self.timestamp()],
+                          payload: ["displayName": principal.subject, "since": Self.timestamp()],
                           socket: socket)
     await presence.sendState(topic: topic, to: socket)
     return .ok(initialState: ["room": .string(topic)])
@@ -80,3 +80,13 @@ not a defect to route around; it's a real property worth knowing before
 building a live "who's here" list for something that expects a burst of
 simultaneous arrivals — a stream premiere, a scheduled event start —
 rather than the gradual trickle most rooms actually see.
+
+## Across more than one server
+
+On one node, presence is exact. Across several it needs to hear when a peer
+goes away, and on the Valkey PubSub adapter it learns that by heartbeat
+expiry: a node that crashes stops heartbeating, and its users disappear once
+the heartbeat has been missed for long enough. Until then they stay visible —
+for up to `presence.down-after-seconds`, which is the knob that bounds it.
+Startup says which mode is in force, and warns until `down-after-seconds` is
+set explicitly, so the delay is a choice rather than a surprise.

@@ -16,7 +16,7 @@ func create(_ context: RequestContext, body: CreatePost) throws -> Response {
 }
 
 @DeleteRoute("/posts/:id")
-func delete(_ context: RequestContext) -> Response {
+func delete(_ context: RequestContext, id: UUID) -> Response {
     .noContent
 }
 ```
@@ -66,10 +66,24 @@ Every `HTTPError` — and anything else conforming to `HTTPErrorRepresentable`
 ```
 
 `title` is always the status's own reason phrase; `detail` is the message
-you passed, omitted entirely (not repeated) when you don't pass one. An
-error that *doesn't* conform to `HTTPErrorRepresentable` — a force-unwrap
-you didn't mean to ship, a database timeout — answers a bare `500` with no
-`detail` at all; the real error goes to the log, never to the client. A
+you passed, omitted entirely (not repeated) when you don't pass one.
+
+Everything else a handler lets escape is mapped by what it *means*, not by
+its type:
+
+| Thrown | Answers |
+|---|---|
+| `HTTPError`, or anything `HTTPErrorRepresentable` | its own status and message |
+| `RejectedInput` — the request asked wrongly | `400`, with the error's client-safe message |
+| `TemporarilyUnavailable` — a dependency cannot serve right now | `503`, with `Retry-After` |
+| anything else — a bug, an invariant | a bare `500`, no `detail` |
+
+The middle two live in AlulaCore and say nothing about HTTP, so packages below
+the web layer conform their own errors. Alula Data does: a database that
+cannot be reached, a pool with no free connection, a deadlock or a
+serialization failure reach the client as a `503` a client may retry, and a
+dynamic filter naming an unknown field is a `400` that names only the field.
+Whatever the status, the real error goes to the log, never to the client — a
 handler can let an unexpected error simply propagate and trust that the
 client learns nothing more than "the server failed," while the log has
 everything.

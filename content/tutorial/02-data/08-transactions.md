@@ -22,6 +22,29 @@ inside one doesn't open a second transaction; Postgres doesn't nest
 rolls back exactly that savepoint — the outer transaction, and whatever it
 already did (the new issue, still uncommitted), is unaffected.
 
+## Catching an error inside one
+
+A statement that fails inside a transaction doesn't just fail — Postgres
+aborts the whole transaction at that point, and everything after it is
+refused. So catching the error and carrying on can't work, and Hangar won't
+pretend it did: when the body returns, the `COMMIT` is answered with a
+rollback, and the transaction throws `HGR-QUERY-4101` ("The transaction was
+rolled back, not committed"), naming the statement that failed first.
+
+To recover from a statement that may fail and keep the rest, run it in a
+nested transaction — a savepoint — and catch *that*:
+
+```swift
+try await repo.transaction { tx in
+    try await tx.insert(order)
+    do {
+        try await tx.transaction { sp in try await sp.insert(coupon) }   // a savepoint
+    } catch let error as DatabaseError where error.isUniqueViolation {
+        // only the coupon was rolled back; the order still commits
+    }
+}
+```
+
 ## Isolation level
 
 ```swift

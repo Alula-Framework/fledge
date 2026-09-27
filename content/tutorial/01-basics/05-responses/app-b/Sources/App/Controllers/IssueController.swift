@@ -9,9 +9,9 @@ struct IssueSummary: Codable, ResponseEncodable {
 @Controller
 struct IssueController {
     @GetRoute("/issues/:number")
-    func show(_ context: RequestContext) throws -> Response {
-        guard let text = context.pathParam("number"), let number = Int(text) else {
-            throw HTTPError(.badRequest, "issue number must be an integer")
+    func show(_ context: RequestContext, number: Int) throws -> Response {
+        guard number > 0 else {
+            throw HTTPError(.badRequest, "issue numbers start at 1")
         }
         guard number <= 200 else {
             throw HTTPError(.notFound, "no issue #\(number)")
@@ -25,7 +25,7 @@ struct IssueController {
     }
 
     @DeleteRoute("/issues/:number")
-    func delete(_ context: RequestContext) -> Response {
+    func delete(_ context: RequestContext, number: Int) -> Response {
         .noContent
     }
 }

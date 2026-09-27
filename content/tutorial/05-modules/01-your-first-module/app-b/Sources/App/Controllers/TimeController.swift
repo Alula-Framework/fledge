@@ -5,7 +5,7 @@ import Foundation
 @Controller
 struct TimeController {
     // alula:hand-registered — Clock is provided by AppModule, not scanned
-    // from an annotation, so the marker tells the build not to warn.
+    // from an annotation.
     @Inject var clock: Clock
 
     @GetRoute("/time")

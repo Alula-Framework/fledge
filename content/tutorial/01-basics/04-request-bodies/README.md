@@ -62,10 +62,9 @@ curl -X POST http://127.0.0.1:8080/issues \
 
 Nothing in your handler catches either case — they never reach it. The
 handler body only ever runs once `body` is a real, valid `NewIssue`. The
-415 says so explicitly, naming what it would have accepted:
+415 says so explicitly, naming what it would have accepted (the slashes come
+back JSON-escaped, which any JSON parser undoes):
 
 ```
-{"status":415,"title":"Unsupported Media Type",
- "detail":"Unsupported Media Type: 'text/plain' — this route accepts
-           application/json or application/x-www-form-urlencoded"}
+{"status":415,"title":"Unsupported Media Type","detail":"Unsupported Media Type: 'text\/plain' — this route accepts application\/json or application\/x-www-form-urlencoded"}
 ```

@@ -23,8 +23,10 @@ it for real and reports what actually happened: real row counts, real
 timings, whether the planner's estimate matched reality. The divergence
 between the two is usually the whole diagnosis — an index that isn't being
 used, a row estimate that's wrong by three orders of magnitude. `explain`
-only ever renders a `Query` as a `SELECT`, so there's no path through this
-API that runs `.analyze` against a write and executes it for real.
+renders a `Query` only as a `SELECT`, so explaining a query can't run a write
+for real. (There's also `explain(_:mode:)` for a raw `SQLFragment`, for
+statements the builder doesn't express — and with `.analyze`, that one runs
+whatever you hand it.)
 
 The plan comes back as plain text, one line per node, exactly what `psql`
 would show — deliberately not parsed into a structured type. A plan is

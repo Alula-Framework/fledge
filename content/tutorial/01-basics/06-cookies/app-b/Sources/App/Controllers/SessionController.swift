@@ -25,7 +25,6 @@ struct SessionController {
 
     @PostRoute("/logout")
     func logOut(_ context: RequestContext) -> Response {
-        Response.seeOther("/me")
-            .settingCookie(Cookie(name: "who", value: "", maxAge: .seconds(0)))
+        Response.seeOther("/me").expiringCookie("who")
     }
 }

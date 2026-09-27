@@ -5,7 +5,7 @@ order: 9
 ---
 
 Bootstrap's first step (§1) was `Configuration.load()`, resolving three
-layers into one immutable value — frozen before the container is even
+layers into one immutable value — frozen before any module or component is
 built, so nothing downstream can read a config value that changes mid-run:
 
 1. **`alula.yaml`** — defaults shared by every environment.
@@ -22,13 +22,15 @@ The anatomy exercise (§3) used the required form —
 `alula.yaml`. A key that's genuinely optional gets a default instead:
 
 ```swift
-@ConfigValue("app.maintenanceMode", default: false) var maintenanceMode: Bool
+@ConfigValue("app.maintenance-mode", default: false) var maintenanceMode: Bool
 ```
 
 — which is exactly the property the middleware exercise's `MaintenanceGate`
 declared, without naming it yet. Absent from every layer, it's `false`;
 present but the wrong shape (a string where a `Bool` was expected) still
-fails at bootstrap rather than silently keeping the default.
+fails at bootstrap rather than silently keeping the default. The key is
+`maintenance-mode`, not `maintenanceMode`: keys are kebab-case, like every
+key Alula and alula-data read.
 
 **Try both forms together** in your own project, with a new controller:
 
@@ -36,7 +38,7 @@ fails at bootstrap rather than silently keeping the default.
 @Controller
 struct ConfigController {
     @ConfigValue("app.name") var appName: String
-    @ConfigValue("app.maintenanceMode", default: false) var maintenanceMode: Bool
+    @ConfigValue("app.maintenance-mode", default: false) var maintenanceMode: Bool
     @ConfigValue("app.greeting", default: "hello") var greeting: String
 
     @GetRoute("/config")
@@ -47,7 +49,7 @@ struct ConfigController {
 ```
 
 ```
-name=App maintenance=false greeting=hello
+name=MyService maintenance=false greeting=hello
 ```
 
 `app.name` came from `alula.yaml`. The other two aren't in any layer at
@@ -58,7 +60,7 @@ Now break it on purpose: change `"app.name"` to `"app.nam"` and rebuild.
 It doesn't start and then fail; it doesn't build at all:
 
 ```
-Sources/App/Controllers/ConfigController.swift:6:1: error: [ALU-CONFIG-5004] configuration key 'app.nam' is not in alula.yaml, and ConfigController has no default for it
+Sources/MyService/Controllers/ConfigController.swift:6:1: error: [ALU-CONFIG-5004] configuration key 'app.nam' is not in alula.yaml, and ConfigController has no default for it
     Without the key or a default, the application would fail at startup.
     help: add 'app.nam' to alula.yaml — a ${VAR} placeholder is fine for a value the environment supplies —
           or give the @ConfigValue a `default:`.
@@ -105,11 +107,9 @@ struct IssueController {
 }
 ```
 
-This half is prose rather than something to run here: `@Settings` needs
-its keys in `alula.yaml`, and that file is deliberately not editable in
-these exercises — it carries the host and port the preview pane depends
-on, so a stray edit there would break your own preview with no visible
-cause. You'll write one for real in Part 3, where the project is yours.
+Add the `issues:` block to your project's `alula.yaml` and the struct beside
+your controllers, and `/issues` answers `page size: 25`; change the file,
+restart, and it follows.
 
 A property with no default (no `= value`) is required, checked against
 `alula.yaml`'s base layer at compile time — the same "build error, not a
@@ -117,13 +117,17 @@ bootstrap surprise" guarantee `@ConfigValue`'s no-default form makes.
 
 ## The environment-variable name a key actually reads
 
-The transform is fixed and one-way: uppercase, `.` → `_`, prefixed
-`ALULA_`. `app.name` reads `ALULA_APP_NAME`; `issues.max-page-size` reads
-`ALULA_ISSUES_MAX-PAGE-SIZE` — note the literal dash. Only dots are
-rewritten, so a `@Settings`-derived key with more than one word in its
-property name keeps its dash straight through into the variable name, and a
-dash is not legal in a variable name most shells can `export`. It's a real
-gap, not a rare one: `pageSize`, `signingKey`, `tokenLifetime` all produce
-one. For a key shaped like that, reach for the `alula-{env}.yaml` overlay
-instead of an environment variable — `ALULA_ENV` itself has no such
-problem, being a single word.
+The transform is fixed and one-way: uppercase, every character that is not a
+letter or a digit becomes `_`, prefixed `ALULA_`. `app.name` reads
+`ALULA_APP_NAME`; `issues.max-page-size` reads `ALULA_ISSUES_MAX_PAGE_SIZE` —
+the dash goes the same way as the dot, so every key, however many words its
+property name has, is a variable any shell can `export`:
+
+```bash
+ALULA_ISSUES_PAGE_SIZE=50 ALULA_APP_MAINTENANCE_MODE=true swift run MyService
+```
+
+One-way means `max-page-size`, `max_page_size` and `max.page.size` all land on
+the same variable, so don't define keys that differ only in their punctuation.
+When a key is missing at startup, the error names the variable to set, spelled
+exactly the way the runtime reads it.

@@ -15,11 +15,8 @@ struct IssueController {
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")
-    func show(_ context: RequestContext) async throws -> Issue {
-        guard let idText = context.pathParam("id"), let id = UUID(uuidString: idText) else {
-            throw HTTPError(.badRequest, "malformed id")
-        }
-        return try await pool.withRepo { repo in
+    func show(_ context: RequestContext, id: UUID) async throws -> Issue {
+        try await pool.withRepo { repo in
             guard let issue = try await repo.one(Issue.where { $0.id == id }) else {
                 throw HTTPError(.notFound, "no such issue")
             }

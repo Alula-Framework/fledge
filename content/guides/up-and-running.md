@@ -8,7 +8,7 @@ category: Alula
 ```bash
 alula new MyService
 cd MyService
-swift run
+swift run MyService
 ```
 
 `alula new` generates a complete, buildable project from one of three
@@ -26,13 +26,20 @@ one trait — that line is the whole story of what the project depends on.
 MyService/
   Package.swift
   alula.yaml
-  Sources/App/
+  Dockerfile
+  Sources/MyService/
     Main.swift
     Controllers/HealthController.swift
     Entities/      (empty)
     Repos/         (empty)
-  Tests/AppTests/HealthControllerTests.swift
+    Services/      (empty)
+  Tests/MyServiceTests/HealthControllerTests.swift
 ```
+
+The name you give `alula new` is the target, the module and the executable:
+`Sources/MyService`, `@testable import MyService`, and the `swift run MyService`
+that `alula new` prints as its last step. It is also the `app.name` in
+`alula.yaml`, which is where the greeting below gets it.
 
 `Main.swift` is the whole boot sequence, in one place: configuration
 loads, the modules compose in dependency order (each module's
@@ -40,7 +47,7 @@ loads, the modules compose in dependency order (each module's
 once, and only then does the server start accepting requests. There's no
 window where a request could arrive against a half-built graph.
 
-`HealthController` is the one route worth curling once `swift run` is up:
+`HealthController` is the one route worth curling once the server is up:
 
 ```swift
 @Controller
@@ -56,7 +63,7 @@ struct HealthController {
 
 ```bash
 curl http://127.0.0.1:8080/
-# App is flying
+# MyService is flying
 ```
 
 Two macros doing real work: `@Controller` is what the build-time
@@ -79,9 +86,13 @@ composition root does, then dispatches against them:
 ```swift
 @Test("the index route answers with the configured application name")
 func index() async throws {
-    let graph = try AlulaGraph(configuration: Configuration(values: ["app.name": "TestApp"]))
+    let configuration = Configuration(values: ["app.name": "TestApp"])
+    let graph = try AlulaGraph(configuration: configuration)
     let client = try TestClient(routes: alulaRoutes(graph))
+
     let response = await client.get("/")
+
+    #expect(response.status == .ok)
     #expect(response.bodyText == "TestApp is flying")
 }
 ```

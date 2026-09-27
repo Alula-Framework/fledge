@@ -16,9 +16,8 @@ public protocol PubSub: Sendable {
 
 On one server, that's the whole story: `LocalPubSub` delivers in-process,
 and every socket subscribed to a topic on this node sees every publish to
-it. Nothing in `Channel`, `ChannelBroadcaster`, or a handler's own
-`context.resolve(ChannelBroadcaster.self)` call knows or cares whether
-that's true.
+it. Nothing in `Channel`, `ChannelBroadcaster`, or a controller that injects
+one knows or cares whether that's true.
 
 ## The seam a second node plugs into
 
@@ -26,10 +25,16 @@ that's true.
 public protocol DistributedPubSubAdapter: Sendable {
     func broadcast(_ message: Message) async throws   // send to other nodes
     func incoming() -> AsyncStream<Message>             // receive from other nodes
+
+    // Optional — both default to doing nothing:
+    func subscribed(to topic: String)                   // this node's first subscriber
+    func unsubscribed(from topic: String)               // this node's last one left
 }
 ```
 
-Two methods, and nothing more. `ClusteredPubSub` is what wraps a local
+Two methods required. The optional pair tells an adapter which topics this
+node needs, for a transport that can subscribe per topic rather than take
+the whole firehose. `ClusteredPubSub` is what wraps a local
 core with one of these: on `publish`, it fans out locally *and*
 broadcasts through the adapter; a background relay drains `incoming()`
 back into local delivery. A publish on node A reaches every socket on A
@@ -61,7 +66,7 @@ testing can never exercise.
 modules: [AlulaPubSubModule.self, AppModule.self]
 
 // Clustered — one module added, nothing else in the app changes:
-modules: [AlulaPubSubValkeyModule.self, AppModule.self]
+modules: [AlulaPubSubValkeyModule.self, AlulaPubSubModule.self, AppModule.self]
 ```
 
 ```yaml
@@ -70,10 +75,14 @@ pubsub:
     url: valkey://localhost:6379
 ```
 
-`AlulaPubSubModule`'s factory composes *by presence*: it runs once, at
-`freeze()`, checks whether some other module registered a
-`DistributedPubSubAdapter`, and hands the application `ClusteredPubSub`
-if one exists or the bare local core otherwise. Every earlier exercise's
+`AlulaPubSubValkeyModule` (from alula-data) provides one value, an
+`adapter: any DistributedPubSubAdapter`, and the composition root hands it to
+`AlulaPubSubModule`'s initializer, matched by type. With an adapter,
+`AlulaPubSubModule` builds `ClusteredPubSub` around the same local core and
+runs the relay that feeds it; with none, the application gets the bare local
+core. Whether there is an adapter is a fact about how the application was
+composed, so it is decided when the modules are built — nothing asks at
+runtime. Every earlier exercise's
 `ChannelBroadcaster`/`Channel`/`Presence` code reads exactly the same
 either way — the same architectural shape this tutorial's cache and data
 source exercises already established, applied to the realtime stack.
@@ -84,7 +93,12 @@ broadcasts reach sockets on other servers, **Presence** gets a transport
 to sync membership over, and **`ClusteredPubSub`** itself becomes
 reachable at all rather than a type with nothing to wrap. Two details
 worth knowing before relying on it: a remote broadcast is bounded by a
-timeout (five seconds by default) so a slow or unreachable adapter costs
-one remote delivery, never the local publisher's own liveness; and every
-broadcast carries an origin marker so a message a node publishes never
-loops back to itself as if it arrived from somewhere else.
+timeout (`pubsub.broadcast-timeout`, five seconds by default) so a slow or
+unreachable adapter costs one remote delivery, never the local publisher's
+own liveness; and every broadcast carries an origin marker — a token unique
+to the running instance — so a message a node publishes never loops back to
+itself as if it arrived from somewhere else. The node's *name*,
+`pubsub.node-id`, is for logs and metrics and defaults to the host name;
+several nodes on one host share it, which changes nothing about delivery but
+does conflate them in the logs — each warns once, `another node is using this
+node's ID` — so give each its own with `ALULA_PUBSUB_NODE_ID`.

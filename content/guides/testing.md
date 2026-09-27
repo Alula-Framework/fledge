@@ -25,19 +25,23 @@ construct the type with a fake, call the method, assert on what comes back. No
 container, no router, no HTTP.
 
 ```swift
-// A service: fake repository in, called directly.
-let service = UserService(repository: MockUserRepository(users: [ada]))
+// A service: a fake repository and the framework's mail and queue doubles in,
+// called directly.
+let service = UserService(
+    repository: MockUserRepository(users: [ada]),
+    mailer: .testing, jobs: QueueTestHarness().queue)
 #expect(try await service.find(byID: ada.id) == ada)
 
 // A controller: a real service over a fake repo; the route method is a function.
-let controller = UserController(
-    users: UserService(repository: MockUserRepository(users: [ada])))
+let controller = UserController(users: service)
 let user = try await controller.getUser(.mock(), id: ada.id)
 #expect(user.id == ada.id)
 ```
 
-`MockUserRepository` is a plain type conforming to `UserRepositoryProtocol`, and
-`RequestContext.mock(...)` builds a context with no transport behind it. Nothing
+`MockUserRepository` is a plain type conforming to `UserRepositoryProtocol`;
+`Mailer.testing` and `QueueTestHarness` ship with `AlulaMail` and
+`AlulaQueueTesting`; and `RequestContext.mock(...)` builds a context with no
+transport behind it. Nothing
 is registered or resolved — wiring the real dependency in is the composition
 root's job, which a unit test replaces by hand. Handlers return domain values
 (`getUser` returns a `User`), so a unit test asserts on the value or, for the
@@ -64,7 +68,7 @@ encoding for real:
 
 ```swift
 let client = try TestClient(routes: UserController.alulaRoutes { _ in
-    UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+    UserController(users: service)
 })
 let response = await client.get("/user/\(ada.id)")
 

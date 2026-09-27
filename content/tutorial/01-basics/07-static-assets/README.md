@@ -44,6 +44,18 @@ routes' default lane carries that a request for `app.js` has no use for.
 `exclude` carves `/api` back out even though this mount claims `/`, so a
 miss under it reaches the ordinary 404 rather than the SPA shell.
 
+"A real route always wins" has one consequence to check the first time you
+run this in a `skeleton` project: its `HealthController` answers `GET /`, which
+is exactly where the mount's `index.html` belongs. Every other path under the
+mount works, so it is easy to miss, and startup says so:
+
+```
+GET / is answered by a route, so the asset mount's index.html is never served there
+```
+
+Move the health route (`@GetRoute("/health")`, say) or delete the controller,
+and `/` serves the front end.
+
 ## The shell fallback
 
 `spaFallback` is what makes this a *frontend* mount and not just a file

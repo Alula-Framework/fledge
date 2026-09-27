@@ -45,4 +45,9 @@ let issue: Issue? = try await repo.one(
 entirely normal outcome, not an error. It throws only when a query meant to
 identify a single row finds *more than one*, which is never legitimate: two
 rows matching a query built to find one is a bug worth surfacing loudly,
-not a `nil` indistinguishable from zero.
+not a `nil` indistinguishable from zero. The error says so, with a code you
+can look up:
+
+```
+[HGR-QUERY-4103] one(...) on "issues" matched more than one row; use all(...) or add a narrower predicate. See https://github.com/Alula-Framework/hangar/blob/main/Diagnostics/HGR-QUERY-4103.md
+```

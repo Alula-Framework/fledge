@@ -26,15 +26,19 @@ to it is `await`ed.
 
 `send` returns `false` once the client has disconnected — the natural way to
 stop a loop that's producing from something else, like a subscription. The bus
-is injected the same way any dependency is:
+is injected the same way any dependency is. (The `demo` template already
+answers `GET /activity` with a report of its own, so this feed lives at
+`/feed`: two handlers for one method and path are a build error,
+`ALU-WEB-2001`, naming both.)
 
 ```swift
 @Controller
 struct ActivityController {
-    // alula:hand-registered — the bus is provided by AlulaPubSubModule.
+    // alula:hand-registered — the bus is a value AlulaPubSubModule provides,
+    // not a scanned @Component.
     @Inject var pubsub: any PubSub
 
-    @GetRoute("/activity")
+    @GetRoute("/feed")
     func activity(_ context: RequestContext) -> Response {
         .serverSentEvents { events in
             for await message in pubsub.subscribe("activity") {

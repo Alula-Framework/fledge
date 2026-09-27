@@ -1,6 +1,5 @@
 import AlulaCore
 import AlulaScheduler
-import Foundation
 
 @Scheduler
 struct ReportJobs {

@@ -93,8 +93,9 @@ reach a consuming module through exactly this init-parameter matching.
 
 Matching by type has one failure mode worth knowing before you hit it: if *two*
 modules both provide a `Clock`, nothing in `GreetingModule`'s `clock:` parameter
-says which one it meant, so the root refuses to guess — the build fails with a
-composition-ambiguity error naming both providers.
+says which one it meant, so the root refuses to guess — the build fails with
+`ALU-DI-1002`, "2 modules provide `Clock`, and it is asked for by type", with a
+note at each provider.
 
 Two providers of one type is a shape worth having, though — a system clock and
 a fixed one you pin in tests — so the answer isn't to rename the type until the
@@ -139,7 +140,18 @@ substituted into them, so you don't have to remember this page.
 with the time of day and carries whatever `app.name` your `alula.yaml` sets.
 Then try removing `ClockModule` from `GreetingModule.dependencies` while still
 listing neither in `modules:`: the build fails. With no module providing a
-`Clock`, the root can't fill that initializer parameter, and the generated call
-comes out as `GreetingModule(configuration:)` — which the compiler rejects with
-*"missing argument for parameter 'clock'."* The unsatisfiable dependency
-becomes a compile error at the composition root, before anything runs.
+`Clock`, nothing can fill that initializer parameter, and the generator says
+so at the module, parameter by parameter:
+
+```
+Sources/MyService/Main.swift:32:8: error: [ALU-LIFE-8002] no initializer of `GreetingModule` can be satisfied by this application
+    init(configuration:clock:) needs:
+      clock: Clock — nothing provides it
+    A module's parameters must be values another module provides, `Configuration`, or the component graph.
+    help: add the modules that provide those values, give the parameters defaults, or add an initializer this application can satisfy.
+    docs: https://github.com/Alula-Framework/alula/blob/main/Diagnostics/ALU-LIFE-8002.md
+```
+
+`configuration` isn't listed — the root always has one — so what's left is
+exactly the parameter nobody provides. The unsatisfiable dependency is a build
+error, before anything runs.

@@ -29,12 +29,12 @@ where routes are registered.
 
 ## What a handler can return
 
-A `String` becomes `text/plain`; a `Codable` type becomes JSON — the return
-type decides the `Content-Type`, so the two don't need different handler
-shapes:
+A `String` becomes `text/plain`; a type of your own that declares
+`ResponseEncodable` alongside `Codable` becomes JSON — the return type decides
+the `Content-Type`, so the two don't need different handler shapes:
 
 ```swift
-struct Greeting: Codable { let message: String }
+struct Greeting: Codable, ResponseEncodable { let message: String }
 
 @GetRoute("/hello-json")
 func helloJSON(_ context: RequestContext) -> Greeting {
@@ -42,41 +42,58 @@ func helloJSON(_ context: RequestContext) -> Greeting {
 }
 ```
 
-For anything else — a specific status code, a header, a streaming body —
-construct a `Response` directly (see
+`Codable` alone is not enough, and the compiler says so: the conformance is
+empty in practice, but it is the declaration that this type is something a
+handler returns. A handler returning `Void` answers `204`, and one returning a
+`nil` optional answers `404`. For anything else — a specific status code, a
+header, a streaming body — construct a `Response` directly (see
 [Requests & Responses](/guides/requests-and-responses)).
 
 ## Path and query parameters
 
+A handler parameter named after a `:segment` receives it, already parsed:
+
 ```swift
 @GetRoute("/posts/:id")
-func show(_ context: RequestContext) async throws -> Post {
-    guard let idText = context.pathParam("id"), let id = UUID(uuidString: idText) else {
-        throw HTTPError(.badRequest, "malformed id")
-    }
-    guard let post = try await repo.one(Post.where { $0.id == id }) else {
+func show(_ context: RequestContext, id: UUID) async throws -> Post {
+    guard let post = try await posts.find(id) else {
         throw HTTPError(.notFound, "no such post")
     }
     return post
 }
 ```
 
-`:id` in the pattern names a path segment; `context.pathParam("id")` reads
-it back as a plain `String?` — Alula never guesses whether `:id` means a
-`UUID`, an `Int`, or a slug, so converting it is always your own explicit
-call. The shape above — extract as `String?`, convert, `guard`-else-throw —
-is the one you'll write for every typed path parameter in every Alula app.
+The label *is* the segment it binds to, so the two cannot drift apart: asking
+for a segment the path does not declare is a build error naming the ones it
+does. A segment that will not parse never reaches the handler — `/posts/abc`
+answers `400` with `path parameter 'id' is not a valid UUID: 'abc'`. `String`,
+the integer types, `Double`, `Bool` and `UUID` are understood; conform your own
+type to `PathParameterConvertible` and the rule for what the segment may be
+lives at the edge instead of in every handler.
 
-Query parameters read the same way, from the request rather than the
-route's match:
+That leaves one failure per concern, each named: "that wasn't a UUID" is the
+framework's 400, and "no post has that id" is your 404.
+`context.pathParam("id")` still returns the raw `String?`, and
+`context.pathParam("id", as: UUID.self)` parses one where a handler signature
+cannot reach — inside middleware, say.
+
+Query parameters decode into a type the same way a body does:
 
 ```swift
+struct PostFilters: Decodable {
+    var published: Bool?
+    var page: Int?
+}
+
 @GetRoute("/posts")
-func index(_ context: RequestContext) -> String {
-    let onlyPublished = context.request.queryParam("published") == "true"
-    return "published only: \(onlyPublished)"
+func index(_ context: RequestContext, query: PostFilters) -> String {
+    "published only: \(query.published ?? false), page \(query.page ?? 1)"
 }
 ```
+
+Optional means optional and non-optional means required: a missing required
+key, or a value of the wrong type, is a `400` naming the parameter.
+`context.request.queryParam("published")` still reads one raw value.
 
 ## Grouping routes under a base path
 
@@ -98,10 +115,12 @@ not a trailing-slash variant of it.
 ## `RequestContext`
 
 Every handler's first parameter, resolved for you — never something you
-construct. It's the single access point for the current request: path
-parameters, container components scoped to this request (`@Inject`
-works the same way inside a controller as anywhere else), and the request
-logger.
+construct. It's the single access point for the current request: the
+`request` itself, its path parameters, the request logger, and what earlier
+middleware established — `context.principal` once a request is authenticated,
+`context.session` when sessions are on. Dependencies are not on it: a
+controller takes those as `@Inject` properties, built once, like any other
+component.
 
 ## Where to go next
 

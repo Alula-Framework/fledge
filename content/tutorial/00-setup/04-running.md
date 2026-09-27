@@ -1,13 +1,13 @@
 ---
 title: Running it locally
-description: swift run, swift test, and what this site's editor will map to.
+description: swift run, swift test, and where the rest of the exercises run.
 order: 4
 ---
 
 From inside the project directory:
 
 ```bash
-swift run
+swift run MyService
 ```
 
 The first build resolves dependencies and compiles the framework, which
@@ -17,7 +17,7 @@ seconds, not minutes. When it's up:
 
 ```bash
 curl http://127.0.0.1:8080/
-# App is flying
+# MyService is flying
 ```
 
 That's `HealthController.index`, reading `app.name` out of `alula.yaml`
@@ -31,7 +31,7 @@ for every exercise in this tutorial.
 swift test
 ```
 
-`Tests/AppTests/HealthControllerTests.swift` exercises the same route
+`Tests/MyServiceTests/HealthControllerTests.swift` exercises the same route
 without a real socket — `AlulaWebTesting`'s `TestClient` dispatches
 through the exact same `Request`/`Response` types your controller does,
 skipping the transport layer entirely rather than routing through an
@@ -41,16 +41,14 @@ ends up reading like calling a function, not like standing up a server and
 tearing it down. You'll see this pattern again, in more depth, in
 [Testing](/guides/testing) once there's more than one route to test.
 
-## What this site's editor maps to
+## Where the exercises run
 
-The exercises after this one run in an embedded editor rather than your
-terminal — but they run the same two commands underneath. When an
-exercise says "Run," it is doing `swift build` and either `swift run` or
-`swift test` against a real, warm Swift workspace, the same as you just
-did by hand. Nothing about the framework changes between here and there;
-only where the terminal lives does.
+From here on, the exercises run where this one did: in a project of your own,
+made with `alula new`, with the same `swift run` and `swift test`. Each one
+names the tier to start from and the files it touches, and ships a solution
+that the site's CI builds against the current `alula new` templates, so what
+you read is what compiles.
 
-If the in-browser editor is ever unavailable — rate-limited, or simply
-not deployed yet for a given exercise — every exercise is also a
-downloadable `alula new`-shaped project. Reading and running it locally,
-the way this page just walked through, always works.
+The exception is Part 2, on Hangar and Changeset. Its exercises are one file
+each and run in the browser — an editor, a real compile, real output, and
+`debugSQL` printing the SQL beside the Swift that produced it.

@@ -73,7 +73,7 @@ it:
 ```swift
 @Middleware
 struct MaintenanceGate {
-    @ConfigValue("app.maintenanceMode", default: false) var maintenanceMode: Bool
+    @ConfigValue("app.maintenance-mode", default: false) var maintenanceMode: Bool
 
     func handle(_ context: RequestContext, next: Next) async throws -> Response {
         guard !maintenanceMode else {
@@ -116,6 +116,16 @@ struct AdminController { /* ... */ }
 
 This is the same mechanism the previous exercise's asset mount used —
 `pipelines: ["assets"]` names a lane too, just one declared empty with
-`MiddlewareRegistration.lane("assets", [])`. Naming an undeclared lane fails
-at bootstrap, pointing at the route and the lane — never a 500 discovered
-from a request three deploys later.
+`MiddlewareRegistration.lane("assets", [])`. Naming an undeclared lane is
+caught twice. Misspell it — `pipelines: ["admn"]` — and the build warns at
+each route it affects:
+
+```
+warning: [ALU-WEB-2009] `GET /admin/status` runs through lane 'admn', which nothing declares
+    Dispatch is built from the declared lanes; this route would fail when it is.
+```
+
+— and if it ships anyway, startup refuses it, naming the route and the lane.
+Never a 500 discovered from a request three deploys later. (A warning rather
+than an error, because a lane can be declared by a module the build can't
+see.)

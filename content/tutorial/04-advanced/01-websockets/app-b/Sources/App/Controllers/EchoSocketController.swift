@@ -4,9 +4,9 @@ import Foundation
 
 @Controller
 struct EchoSocketController {
-    @WebSocketRoute("/echo/:room")
-    func echo(_ context: RequestContext) throws -> any WebSocketUpgradeHandler {
-        EchoHandler(room: context.pathParam("room") ?? "?")
+    @WebSocketRoute("/ws/echo/:room")
+    func echo(_ context: RequestContext, room: String) throws -> any WebSocketUpgradeHandler {
+        EchoHandler(room: room)
     }
 }
 

@@ -5,8 +5,8 @@ order: 5
 ---
 
 ```swift
+import AlulaCore
 import AlulaScheduler
-import Foundation          // the expansion references Date — see below
 
 @Scheduler
 struct ReportJobs {
@@ -24,22 +24,25 @@ struct ReportJobs {
 }
 ```
 
-The `import Foundation` is not decoration: `@Scheduler`'s expansion refers
-to `Date` (a job's scheduled instant is one), so the file needs it even
-though nothing you wrote mentions it. Omit it and the error is `cannot
-find 'Foundation' in scope`, pointing into macro-expanded code rather than
-at any line you typed.
-
 `@Scheduler` marks an ordinary singleton component — `@Inject` resolves
 its dependencies exactly like any other type. `@Scheduled` takes either a
-six-field cron expression (seconds first: `0 0 3 * * *` is 03:00 UTC every
-day) or a fixed interval measured from the end of the previous run, never
+cron expression — six fields, seconds first: `0 0 3 * * *` is 03:00 UTC every
+day; the classic five-field shape is accepted too and means second zero — or
+a fixed interval measured from the end of the previous run, never
 wall-clock. Either way the method itself takes no parameters and returns
 `Void` — there's no caller to hand it arguments, so anything it needs comes
 through `@Inject` on the enclosing type instead. The cron string must be
-a literal: that's what lets the build plugin validate it against the same
-parser that runs it, so a malformed expression is a build error, not a job
-that silently never fires.
+a literal: that's what lets the macro validate it with the same parser that
+runs it, so a malformed expression is a build error, not a job that silently
+never fires:
+
+```
+error: [ALU-SCHED-9001] hour: 25 is out of range 0–23. In "0 0 25 * * *". Fields are: second minute hour day-of-month month day-of-week (a five-field expression is also accepted and means second zero).
+```
+
+A time zone (`timeZone: "America/New_York"`) is checked the same way, against
+Foundation's own database, so a missing underscore is a build error rather
+than a job quietly running in GMT.
 
 ## The problem with more than one server
 
@@ -53,6 +56,7 @@ narrow seam, `JobCoordinator`:
 public protocol JobCoordinator: Sendable {
     func claim(job: String, scheduledFor: Date) async throws -> Bool
     func release(job: String, scheduledFor: Date) async
+    var describedKind: String { get }   // "single-process", "postgres lease (alula_job_leases)" — logged at startup
 }
 ```
 
@@ -78,7 +82,7 @@ lease row sidesteps that entirely:
 
 ```sql
 INSERT INTO alula_job_leases (job, scheduled_for, claimed_by, claimed_at)
-VALUES ($1, $2, $3, now())
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (job, scheduled_for) DO NOTHING
 RETURNING job
 ```
@@ -114,10 +118,17 @@ The explicit `any JobCoordinator` annotation is what makes the match work:
 the composition root reads source text, not a conformance table, so
 `let jobCoordinator = PostgresJobCoordinator(...)` — inferred type — wouldn't
 be recognized as the coordinator `AlulaSchedulerModule` is looking for. This
-used to be a `container.register((any JobCoordinator).self)` the scheduler
-resolved at runtime, which meant a deployment that forgot it degraded
-silently; providing it as a value means the missing-coordinator warning at
-startup is the only place that question gets answered.
+is a value the build can see, so the scheduler knows at startup whether it
+has one: with run-once jobs and no coordinator it logs a warning saying
+exactly that, and with one it names the kind (`postgres lease (alula_job_leases)`).
+
+The lease makes a firing run **at most once**, not exactly once: the row is
+written before the job runs and never removed, so a server that crashes
+mid-job has used that firing up. That is deliberate — the alternative, a
+lease that expires, has to guess how long a job takes, and guessing short
+runs a billing job twice — and it means you alert on the job's *effect*, not
+on the lease table. `PostgresJobCoordinator.prune(olderThan:)` trims old rows;
+the table itself belongs in one of your migrations.
 
 ## When every node running it is actually what you want
 

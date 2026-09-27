@@ -37,6 +37,23 @@ into ordinary task cancellation, so `run()` exits by returning rather than by
 throwing. A thrown error is a failure that takes the app down with it — which is
 right for a crash, wrong for a clean stop.
 
+Both ways out of `run()` mean something, and the report on exit says which
+happened. A service that throws after the app has been up stops it with the
+module named and the error underneath:
+
+```
+alula: stopped after running 4m 07s: HeartbeatModule failed.
+error: [ALU-LIFE-8005] HeartbeatModule failed after running 4m 07s
+```
+
+A service that *returns* while the app is still running — a loop that ended,
+a stream that finished — stops it too, as `ALU-LIFE-8006`, "HeartbeatModule's
+service ended on its own." Returning is only clean when shutdown asked for it,
+which is what `cancelWhenGracefulShutdown` arranges. A service that is
+genuinely a bounded job — an import that finishes — says so with
+`serviceCompletion: .endsApp` on its module, and then finishing shuts the app
+down gracefully instead.
+
 A module hands its service over by holding it and exposing it:
 
 ```swift
@@ -46,7 +63,7 @@ struct HeartbeatModule: AlulaModule {
     let heartbeat: HeartbeatService
 
     init(configuration: Configuration) {
-        let seconds = configuration.get("heartbeat.intervalSeconds", default: 5)
+        let seconds = configuration.get("heartbeat.interval-seconds", default: 5)
         self.heartbeat = HeartbeatService(
             interval: .seconds(seconds),
             logger: Logger(label: "app.heartbeat"))
@@ -95,7 +112,9 @@ component graph. A module can do one of two things with the graph, never both:
   also provide a root, because that would mean the graph depends on a module
   that depends on the graph. A cycle.
 
-The build refuses that cycle *by name* rather than deadlocking at runtime. It's
+The build refuses that cycle *by name* rather than deadlocking at runtime:
+`ALU-LIFE-8001` prints the shortest cycle with the value each edge carries, so
+you can see which provided value closes the loop. It's
 why Alula's own demo splits its authentication into a `DemoAuthModule` (which
 *provides* the `TokenValidator` root) separate from the `AppModule` (which
 *takes* the graph): one module trying to do both would be rejected at build
@@ -106,4 +125,7 @@ module on one side of that line and composition stays a DAG.
 **Try it.** Add `HeartbeatModule` to a `skeleton` project and `swift run`. You'll
 see a `heartbeat` log line every few seconds; press Ctrl-C and watch it stop
 cleanly — no error, no stack trace — because `cancelWhenGracefulShutdown` turned
-the shutdown into a cancellation the loop returns from.
+the shutdown into a cancellation the loop returns from. Set
+`heartbeat.interval-seconds: 2` in `alula.yaml` — or
+`ALULA_HEARTBEAT_INTERVAL_SECONDS=2` in the environment — and the beat
+quickens.

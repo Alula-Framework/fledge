@@ -9,9 +9,9 @@ A raw upgrade is one protocol, one method:
 ```swift
 @Controller
 struct EchoSocketController {
-    @WebSocketRoute("/echo/:room")
-    func echo(_ context: RequestContext) throws -> any WebSocketUpgradeHandler {
-        EchoHandler(room: context.pathParam("room") ?? "?")
+    @WebSocketRoute("/ws/echo/:room")
+    func echo(_ context: RequestContext, room: String) throws -> any WebSocketUpgradeHandler {
+        EchoHandler(room: room)
     }
 }
 
@@ -35,10 +35,23 @@ struct EchoHandler: WebSocketUpgradeHandler {
 ```
 
 `@WebSocketRoute` generates a route exactly like `@GetRoute` does, just
-tagged as an upgrade; the transport performs the HTTP 101 handshake and
-hands your handler the frame stream. `WebSocketConnection` owns
-fragmentation reassembly, masking, and the close handshake — you only ever
-see whole `.text`/`.binary`/`.ping`/`.pong`/`.close` frames.
+tagged as an upgrade — typed path parameters included — and the transport
+performs the HTTP 101 handshake and hands your handler the frame stream.
+`WebSocketConnection` owns fragmentation reassembly, masking, and the close
+handshake — you only ever see whole `.text`/`.binary`/`.ping`/`.pong`/`.close`
+frames. (The path is `/ws/echo/:room` because the `demo` template's
+`HealthController` already answers `GET /echo/:word`, and an upgrade is a
+`GET`: two routes matching the same requests are a build error.)
+
+Two things the framework does before your handler runs are worth knowing on
+day one. A browser sends its page's origin with the handshake, and by default
+the upgrade is refused with `403` unless that origin is the host the request
+was addressed to — cookies ride a WebSocket handshake to any site, so a socket
+that trusts the session must check who opened it. A front end on another
+origin is listed in `web.websocket.allowed-origins`; a non-browser client
+sends no browser origin and is let through. And the server pings every socket
+every 30 seconds (`server.websocket-ping-seconds`), closing one that stops
+answering, so a phone that loses signal doesn't hold its socket for hours.
 
 This is enough for an echo server. It is not enough for what a real
 feature needs: named topics, an authorization check before a client joins

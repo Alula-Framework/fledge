@@ -75,11 +75,13 @@ the value form of what a runtime container's `pipeline { }` block used to do.
 
 ## How the root folds them together
 
-Read the generated composition root and the aggregation is right there:
+Read the generated composition root (`AlulaRegistration.generated.swift`, under
+`.build/plugins/outputs/`) and the aggregation is right there — reformatted
+here, one argument per line:
 
 ```swift
 let pingModule = PingModule(configuration: configuration)
-let alulaWebModule = try AlulaWebModule<AlulaTransport>(
+let alulaWebModuleAlulaTransport = try AlulaWebModule<AlulaTransport>(
     configuration: configuration,
     routes: alulaRoutes(alulaGraph) + pingModule.routes + actuatorModule.routes,
     middleware: pingModule.middleware)

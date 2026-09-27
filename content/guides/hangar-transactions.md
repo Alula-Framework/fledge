@@ -20,6 +20,14 @@ second `BEGIN` — Postgres doesn't support that — it opens a `SAVEPOINT`
 instead, transparently. The body throwing rolls back exactly that
 savepoint; the outer transaction is unaffected.
 
+That is also the only way to recover from a failed statement. Postgres aborts
+the whole transaction at the first failure, so a body that catches the error
+and carries on can't commit anything — and rather than report success,
+Hangar throws `HGR-QUERY-4101`, "The transaction was rolled back, not
+committed", naming the statement that failed. Run a statement that may fail
+inside a nested `transaction { }` and catch the error there: only the
+savepoint rolls back.
+
 ## Isolation and retry
 
 ```swift

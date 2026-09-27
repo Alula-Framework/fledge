@@ -12,8 +12,8 @@ Every message, either direction, shares one shape:
 ```
 
 `ref` correlates a client's message with its reply; `ref: null` on
-anything server-initiated. A `Channel` implements up to three methods
-against that shape:
+anything server-initiated. A `Channel` implements `join` and `handle` against
+that shape, and optionally `leave`:
 
 ```swift
 struct RoomChannel: Channel {
@@ -25,7 +25,7 @@ struct RoomChannel: Channel {
     }
 
     func handle(_ event: InboundEvent, socket: Socket) async -> HandleResult {
-        guard event.event == "new_msg", let body = event.payload["body"]?.stringValue else {
+        guard event.event == "new_msg", event.payload["body"]?.stringValue != nil else {
             return .error(reason: "unknown_event")
         }
         await broadcaster.broadcast(topic: event.topic, event: "new_msg", payload: event.payload,
@@ -46,6 +46,32 @@ established *before* the reply is sent, which is what makes a broadcast
 racing the join structurally unable to slip through the gap between
 "admitted" and "actually receiving."
 
+A join that needs what the client sent with it — a cursor, a filter — adopts
+`PayloadJoinChannel` and implements `join(_:payload:socket:)` instead; the
+Swift client's `join(payloadForEachJoin:)` recomputes that payload on every
+automatic rejoin, so a reconnecting client asks for what it is missing now.
+
+## Registering one
+
+A module holds its channels as values; the composition root collects them
+from every module and hands them to `AlulaChannelsModule`:
+
+```swift
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [AlulaChannelsModule.self] }
+
+    let channels: [ChannelRegistration] = [
+        ChannelRegistration("room:*") { channel in
+            RoomChannel(broadcaster: channel.broadcaster)
+        },
+    ]
+}
+```
+
+`"room:*"` matches every topic that starts with `room:`; the most specific
+pattern wins. `ChannelRegistration("admin:*", roles: [AppRole.admin])` gates a
+whole pattern on a role before the channel is even built.
+
 ## `handle` answers three ways
 
 `.reply(payload)` (answers `alula:reply`, echoing the inbound `ref`),
@@ -63,13 +89,15 @@ await broadcaster.broadcast(topic: event.topic, event: "new_msg", payload: event
 socket.push(topic: event.topic, event: "ack", payload: .object([:]))   // just this connection
 ```
 
-`ChannelBroadcaster` is an ordinary container singleton — anything holding
-one can broadcast, not only a `Channel` implementation. An ordinary
-`@PostRoute` handler resolves it exactly the same way to fan an HTTP
-write out to socket subscribers:
+`ChannelBroadcaster` is a value `AlulaChannelsModule` provides — anything
+holding one can broadcast, not only a `Channel` implementation. An ordinary
+controller injects it like any other dependency and fans an HTTP write out to
+socket subscribers:
 
 ```swift
-let broadcaster = try context.resolve(ChannelBroadcaster.self)
+@Inject var broadcaster: ChannelBroadcaster
+
+// in a @PostRoute handler, after the write:
 await broadcaster.broadcast(topic: "project:\(project.key)", event: "issue_created", payload: wire(issue))
 ```
 

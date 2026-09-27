@@ -49,11 +49,25 @@ alula new MyService --tier basics --with postgres,valkey
 ```
 
 `postgres`, `valkey`, and `security` are the options, and each maps to a
-package trait in the generated `Package.swift`. Naming none of them
-resolves none of them — a `skeleton` project's dependency graph really is
-just Alula's container and HTTP layer, nothing brought in "in case you
-need it later." A combination the tier's own code couldn't compile against
-is refused at generation time rather than emitted broken.
+package trait in the generated `Package.swift`. Leave `--with` off and you get
+what the tier's own code needs: nothing for `skeleton`, `postgres` for
+`basics`, `postgres` and `security` for `demo`; naming any replaces that
+default. Nothing else is resolved: a `skeleton` project's dependency graph
+really is just Alula's core and HTTP layer, nothing brought in "in case you
+need it later." A
+combination the tier's own code couldn't compile against — `--tier basics
+--with valkey`, which leaves out the `postgres` its repository is written
+against — is refused at generation time rather than emitted broken.
+
+A trait the tier's code doesn't use yet — `valkey` on `basics`, above — is
+switched on in `Package.swift` but wired into nothing, and `alula new` says so:
+after the usual next steps it prints what is left to do for each one (the
+product to add, the module to list, the key to set).
+
+`alula new` also names the project after its argument: `Sources/MyService`,
+`Tests/MyServiceTests`, and an executable you run with `swift run MyService`.
+It finishes by printing the commands to run next — for `basics` and `demo`,
+starting a Postgres and applying the migrations first.
 
 ## Why this matters before you've written anything
 

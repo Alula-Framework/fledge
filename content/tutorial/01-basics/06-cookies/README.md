@@ -73,21 +73,32 @@ call named a name, a value, and a lifetime; the cookie arrived with
 
 ## Clearing one
 
-There is no "delete cookie" call, because there is no such thing on the
-wire — you overwrite it with an empty value and a zero lifetime:
+There is no "delete cookie" on the wire — a cookie is deleted by overwriting
+it with an empty value that has already expired. `Cookie.expiring(_:)` builds
+exactly that, and `expiringCookie(_:)` on a response sets it:
 
 ```swift
 @PostRoute("/logout")
 func logOut(_ context: RequestContext) -> Response {
-    Response.seeOther("/me")
-        .settingCookie(Cookie(name: "who", value: "", maxAge: .seconds(0)))
+    Response.seeOther("/me").expiringCookie("who")
 }
 ```
 ```
-Set-Cookie: who=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
+Set-Cookie: who=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax
 ```
 
-`Max-Age=0` tells the browser to drop it immediately. The path has to
-match the one it was set with, which is one more reason to leave `path`
-alone unless you have a reason: a cookie set at `/` and cleared at
-`/logout` is a cookie that never goes away.
+`Max-Age=0` tells the browser to drop it immediately, and the past `Expires`
+says the same to a client that only reads that. The path has to match the one
+it was set with, which is one more reason to leave `path` alone unless you
+have a reason: a cookie set at `/` and cleared at `/logout` is a cookie that
+never goes away. `expiringCookie` defaults to `/` for that reason, and takes
+`path:` and `domain:` for a cookie that was set with others.
+
+## When the cookie *is* the login
+
+A name in a cookie is fine for learning how cookies behave, and nothing more:
+the client can set `who` to anything it likes. Real sign-in state belongs in a
+session — `AlulaSessionsModule` keeps the values on the server under an id the
+cookie carries, regenerates that id when someone signs in, and gives a handler
+`context.session`. [Authentication](/tutorial/03-intermediate/02-authentication)
+builds on it.

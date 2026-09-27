@@ -12,22 +12,29 @@ router, no HTTP.
 
 ## Service unit tests
 
-`UserService` injects `any UserRepositoryProtocol`, so a test hands it a fake
-and calls its methods directly:
+The `demo` template's `UserService` injects `any UserRepositoryProtocol`, a
+`Mailer` and a `JobQueue`, so a test constructs it with a fake for each and
+calls its methods directly:
 
 ```swift
+func makeService(_ repository: MockUserRepository) -> UserService {
+    UserService(repository: repository, mailer: .testing, jobs: QueueTestHarness().queue)
+}
+
 @Test("find(byID:) returns the matching user")
 func findByID() async throws {
-    let service = UserService(repository: MockUserRepository(users: [ada]))
+    let service = makeService(MockUserRepository(users: [ada]))
 
     #expect(try await service.find(byID: ada.id) == ada)
 }
 ```
 
 `MockUserRepository` is a plain type conforming to `UserRepositoryProtocol` —
-the seam that makes this possible. Nothing is registered or resolved: wiring
-the real repository in is the composition root's job, and a unit test is
-exactly the place that does it by hand instead.
+the seam that makes this possible. `Mailer.testing` (from `AlulaMail`) and
+`QueueTestHarness` (from `AlulaQueueTesting`) are the framework's own doubles,
+so a test that isn't about mail needs no mail server. Nothing is registered or
+resolved: wiring the real dependencies in is the composition root's job, and a
+unit test is exactly the place that does it by hand instead.
 
 ## Controller unit tests
 
@@ -38,7 +45,7 @@ route method — it is just a function:
 @Test("getUser returns the mocked user")
 func getUser() async throws {
     let controller = UserController(
-        users: UserService(repository: MockUserRepository(users: [ada])))
+        users: makeService(MockUserRepository(users: [ada])))
 
     let user = try await controller.getUser(.mock(), id: ada.id)
 
@@ -63,7 +70,7 @@ Error paths are just as direct — you don't need HTTP to prove a 404's cause:
 ```swift
 @Test("getUser throws notFound for an unknown id")
 func getUserMissing() async {
-    let controller = UserController(users: UserService(repository: MockUserRepository()))
+    let controller = UserController(users: makeService(MockUserRepository()))
 
     await #expect(throws: HTTPError.self) {
         try await controller.getUser(.mock(), id: UUID())
@@ -87,7 +94,7 @@ network but runs routing, middleware, DI, and encoding for real:
 
 ```swift
 let client = try TestClient(routes: UserController.alulaRoutes { _ in
-    UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+    UserController(users: makeService(MockUserRepository(users: [ada])))
 })
 let response = await client.get("/user/\(ada.id)")
 

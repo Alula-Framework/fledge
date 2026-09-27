@@ -14,14 +14,16 @@ board, built from nothing this tutorial hasn't already covered.
 ```swift
 // `AlulaChannels.Channel`, qualified — see the note below the code
 struct BoardChannel: AlulaChannels.Channel {
-    let repo: Repo
+    let pool: PostgresDataSource   // the pool, not a Repo — a channel lives as long as the membership
     let broadcaster: ChannelBroadcaster
     let presence: any Presence
 
     func join(_ topic: String, socket: Socket) async -> JoinResult {
         guard let principal = socket.principal else { return .reject(.unauthenticated) }
         guard let key = Self.projectKey(from: topic),
-              let project = try? await repo.one(Project.where { $0.key == key })
+              let project = try? await pool.withRepo({ repo in
+                  try await repo.one(Project.where { $0.key == key })
+              })
         else { return .reject(JoinRejection("no_such_project")) }
 
         await presence.track(topic: topic, key: principal.subject,
@@ -33,12 +35,16 @@ struct BoardChannel: AlulaChannels.Channel {
     func handle(_ event: InboundEvent, socket: Socket) async -> HandleResult {
         guard event.event == "update_issue", let id = event.payload["id"]?.stringValue,
               let issueID = UUID(uuidString: id), let status = event.payload["status"]?.stringValue,
-              let issue = try? await repo.one(Issue.where { $0.id == issueID })
+              let issue = try? await pool.withRepo({ repo in
+                  try await repo.one(Issue.where { $0.id == issueID })
+              })
         else { return .error(reason: "invalid_event") }
 
         // update, persist, then broadcast — the same ordering every
         // write-then-broadcast handler in this tutorial has used
-        guard let updated = try? await repo.update(Changeset(original: issue).change(\.status, status))
+        guard let updated = try? await pool.withRepo({ repo in
+                  try await repo.update(Changeset(original: issue).change(\.status, status))
+              })
         else { return .error(reason: "handler_error") }
         await broadcaster.broadcast(topic: event.topic, event: "issue_updated", payload: Self.wire(updated))
         return .reply(["ok": true])
@@ -53,7 +59,11 @@ socket's own `update_issue` both end up broadcasting `issue_created` /
 same way whichever door it came through. `join`'s authorization check, the
 two-call presence integration, and the persist-then-broadcast ordering are
 all exercises 1 through 5 of this part, applied together rather than in
-isolation.
+isolation. So is Part 3's first lesson: a channel instance lives as long as
+the socket's membership of its topic — minutes, hours — so it holds the
+*pool* and leases a connection per operation with `withRepo`, exactly like a
+controller. Holding a `Repo` would pin one connection for as long as someone
+keeps the board open.
 
 
 Two things in that first line are worth pausing on, because the capstone is

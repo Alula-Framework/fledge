@@ -32,9 +32,12 @@ struct Main {
    is how they're built.
 3. **Every component is built once, eagerly.** The composition root constructs
    each `@Controller`, `@Service`, `@Repository`, and `@Component` a single
-   time and wires them together by type. A missing dependency, or a required
-   `@ConfigValue` that isn't there, fails *here* — at startup — not as a
-   runtime surprise three requests later.
+   time and wires them together by type. The wiring was checked when it was
+   generated: a dependency nothing provides, or a required `@ConfigValue` that
+   `alula.yaml` doesn't have, is a *build* error. What is left for startup is
+   what only the running process can know — a value of the wrong type in an
+   environment variable, a database that refuses the connection — and that
+   fails *here*, before a single request, not three requests later.
 4. **The server starts accepting connections.** Not before: there is no window
    where a request could arrive against a half-built graph.
 
@@ -73,8 +76,8 @@ appear in `Main.swift`'s array. You'll see this directly once Part 2 adds a
 database module ahead of your own.
 
 **Try it — this is the exercise.** In a project of your own
-(`alula new --tier skeleton myapp`, from Part 0), add
-`Sources/App/Controllers/StatusController.swift`:
+(`alula new MyService`, from Part 0 — `skeleton` is the default tier), add
+`Sources/MyService/Controllers/StatusController.swift`:
 
 ```swift
 import AlulaCore
@@ -91,7 +94,8 @@ struct StatusController {
 }
 ```
 
-`swift run`, then `curl 127.0.0.1:8080/status` — it answers `App: up`, and
+`swift run MyService`, then `curl 127.0.0.1:8080/status` — it answers
+`MyService: up` (the `app.name` `alula new` wrote), and
 nothing in `AppModule` or `Main.swift` changed to make that happen. That's the
 composition root doing its job: the plugin found the new type at build time and
 wired it in.

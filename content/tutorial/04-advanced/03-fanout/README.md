@@ -15,8 +15,8 @@ struct IssueCreationController {
     @Inject var broadcaster: ChannelBroadcaster
 
     @PostRoute("/projects/:key/issues")
-    func create(_ context: RequestContext, body: CreateIssueRequest) async throws -> Response {
-        guard let key = context.pathParam("key"), let project = try await db.findProject(byKey: key) else {
+    func create(_ context: RequestContext, key: String, body: CreateIssueRequest) async throws -> Response {
+        guard let project = try await db.findProject(byKey: key) else {
             throw HTTPError(.notFound, "no such project")
         }
         let issue = try await db.insertIssue(projectID: project.id, title: body.title, body: body.body)

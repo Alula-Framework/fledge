@@ -1,4 +1,6 @@
 import AlulaCore
+import AlulaMail
+import AlulaQueueTesting
 import AlulaWeb
 import AlulaWebTesting
 import Foundation
@@ -16,10 +18,17 @@ struct TutorialTestingTests {
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
         name: "Ada", email: "ada@example.com", createdAt: Date(), updatedAt: Date())
 
+    /// `UserService` injects a repository, a mailer and a job queue. The test
+    /// doubles for the last two ship with AlulaMail and AlulaQueueTesting;
+    /// only the repository is the test's own fake.
+    func makeService(_ repository: MockUserRepository) -> UserService {
+        UserService(repository: repository, mailer: .testing, jobs: QueueTestHarness().queue)
+    }
+
     /// Service unit test: a fake repository, called directly.
     @Test("find(byID:) returns the matching user from the fake repository")
     func serviceFindByID() async throws {
-        let service = UserService(repository: MockUserRepository(users: [ada]))
+        let service = makeService(MockUserRepository(users: [ada]))
         #expect(try await service.find(byID: ada.id) == ada)
     }
 
@@ -29,7 +38,7 @@ struct TutorialTestingTests {
     @Test("getUser returns the mocked user")
     func controllerGetUser() async throws {
         let controller = UserController(
-            users: UserService(repository: MockUserRepository(users: [ada])))
+            users: makeService(MockUserRepository(users: [ada])))
         let user = try await controller.getUser(.mock(), id: ada.id)
         #expect(user.id == ada.id)
     }
@@ -37,7 +46,7 @@ struct TutorialTestingTests {
     /// The error path, just as directly — no HTTP needed to prove a 404's cause.
     @Test("getUser throws notFound for an unknown id")
     func controllerGetUserMissing() async {
-        let controller = UserController(users: UserService(repository: MockUserRepository()))
+        let controller = UserController(users: makeService(MockUserRepository()))
         await #expect(throws: HTTPError.self) {
             try await controller.getUser(.mock(), id: UUID())
         }
@@ -52,7 +61,7 @@ struct TutorialTestingTests {
     @Test("GET /user/:id routes and encodes end to end")
     func endToEnd() async throws {
         let client = try TestClient(routes: UserController.alulaRoutes { _ in
-            UserController(users: UserService(repository: MockUserRepository(users: [ada])))
+            UserController(users: makeService(MockUserRepository(users: [ada])))
         })
         let response = await client.get("/user/\(ada.id)")
 

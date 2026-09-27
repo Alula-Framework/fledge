@@ -71,7 +71,8 @@ let issues: [Issue] = try await repo.all(urgent)
 
 `repo.one(query)` returns at most one row: `nil` for zero matches, the row
 for exactly one, and a thrown `HangarError.tooManyRows` for more than
-one. Zero is a legitimate outcome — "no issue has that id" is completely
+one — `[HGR-QUERY-4103]`, like every error Hangar raises when a query runs,
+leading with a code that has a page. Zero is a legitimate outcome — "no issue has that id" is completely
 ordinary — but two rows matching a query you expected to identify a
 single one is never legitimate, and `one` refuses to silently pick the
 first and hide that something's wrong:

@@ -35,7 +35,7 @@ struct HeartbeatModule: AlulaModule {
     let heartbeat: HeartbeatService
 
     init(configuration: Configuration) {
-        let seconds = configuration.get("heartbeat.intervalSeconds", default: 5)
+        let seconds = configuration.get("heartbeat.interval-seconds", default: 5)
         self.heartbeat = HeartbeatService(
             interval: .seconds(seconds),
             logger: Logger(label: "app.heartbeat"))

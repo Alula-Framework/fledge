@@ -65,20 +65,90 @@ try await repo.all(
 entity itself — for exactly the case a full model would over-fetch: an
 aggregate, a narrow read, a join's combined row.
 
+## Reporting expressions
+
+Grouping, aggregates and ordering take expressions, not only columns — here
+over an `Incident` entity with an `openedAt`, an optional `acknowledgedAt` and
+a `severity`:
+
+```swift
+struct DailyTrend: Decodable {
+    let day: Date
+    let opened: Int
+    let critical: Int
+    let medianAckSeconds: Double?
+}
+
+let utc = TimeZone(identifier: "UTC")!
+let trend = try await repo.all(
+    Incident.groupBy { $0.openedAt.truncated(to: .day, in: utc) }
+        .select(into: DailyTrend.self) {
+            (day: $0.openedAt.truncated(to: .day, in: utc),
+             opened: $0.id.count(),
+             critical: $0.id.count().filter($0.severity == 1),
+             medianAckSeconds: $0.acknowledgedAt.interval(since: $0.openedAt).seconds.median())
+        }
+        .order { $0.openedAt.truncated(to: .day, in: utc).asc() })
+```
+
+`truncated(to:in:)` renders `date_trunc`, `interval(since:)` interval
+arithmetic, `.filter` an aggregate `FILTER`, and `percentile`/`median` the
+ordered-set aggregates. Arithmetic is methods — `adding`, `subtracting`,
+`multiplied(by:)`, `divided(by:)` — rather than operators, which keeps
+ordinary `Double` arithmetic fast to type-check in every file importing
+Hangar.
+
+## Combining queries
+
+Projections of different tables into the same result type combine with
+`union`, `unionAll`, `intersect` and `except`, and the combination orders by
+output column, limits and runs like a query — here a feed merging
+incidents with a `Deploy` entity's rows. `ColumnExpression.value(_:)`
+puts a constant in a projection, so each branch can say where its rows came
+from:
+
+```swift
+struct FeedItem: Decodable {
+    let at: Date
+    let source: String
+    let summary: String
+}
+
+let feed = Incident.all.select(into: FeedItem.self) {
+        (at: $0.openedAt, source: ColumnExpression.value("incident"), summary: $0.status)
+    }
+    .unionAll(Deploy.all.select(into: FeedItem.self) {
+        (at: $0.finishedAt, source: ColumnExpression.value("deploy"), summary: $0.service)
+    })
+    .order("at", .desc)
+    .limit(50)
+
+let items = try await repo.all(feed)
+```
+
+A branch whose labels come in another order is lined up by label; a branch
+with different labels is refused before anything runs.
+
 ## Bulk writes
 
 One statement, however many rows match:
 
 ```swift
 let closed = try await repo.update(Issue.where { $0.status == "open" }) {
-    ($0.status.set(to: "closed"), $0.updatedAt.set(to: Date()))
+    ($0.status.set(to: "closed"), $0.updatedAt.set(to: .transactionTimestamp))
 }
 let purged = try await repo.delete(Session.where { $0.expiresAt < .now })
 ```
 
 Both return an `Int` row count — zero is a normal answer, not an error. A
 query with no predicate at all deletes every row in the table; Hangar
-honors that rather than second-guessing it.
+honors that rather than second-guessing it. `set(to:)` takes a value, another
+column, or an expression the server computes per row —
+`$0.version.set(to: $0.version.adding(1))` renders `SET version = (version +
+$1)`, so concurrent increments don't lose each other. A query carrying a
+clause a single `UPDATE` or `DELETE` can't honor — `LIMIT`, `ORDER BY`,
+`GROUP BY` — is refused (`HGR-QUERY-4111`) rather than run with the clause
+silently dropped.
 
 ## Where to go next
 

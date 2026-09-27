@@ -6,7 +6,7 @@ category: Alula
 ---
 
 Every Alula app resolves configuration once, at bootstrap, into an
-immutable value — frozen before the container is even built, so nothing
+immutable value — frozen before any module or component is built, so nothing
 downstream can read a value that changes mid-run. It's built from three
 layers:
 
@@ -28,11 +28,13 @@ key is a build error naming the site, not a bootstrap-time surprise. A key
 that's genuinely optional gets a default instead:
 
 ```swift
-@ConfigValue("app.maintenanceMode", default: false) var maintenanceMode: Bool
+@ConfigValue("app.maintenance-mode", default: false) var maintenanceMode: Bool
 ```
 
 Absent from every layer, it's `false`; present but the wrong shape still
-fails at bootstrap rather than silently keeping the default.
+fails at bootstrap rather than silently keeping the default. Keys are
+kebab-case — `maintenance-mode`, not `maintenanceMode` — the same convention
+every framework key follows.
 
 ## A related group: `@Settings`
 
@@ -65,13 +67,19 @@ like `@ConfigValue`'s no-default form.
 
 ## The environment-variable name a key actually reads
 
-The transform is fixed and one-way: uppercase, `.` → `_`, prefixed
-`ALULA_`. `app.name` reads `ALULA_APP_NAME`. Only dots are rewritten,
-so a `@Settings`-derived key with more than one word in its property name
-carries its dash straight into the variable name —
-`posts.max-page-size` reads `ALULA_POSTS_MAX-PAGE-SIZE`, which most shells
-can't `export`. For a key shaped like that, reach for the
-`alula-{env}.yaml` overlay instead.
+The transform is fixed and one-way: uppercase, every character that is not a
+letter or a digit becomes `_`, prefixed `ALULA_`. `app.name` reads
+`ALULA_APP_NAME`, and the dash in a multi-word key goes the same way as the
+dot — `posts.max-page-size` reads `ALULA_POSTS_MAX_PAGE_SIZE`, which any shell
+can `export`.
+
+Because it is one-way, `max-page-size`, `max_page_size` and `max.page.size`
+all read the same variable; don't define keys that differ only there. A
+missing-key error names exactly the variable the runtime reads:
+
+```
+error: [ALU-CONFIG-5004] Configuration key 'posts.max-page-size' is not set in any source (active environment: prod). Add it to alula.yaml or alula-prod.yaml, or set the ALULA_POSTS_MAX_PAGE_SIZE environment variable.
+```
 
 ## Where to go next
 

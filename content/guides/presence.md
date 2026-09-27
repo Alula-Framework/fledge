@@ -9,7 +9,7 @@ Tracking who's here is two calls, made from a channel's `join`:
 
 ```swift
 await presence.track(topic: topic, key: principal.subject,
-                      payload: ["displayName": principal.name], socket: socket)
+                      payload: ["displayName": principal.name ?? principal.subject], socket: socket)
 await presence.sendState(topic: topic, to: socket)
 ```
 
@@ -28,7 +28,8 @@ A user with three browser tabs open is one person, present three times —
 one key, three metas, each with its own `ref`. Closing one tab removes
 one meta; only when the last one goes do other clients see a leave.
 `payload` is a flat `[String: String]` your application controls
-entirely.
+entirely — plain strings, not `JSONValue`, which is why `principal.name` (a
+`String?`, from the standard `name` claim) needs a fallback above.
 
 ## State, then diffs — never the reverse
 

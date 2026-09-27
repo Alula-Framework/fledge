@@ -20,7 +20,7 @@ func create(_ context: RequestContext) throws -> Response {
 }
 
 @DeleteRoute("/issues/:number")
-func delete(_ context: RequestContext) -> Response {
+func delete(_ context: RequestContext, number: Int) -> Response {
     .noContent
 }
 ```
@@ -42,9 +42,9 @@ status code — it throws, and names the status when it does:
 
 ```swift
 @GetRoute("/issues/:number")
-func show(_ context: RequestContext) throws -> Response {
-    guard let text = context.pathParam("number"), let number = Int(text) else {
-        throw HTTPError(.badRequest, "issue number must be an integer")
+func show(_ context: RequestContext, number: Int) throws -> Response {
+    guard number > 0 else {
+        throw HTTPError(.badRequest, "issue numbers start at 1")
     }
     guard number <= 200 else {
         throw HTTPError(.notFound, "no issue #\(number)")
@@ -53,7 +53,7 @@ func show(_ context: RequestContext) throws -> Response {
 }
 ```
 
-(The seeded project has 200 issues, so `number <= 200` stands in for the
+(Pretend there are 200 issues: `number <= 200` stands in for the
 database lookup this tier has no database for — Part 3 replaces it with a
 real query, and the error handling around it doesn't change.)
 
@@ -64,17 +64,19 @@ the wire) is caught centrally and rendered as
 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) `application/problem+json`:
 
 ```bash
-curl -i http://127.0.0.1:8080/issues/abc
+curl -i http://127.0.0.1:8080/issues/0
 ```
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/problem+json
 
-{"status":400,"title":"Bad Request","detail":"issue number must be an integer"}
+{"status":400,"title":"Bad Request","detail":"issue numbers start at 1"}
 ```
 
 And `/issues/999` answers `404` with `"detail":"no issue #999"` — same
 mechanism, different status, still no `catch` anywhere in the handler.
+`/issues/abc` is a `400` too, but not one you wrote: the typed `number: Int`
+parameter refused it before the handler ran, through this same rendering.
 
 `title` is always the status's own reason phrase; `detail` is the message
 you passed. Omit the message — `throw HTTPError(.forbidden)` — and `detail`
@@ -82,9 +84,9 @@ disappears from the body entirely rather than repeating `title` back at you.
 
 ## What never reaches the client
 
-An error that doesn't conform to `HTTPErrorRepresentable` — a database
-timeout, a force-unwrap you didn't mean to ship, anything unplanned —
-answers a bare `500` with `detail` omitted:
+An error that doesn't conform to `HTTPErrorRepresentable` — a force-unwrap
+you didn't mean to ship, a bug, anything unplanned — answers a bare `500`
+with `detail` omitted:
 
 ```json
 {"status":500,"title":"Internal Server Error"}
@@ -96,3 +98,12 @@ mapping that renders `HTTPError`, falling through to its `default` case.
 The practical effect: a handler can let an unexpected error simply propagate
 and trust that whatever it was, the client learns nothing more than "the
 server failed" while you learn everything, in the logs.
+
+Two kinds of error get a more useful answer than `500`, because they say
+what they mean rather than what they are. `TemporarilyUnavailable` — a
+dependency that can't serve right now — answers `503` with a `Retry-After`,
+so a client knows to try again; Alula Data's errors for a database that is
+unreachable, a pool with no free connection, or a deadlock are among them.
+`RejectedInput` — the request asked for something wrong — answers `400` with a
+message chosen for the client. Both are protocols in AlulaCore, so an error
+type of your own can conform too.

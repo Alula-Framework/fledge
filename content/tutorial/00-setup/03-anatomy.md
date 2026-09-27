@@ -10,33 +10,37 @@ Run `alula new MyService` and you get this:
 MyService/
   Package.swift
   alula.yaml
-  Sources/App/
+  Dockerfile
+  .dockerignore
+  Sources/MyService/
     Main.swift
     Controllers/
       HealthController.swift
     Entities/      (empty — basics adds to it)
     Repos/         (empty — basics adds to it)
     Services/      (empty)
-  Tests/AppTests/
+  Tests/MyServiceTests/
     HealthControllerTests.swift
 ```
 
-Seven files with anything in them. Every one is worth reading before you
-add an eighth.
+Everything is named after the argument you gave `alula new`: the target, the
+module your tests `@testable import`, the executable, and `app.name`. The files
+that shape the app are worth reading before you add one of your own; the
+`Dockerfile` waits until [Deployment](/tutorial/04-advanced/09-deployment).
 
 ## `Package.swift` — one dependency, one trait
 
 ```swift
 let package = Package(
-    name: "App",
+    name: "MyService",
     platforms: [.macOS(.v15)],
-    products: [.executable(name: "App", targets: ["App"])],
+    products: [.executable(name: "MyService", targets: ["MyService"])],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.36.0", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.57.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
-            name: "App",
+            name: "MyService",
             dependencies: [
                 .product(name: "AlulaCore", package: "alula"),
                 .product(name: "AlulaWeb", package: "alula"),
@@ -46,8 +50,8 @@ let package = Package(
             plugins: [.plugin(name: "AlulaRegistrationPlugin", package: "alula")]
         ),
         .testTarget(
-            name: "AppTests",
-            dependencies: ["App", /* … */ .product(name: "AlulaWebTesting", package: "alula")]
+            name: "MyServiceTests",
+            dependencies: ["MyService", /* … */ .product(name: "AlulaWebTesting", package: "alula")]
         ),
     ]
 )
@@ -62,14 +66,15 @@ transport protocol is a peer you could swap in.
 The plugin line matters more than it looks: `AlulaRegistrationPlugin`
 scans this target for `@Component`/`@Controller`/`@Service` at *build*
 time and generates the composition root (`alulaComposeModules`) that builds
-and wires them. There is no runtime route table anywhere in this project for
-you to find and mutate.
+and wires them. It also checks every `@ConfigValue` key without a default
+against `alula.yaml`. There is no runtime route table anywhere in this project
+for you to find and mutate.
 
 ## `alula.yaml` — layer 3 of configuration
 
 ```yaml
 app:
-  name: App
+  name: MyService
 
 server:
   host: 127.0.0.1
@@ -86,7 +91,7 @@ restart the process. That's a deliberate trade: a config value can't drift
 mid-request, and every route you write can trust the value it read a
 minute ago is still the value it would read now.
 
-## `Sources/App/Main.swift` — the whole boot sequence, in one place
+## `Sources/MyService/Main.swift` — the whole boot sequence, in one place
 
 ```swift
 struct AppModule: AlulaModule {
