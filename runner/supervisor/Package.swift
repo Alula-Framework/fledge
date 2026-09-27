@@ -9,7 +9,7 @@ let package = Package(
     name: "supervisor",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.36.0", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.57.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
