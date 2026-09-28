@@ -11,6 +11,13 @@ cd MyService
 swift run MyService
 ```
 
+For day-to-day work, `alula dev` does the same and rebuilds and restarts on
+every change. It also sets `ALULA_ENV=dev`, which the developer-only surfaces
+need: without a declared environment the actuator dashboard and OpenAPI
+document stay off, and a `demo` project, which includes the mail module,
+refuses to start (`ALU-CONFIG-5013`) rather than silently send nothing. Plain
+`swift run` there needs `ALULA_ENV=dev swift run MyService`.
+
 `alula new` generates a complete, buildable project from one of three
 tiers — `skeleton` (the smallest thing that runs), `basics`, or `demo` —
 defaulting to `skeleton`. The alternative most frameworks choose is one

@@ -1,19 +1,32 @@
 ---
 title: Running it locally
-description: swift run, swift test, and where the rest of the exercises run.
+description: alula dev, swift test, and where the rest of the exercises run.
 order: 4
 ---
 
 From inside the project directory:
 
 ```bash
-swift run MyService
+alula dev
+```
+
+`alula dev` builds the app, runs it, and rebuilds and restarts it when a
+source file or `alula*.yaml` changes; a failed rebuild leaves the running app
+up and shows the errors. It also sets `ALULA_ENV=dev` when you haven't, and
+that matters: an unset `ALULA_ENV` loads the dev configuration but doesn't
+*declare* development, so the actuator dashboard, the OpenAPI document and
+mail logged instead of sent stay off — and the `demo` tier, which includes
+the mail module, refuses to start with `ALU-CONFIG-5013` rather than silently
+deliver nothing. To run it without the watcher:
+
+```bash
+ALULA_ENV=dev swift run MyService
 ```
 
 The first build resolves dependencies and compiles the framework, which
 takes longer than every build after it — Swift's incremental compiler
-caches aggressively, so the second `swift run` after a one-line change is
-seconds, not minutes. When it's up:
+caches aggressively, so the rebuild after a one-line change is seconds, not
+minutes. When it's up:
 
 ```bash
 curl http://127.0.0.1:8080/
@@ -21,7 +34,7 @@ curl http://127.0.0.1:8080/
 ```
 
 That's `HealthController.index`, reading `app.name` out of `alula.yaml`
-and returning it. Change the `app.name` value, restart, curl again — the
+and returning it. Change the `app.name` value, let `alula dev` restart, curl again — the
 response changes. That round trip is the one you'll repeat, in some form,
 for every exercise in this tutorial.
 
@@ -44,7 +57,7 @@ tearing it down. You'll see this pattern again, in more depth, in
 ## Where the exercises run
 
 From here on, the exercises run where this one did: in a project of your own,
-made with `alula new`, with the same `swift run` and `swift test`. Each one
+made with `alula new`, with the same `alula dev` and `swift test`. Each one
 names the tier to start from and the files it touches, and ships a solution
 that the site's CI builds against the current `alula new` templates, so what
 you read is what compiles.
