@@ -13,7 +13,11 @@ layers:
 1. **`alula.yaml`** — defaults shared by every environment.
 2. **`alula-{env}.yaml`** — an overlay for one environment, selected by
    `ALULA_ENV` (`dev` if unset; `test`, `staging`, `prod` are built in, and
-   an app can define more).
+   an app can define more). Unset loads `alula-dev.yaml` but does not
+   *declare* development: the actuator dashboard, the OpenAPI document and
+   the mail module's log-instead-of-send fallback appear only when
+   `ALULA_ENV` is set to `dev`, `development`, `test` or `local`. `alula dev`
+   sets it for you.
 3. **`ALULA_*` environment variables** — always win over both files.
 
 ## One value: `@ConfigValue`

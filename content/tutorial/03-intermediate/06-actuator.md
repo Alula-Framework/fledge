@@ -44,10 +44,12 @@ deployment that never set `ALULA_ENV` at all. Alula inverts it: only
 environments *named* as development — `ALULA_ENV` set to `dev`,
 `development`, `test` or `local` — get the dashboard. Everything else —
 `prod`, `staging`, anything unrecognized, **and an unset `ALULA_ENV`** — gets
-the health probes and nothing more. Everywhere else in Alula an unset
-`ALULA_ENV` means `dev`; here the question is whether to publish your
-topology, and "nobody set the variable" isn't an answer worth acting on. On
-your own machine, `ALULA_ENV=dev swift run MyService` shows the dashboard.
+the health probes and nothing more. An unset `ALULA_ENV` still *loads*
+`alula-dev.yaml`; the question here is whether to publish your topology, and
+"nobody set the variable" isn't an answer worth acting on. The OpenAPI
+document and the mail module's log-instead-of-send fallback follow the same
+rule. On your own machine, `alula dev` sets `ALULA_ENV=dev` for you, and
+`ALULA_ENV=dev swift run MyService` does the same by hand.
 
 Getting an environment name wrong now costs you a dashboard, never leaks one.
 

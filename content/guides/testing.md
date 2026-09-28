@@ -57,6 +57,13 @@ Mock at whichever seam the test is about: a fake repository under a real
 service, or a controller that injects a protocol (`@Inject var users: any
 UserServicing`) so a `MockUserService` can stand in directly.
 
+The doubles come from one import. List `.product(name: "AlulaTesting",
+package: "alula")` in the test target and `import AlulaTesting` to get
+`TestClient`, `QueueTestHarness`, `RecordingMailTransport`,
+`RecordingSessionStore` and the rest; each module arrives only when the trait
+it needs is on. The individual `*Testing` products (`AlulaWebTesting`,
+`AlulaQueueTesting`, …) are still there for a test target that wants just one.
+
 ## End-to-end, sparingly
 
 Unit tests deliberately skip the wiring — that a path routes, a body decodes, a

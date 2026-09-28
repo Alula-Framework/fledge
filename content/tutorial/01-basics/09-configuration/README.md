@@ -12,7 +12,11 @@ built, so nothing downstream can read a config value that changes mid-run:
 2. **`alula-{env}.yaml`** — an overlay for one environment, selected by
    `ALULA_ENV` (`dev` if unset; `test`, `staging`, and `prod` are built in,
    and an app can define more). `ALULA_ENV=staging` loads
-   `alula-staging.yaml` on top of the base file.
+   `alula-staging.yaml` on top of the base file. Unset loads the `dev` file,
+   but it does not *declare* development: the surfaces only a developer
+   should see — the actuator dashboard, the OpenAPI document, mail logged
+   instead of sent — need `ALULA_ENV` actually set to `dev` (or `development`,
+   `test`, `local`). `alula dev` sets it for you.
 3. **`ALULA_*` environment variables** — always win over both files.
 
 ## One value: `@ConfigValue`
