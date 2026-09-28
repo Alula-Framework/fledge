@@ -119,7 +119,7 @@ parameter above included — resolves to `ClockModule.clock`.
 Where a *component* wants the other one, it says so at its injection site:
 
 ```swift
-@Component
+@Service
 struct AuditTrail {
     @Inject(from: FixedClockModule.self) var clock: Clock
 }

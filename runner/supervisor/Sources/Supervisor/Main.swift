@@ -5,7 +5,7 @@ import Foundation
 
 struct AppModule: AlulaModule {
     /// A plain actor, provided as a value the composition root wires into
-    /// `RunnerController` by type — not a scanned @Component, so a stored
+    /// `RunnerController` by type — not a scanned @Service, so a stored
     /// property here is how it enters the graph.
     let state: WorkspaceState = WorkspaceState()
 }

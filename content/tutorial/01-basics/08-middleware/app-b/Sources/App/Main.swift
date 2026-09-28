@@ -6,7 +6,7 @@ import AlulaWeb
 /// Your application's module: one place that says what this app is made of.
 ///
 /// Everything the registration plugin scans — every `@Controller`, `@Service`,
-/// `@Repository`, and `@Component` — is wired by the generated composition
+/// and `@Repository` — is wired by the generated composition
 /// root, so adding a controller does not mean editing this file.
 struct AppModule: AlulaModule {
     /// Modules that must be built before this one. The list is a DAG resolved

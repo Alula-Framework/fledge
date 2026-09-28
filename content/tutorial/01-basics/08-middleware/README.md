@@ -25,7 +25,7 @@ layer working with `curl -i` as well as in the log.
 
 `@Middleware` builds `RequestTiming` as an ordinary singleton component —
 `@Inject` can resolve it, a test can construct it directly — exactly like
-`@Component`. What it deliberately does *not* do is enroll the type in any
+`@Service`. What it deliberately does *not* do is enroll the type in any
 lane. That's a separate, explicit step: a module holds the lane as a value,
 listing the middleware *instances* that run in it, outermost first.
 

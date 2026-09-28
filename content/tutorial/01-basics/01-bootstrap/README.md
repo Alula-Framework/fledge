@@ -31,7 +31,7 @@ struct Main {
    names which subsystems the app includes; `composedBy: alulaComposeModules`
    is how they're built.
 3. **Every component is built once, eagerly.** The composition root constructs
-   each `@Controller`, `@Service`, `@Repository`, and `@Component` a single
+   each `@Controller`, `@Service`, and `@Repository` a single
    time and wires them together by type. The wiring was checked when it was
    generated: a dependency nothing provides, or a required `@ConfigValue` that
    `alula.yaml` doesn't have, is a *build* error. What is left for startup is
@@ -57,8 +57,8 @@ struct AppModule: AlulaModule {
 
 That's the whole thing — a *value* declaring which subsystems the app is built
 on. There is no `configure` method and no registration call to write.
-Everything else — every `@Component`, `@Controller`, `@Service`, and
-`@Repository` — is wired by `alulaComposeModules`, the **composition root**
+Everything else — every `@Controller`, `@Service`, and `@Repository` — is
+wired by `alulaComposeModules`, the **composition root**
 the `AlulaRegistrationPlugin` (named in `Package.swift`'s `plugins:` list)
 generates for you.
 
