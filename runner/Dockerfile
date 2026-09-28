@@ -74,6 +74,12 @@ RUN mkdir -p /workspace && \
 # already-writable workspace tmpfs covers it without a second mount.
 ENV HOME=/workspace/.home
 
+# Declared, not left to default: an unset ALULA_ENV loads the dev overlay
+# while counting as undeclared, and a deployment should say what it is.
+# The supervisor composes only the web module, so nothing it serves
+# changes with this.
+ENV ALULA_ENV=prod
+
 USER runner
 WORKDIR /app
 EXPOSE 9000
