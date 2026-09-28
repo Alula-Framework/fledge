@@ -24,11 +24,10 @@ let package = Package(
     products: [.library(name: "GreetKit", targets: ["GreetKit"])],
     dependencies: [
         .package(url: "https://github.com/Alula-Framework/alula.git",
-                 from: "0.57.0", traits: ["Web"])
+                 from: "0.60.0", traits: ["Web"])
     ],
     targets: [
         .target(name: "GreetKit", dependencies: [
-            .product(name: "AlulaCore", package: "alula"),
             .product(name: "AlulaWeb", package: "alula"),
         ])
     ]
@@ -84,7 +83,7 @@ An application adds the package and names the module. Nothing else:
 ```swift
 // the app's Package.swift
 dependencies: [
-    .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.57.0", traits: ["Web"]),
+    .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.60.0", traits: ["Web"]),
     .package(url: "https://github.com/you/GreetKit.git", from: "1.0.0"),
 ],
 // ...and on the app's executable target:

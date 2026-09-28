@@ -113,7 +113,7 @@ backend, and switching is a module choice, never a code change:
 
 ```swift
 .package(url: "https://github.com/Alula-Framework/alula-data.git",
-         from: "0.23.0", traits: ["Postgres", "Valkey"])
+         from: "0.24.0", traits: ["Postgres", "Valkey"])
 ```
 
 ```swift

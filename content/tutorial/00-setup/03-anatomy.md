@@ -36,15 +36,13 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [.executable(name: "MyService", targets: ["MyService"])],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.57.0", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.60.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
             name: "MyService",
             dependencies: [
-                .product(name: "AlulaCore", package: "alula"),
                 .product(name: "AlulaWeb", package: "alula"),
-                .product(name: "AlulaTransport", package: "alula"),
                 .product(name: "AlulaActuator", package: "alula"),
             ],
             plugins: [.plugin(name: "AlulaRegistrationPlugin", package: "alula")]
@@ -59,12 +57,15 @@ let package = Package(
 
 `traits: ["Web"]` is the whole story of what got resolved: HTTP,
 WebSockets, Channels, and Presence — no database driver, no security
-module, because neither was named. `AlulaTransport` is itself a choice,
-not a given: it wraps HummingbirdCore, and any type conforming to the same
-transport protocol is a peer you could swap in.
+module, because neither was named. The `AlulaWeb` product brings
+`AlulaCore` and the default transport, `AlulaTransport`, with it, which is
+why neither is listed. The transport is still a choice, not a given:
+`Main.swift` imports `AlulaTransport` and names it, it wraps HummingbirdCore,
+and any type conforming to the same transport protocol is a peer you could
+swap in.
 
 The plugin line matters more than it looks: `AlulaRegistrationPlugin`
-scans this target for `@Component`/`@Controller`/`@Service` at *build*
+scans this target for `@Controller`/`@Service`/`@Repository` at *build*
 time and generates the composition root (`alulaComposeModules`) that builds
 and wires them. It also checks every `@ConfigValue` key without a default
 against `alula.yaml`. There is no runtime route table anywhere in this project
@@ -117,7 +118,7 @@ struct Main {
 Read this and you've read the order events happen in, for every Alula
 app you'll ever open: configuration loads, the modules are composed in
 dependency order — each module's `dependencies` form a DAG that's resolved
-once — every `@Controller`, `@Service`, `@Repository`, and `@Component` is
+once — every `@Controller`, `@Service`, and `@Repository` is
 built a single time and wired by type, and *only then* does the server start
 accepting requests. Nothing serves traffic against a half-built graph —
 there's no window where a request could arrive before your controllers exist.
