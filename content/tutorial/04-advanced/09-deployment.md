@@ -35,7 +35,11 @@ ENV ALULA_ENV=prod
 ENV ALULA_SERVER_HOST=0.0.0.0
 ```
 
-`ALULA_ENV=prod` selects `alula-prod.yaml` on top of `alula.yaml`. The second
+`ALULA_ENV=prod` selects `alula-prod.yaml` on top of `alula.yaml`. It also
+declares a non-development environment, so the actuator dashboard and the
+OpenAPI document are off, and a project that includes the mail module (the
+`demo` tier) needs a real transport — `AlulaMailSMTPModule` and `mail.smtp.*`
+— or refuses to start with `ALU-CONFIG-5013` rather than send nothing. The second
 line is the one a hand-written Dockerfile forgets: `server.host` defaults to
 `127.0.0.1`, which inside a container is reachable from nothing but the
 container itself, so nothing answers on the port you published.
