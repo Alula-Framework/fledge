@@ -9,15 +9,13 @@ let package = Package(
     name: "supervisor",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.57.0", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.60.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(
             name: "Supervisor",
             dependencies: [
-                .product(name: "AlulaCore", package: "alula"),
                 .product(name: "AlulaWeb", package: "alula"),
-                .product(name: "AlulaTransport", package: "alula")
             ],
             plugins: [.plugin(name: "AlulaRegistrationPlugin", package: "alula")]
         )
