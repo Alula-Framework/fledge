@@ -15,9 +15,7 @@ import AlulaWeb
 @Controller
 struct SocketController {
     /// The channels stack. Provided by `AlulaChannelsModule`, matched by type
-    /// by the composition root — not scanned from an annotation, hence the
-    /// marker.
-    // alula:hand-registered
+    /// by the composition root.
     @Inject var sockets: ChannelSockets
 
     @WebSocketRoute("/socket")

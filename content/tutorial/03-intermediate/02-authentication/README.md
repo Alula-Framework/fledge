@@ -109,22 +109,17 @@ the default shape for components across Alula for exactly this reason.
 `DocumentService` injects only `DocumentRepository` — a scanned
 `@Repository`. A component can just as well inject a value a *module*
 provides — the `any TokenValidator` a WebSocket upgrade handler needs, say —
-and the composition root wires it by type. You'll see those properties marked
-in the templates:
+and the composition root wires it by type:
 
 ```swift
-// alula:hand-registered
 @Inject var validator: any TokenValidator
 ```
 
-The comment records that the value comes from a module rather than a scanned
-annotation. In an application the build needs no such hint — it sees every
-module's values, and a type nothing provides is a build error
-(`ALU-DI-1001`), marker or not. It matters in two places: in a library target,
-which can't see the modules it will run under and warns (`ALU-DI-1009`) about
-an injection nothing in its scan provides; and on a protocol-typed
-`@Inject`, where it stops the build from bridging the protocol to a scanned
-conformer that would collide with the module's value.
+Nothing marks it as module-provided: the build sees every included module's
+values, and a type nothing provides is a build error (`ALU-DI-1001`). A
+protocol-typed `@Inject` that a module provides is taken from the module even
+when a scanned type in your app also conforms to it; inject the concrete type
+if you want the conformer instead.
 
 ## Bearer tokens are the default seam, not the only one
 

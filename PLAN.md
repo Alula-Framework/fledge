@@ -361,8 +361,8 @@ health checks).
 **Part 5 — Authoring your own modules** *(runtime: local)*
 The seam every subsystem (yours and the framework's) is built on, taught by
 writing one. A `AlulaModule` is a value: your first module and providing a
-value by type (the `// alula:hand-registered` marker, the required explicit
-type annotation) · modules that depend on modules (`dependencies` as an
+value by type (the required explicit type annotation; the build infers what
+a module provides, so no marker) · modules that depend on modules (`dependencies` as an
 inclusion edge, an `init` the composition root satisfies by type,
 configuration and another module's value; ambiguity is a build error) ·
 contributing routes, channels, and middleware as `[RouteRegistration]` /

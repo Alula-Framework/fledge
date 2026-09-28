@@ -15,9 +15,8 @@ struct IssueResponse: Codable, ResponseEncodable {
 
 @Controller
 struct IssueCreationController {
-    // alula:hand-registered — the broadcaster is provided by
-    // AlulaChannelsModule as a value, injected the ordinary way rather than
-    // pulled from the context when the handler runs.
+    // AlulaChannelsModule provides the broadcaster as a value, injected the
+    // ordinary way rather than pulled from the context when the handler runs.
     @Inject var broadcaster: ChannelBroadcaster
 
     @PostRoute("/projects/:key/issues")

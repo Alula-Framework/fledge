@@ -11,7 +11,7 @@ injects it like any other dependency:
 ```swift
 @Controller
 struct IssueCreationController {
-    // alula:hand-registered — the broadcaster is provided by AlulaChannelsModule.
+    // AlulaChannelsModule provides the broadcaster.
     @Inject var broadcaster: ChannelBroadcaster
 
     @PostRoute("/projects/:key/issues")

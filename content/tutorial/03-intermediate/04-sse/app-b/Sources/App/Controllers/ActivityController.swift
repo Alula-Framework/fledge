@@ -5,9 +5,8 @@ import Foundation
 
 @Controller
 struct ActivityController {
-    // alula:hand-registered — the bus is a value AlulaPubSubModule provides,
-    // not a scanned @Component. (`GET /activity` is the demo's own
-    // ChatController route, so the feed lives at `/feed`.)
+    // The bus is a value AlulaPubSubModule provides. (`GET /activity` is
+    // the demo's own ChatController route, so the feed lives at `/feed`.)
     @Inject var pubsub: any PubSub
 
     @GetRoute("/events")

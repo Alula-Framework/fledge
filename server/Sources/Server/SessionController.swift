@@ -29,9 +29,8 @@ struct WriteRequest: Decodable {
 /// an `HttpOnly` cookie is by design unreadable from the client's own JS.
 @Controller
 struct SessionController {
-    // alula:hand-registered — provided by AppModule (matched by type); it
-    // composes an actor and two value types, so it isn't itself a scanned
-    // @Service.
+    // Provided by AppModule (matched by type); it composes an actor and two
+    // value types, so it isn't itself a scanned @Service.
     @Inject var sessionService: SessionService
     @ConfigValue("session.hardCapSeconds", default: 3600) var hardCapSeconds: Int
 

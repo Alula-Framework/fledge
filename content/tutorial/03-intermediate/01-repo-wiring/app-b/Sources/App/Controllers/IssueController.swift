@@ -11,7 +11,7 @@ struct IssueController {
     /// prevent). The controller injects the pool and *leases* a repo per
     /// request with `withRepo`, which hands the connection back at the end of
     /// the bracket.
-    // alula:hand-registered — PostgresDataModule provides the pool.
+    /// `PostgresDataModule` provides it; the build sees that on its own.
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")

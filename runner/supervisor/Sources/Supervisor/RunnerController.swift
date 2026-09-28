@@ -27,8 +27,8 @@ struct WriteRequest: Decodable {
 /// previous session, or a guess, is rejected, never just "present."
 @Controller
 struct RunnerController {
-    // alula:hand-registered — provided by AppModule (matched by type),
-    // since it's a plain actor, never scanned as a @Component.
+    // Provided by AppModule (matched by type), since it's a plain actor,
+    // never scanned as a @Service.
     @Inject var state: WorkspaceState
     @ConfigValue("workspace.live", default: "/workspace") var liveWorkspacePath: String
     @ConfigValue("workspace.pristine", default: "/workspace-pristine") var pristineWorkspacePath: String

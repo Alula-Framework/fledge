@@ -11,7 +11,6 @@ operation:
 ```swift
 @Controller
 struct IssueController {
-    // alula:hand-registered — PostgresDataModule provides the pool.
     @Inject var pool: PostgresDataSource
 
     @GetRoute("/issues/:id")
@@ -47,10 +46,9 @@ connection to the pool when the closure ends. The borrow is exactly as wide as
 the closure: it starts where you can see it and ends when the closure returns.
 
 `PostgresDataModule<PrimaryDataSource>` provides the pool, and the composition
-root wires it by type. The `// alula:hand-registered` comment records that
-`PostgresDataSource` comes from that module rather than from a scanned
-annotation; the build doesn't need it — were no module providing the pool,
-the build would fail with `ALU-DI-1001`, comment or not.
+root wires it by type. Nothing marks the property as module-provided: the
+build sees which values the included modules provide, and were no module
+providing the pool, it would fail with `ALU-DI-1001`.
 
 The lease is also where an outage shows up, and it shows up as what it is. A
 database that can't be reached, or a pool with no free connection, throws an

@@ -48,8 +48,6 @@ Anything that injects a `Clock` now gets this one:
 ```swift
 @Controller
 struct TimeController {
-    // alula:hand-registered — Clock is provided by AppModule, not scanned
-    // from an annotation.
     @Inject var clock: Clock
 
     @GetRoute("/time")
@@ -84,15 +82,12 @@ it reads your *source*, at build time, before anything runs:
   Sources/MyService/Main.swift:19:9: note: `AppModule.clock` constructs a `Clock` but has no written type, so it provides nothing — write `let clock: Clock = …`
   ```
 
-- **The `// alula:hand-registered` marker** records that `Clock` is provided
-  by a module rather than scanned as a `@Component`. In an application it
-  changes nothing the build does — the generator sees every module's values,
-  and a type nothing provides fails the build with the error above, marker or
-  not — so it is a note to the reader. It earns its keep in a *library*
-  target, which composes nothing and so cannot see the modules its components
-  will run under: there, an `@Inject` of a type nothing in the scan provides is
-  a warning (`ALU-DI-1009`), and the marker is how you say "this one is
-  supplied from outside, on purpose."
+- **Nothing marks `clock` as module-provided.** `TimeController` just asks
+  for a `Clock`; the generator sees every module's stored properties, works out
+  that `AppModule` provides one, and wires it. A type nothing provides fails
+  the build with the error above. (Code written for Alula before 0.60 may carry
+  a `// alula:hand-registered` comment on such a property. The build no longer
+  reads it — it is an ordinary comment, and you can delete it.)
 
 ## Why a module, and not just a global
 
@@ -113,6 +108,6 @@ property to `AppModule`, add `TimeController`, and `curl 127.0.0.1:8080/time`.
 Then drop the `: Clock` annotation and rebuild: the build *fails* with the
 `ALU-DI-1001` above, because a route needs a `Clock` that now no module
 provides — and the note points at the line to fix. Put the annotation back and
-delete the `// alula:hand-registered` comment instead: the build is clean,
-because nothing was missing. The build's question is always "does something
+the build is clean again, with nothing on the controller telling it where the
+`Clock` comes from. The build's question is always "does something
 provide this?", answered from the source before the app ever runs.

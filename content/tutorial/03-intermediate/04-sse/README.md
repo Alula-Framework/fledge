@@ -34,8 +34,7 @@ answers `GET /activity` with a report of its own, so this feed lives at
 ```swift
 @Controller
 struct ActivityController {
-    // alula:hand-registered — the bus is a value AlulaPubSubModule provides,
-    // not a scanned @Component.
+    // The bus is a value AlulaPubSubModule provides.
     @Inject var pubsub: any PubSub
 
     @GetRoute("/feed")
