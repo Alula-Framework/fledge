@@ -47,6 +47,21 @@ returns the segment as a plain `String?`, and
 `context.pathParam("number", as: Int.self)` parses it and throws the same
 `400` — useful where a handler signature can't reach, like inside middleware.
 
+`show` never reads `context`, so it could leave it out:
+
+```swift
+@GetRoute("/issues/:number")
+func show(number: Int) -> String {
+    "issue #\(number)"
+}
+```
+
+That builds and answers exactly the same, `400` included, because the
+generated route parses `:number`, not your handler. A handler declares
+`_ context: RequestContext`, always first, when it reads the request itself:
+a header, a cookie, who is signed in. Most handlers in the lessons ahead do,
+so they keep it. A WebSocket route always takes it.
+
 ## Query parameters
 
 Same idea, different source. A `query:` parameter decodes the query string
