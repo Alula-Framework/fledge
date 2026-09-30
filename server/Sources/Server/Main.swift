@@ -38,7 +38,8 @@ struct PostgresModule: AlulaModule {
     }
 
     /// Keeps `PostgresClient`'s connection-pool loop alive — the outbound-admin
-    /// analogue of `AlulaTransport`'s inbound HTTP service. A value now, built
+    /// analogue of the web module's inbound HTTP service. This is a lifecycle
+    /// service (`run()`), unrelated to the `@Service` annotation. A value now, built
     /// from the client this module already holds, rather than a stashed
     /// container resolved at `run()`.
     var service: (any Service)? { PostgresClientService(client: postgresClient) }
@@ -53,8 +54,8 @@ struct PostgresClientService: Service, Sendable {
 
 /// The runner-lease broker, the runner HTTP client, and the `session:*`
 /// channel — everything the sessions module needs that depends on neither the
-/// channel broadcaster nor the component graph, so it composes before Channels
-/// and hands its values to `AppModule`.
+/// channel broadcaster nor the graph of `@Service` types, so it composes before
+/// Channels and hands its values to `AppModule`.
 struct SessionModule: AlulaModule {
     /// The lease broker and runner client, provided to `AppModule` by type.
     let broker: SessionBroker
@@ -89,7 +90,7 @@ struct SessionModule: AlulaModule {
 /// composition root, and owns the idle-TTL reaper as its service.
 ///
 /// It takes those values and provides `sessionService`; it does not take the
-/// component graph and does not declare channels, so nothing depends on it and
+/// graph and does not declare channels, so nothing depends on it and
 /// the module graph stays acyclic.
 struct AppModule: AlulaModule {
     static var dependencies: [any AlulaModule.Type] {
@@ -143,7 +144,7 @@ private struct PostgresSettings {
 @main
 struct Main {
     static func main() async {
-        // `Alula.run` composes the module DAG, builds every component once, and
+        // `Alula.run` composes the module DAG, builds the whole graph once, and
         // starts the ServiceGroup — request serving begins only after the whole
         // graph is built. `composedBy: alulaComposeModules` is the generated
         // composition root; `modules:` names which subsystems to include.

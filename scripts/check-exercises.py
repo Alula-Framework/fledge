@@ -24,7 +24,7 @@ Two tiers, two shapes:
 Both tiers reuse one workspace across every exercise so dependencies
 compile once. The workspace is reset from a pristine copy between
 exercises (`.build` deliberately preserved), because exercises reuse type
-names — three of them define `IssueController` — and a leftover file from
+names — six of them define `IssueController` — and a leftover file from
 the previous one would either collide or, worse, silently satisfy a
 reference the exercise under test should have failed on.
 """
@@ -166,7 +166,7 @@ def check_app_exercises(templates: Path) -> None:
                 # both preserve the files' git-checkout mtimes, which can be
                 # *older* than an object file the warm `.build` compiled for a
                 # previous exercise — and several exercises define the same
-                # type (three define `IssueController`, with different routes).
+                # type (six define `IssueController`, with different routes).
                 # SwiftPM's incremental check is mtime-based, so a stale-but-
                 # newer `.o` gets reused and the app links against the previous
                 # exercise's macro-generated `_alulaRoute_*` symbols, failing
