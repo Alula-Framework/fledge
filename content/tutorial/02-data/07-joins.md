@@ -34,9 +34,12 @@ Forget the alias and join a table to itself anyway, and it fails when the
 query renders — not a generic ambiguity error, but one naming the exact fix:
 
 ```
-a self-join needs an alias on at least one side:
-Employee.alias("parent").join(Employee.alias("child"), on: ...).
+Projection on "employees": a self-join needs an alias on at least one side:
+employees.alias("parent").join(employees.alias("child"), on: ...).
 ```
+
+(The fix names the table, `employees`; in Swift that's
+`Employee.alias("parent")`.)
 
 Closures after an aliased join see alias-qualified columns throughout, so
 `.where { manager, _ in manager.title == "VP" }` keeps working exactly like

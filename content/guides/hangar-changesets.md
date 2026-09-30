@@ -45,8 +45,8 @@ field except the one the new rule actually governs.
 value, since "is this present" has to hold regardless of whether this
 changeset touched it.
 
-Built-in rules beyond `.length`: `.email`, `.matches(pattern:)`,
-`.range(_:)`, `.oneOf(_:)`, and a `.custom { }` escape hatch.
+Built-in rules beyond `.length`: `.email`, `.matches(_:)`,
+`.range(_:)`, `.oneOf(_:)`, and a `.custom(message:) { }` escape hatch.
 
 ## `repo.insert`/`repo.update` validate for you
 

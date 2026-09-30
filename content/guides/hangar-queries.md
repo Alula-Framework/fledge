@@ -45,7 +45,7 @@ join, its closure seeing all three column sets:
 
 ```swift
 Issue.join(Project.self, on: { i, p in i.projectID == p.id })
-    .join(User.self, on: { _, issue, user in issue.reporterID == user.id })
+    .join(User.self, on: { issue, _, user in issue.reporterID == user.id })
 ```
 
 ## Aggregates and projections
@@ -57,7 +57,7 @@ try await repo.all(
     Issue.groupBy { $0.projectID }
         .having { $0.id.count() > 10 }
         .select(into: ProjectIssueCounts.self) { i in
-            (i.projectID, i.id.count())
+            (projectID: i.projectID, issueCount: i.id.count())
         })
 ```
 
@@ -144,7 +144,7 @@ Both return an `Int` row count — zero is a normal answer, not an error. A
 query with no predicate at all deletes every row in the table; Hangar
 honors that rather than second-guessing it. `set(to:)` takes a value, another
 column, or an expression the server computes per row —
-`$0.version.set(to: $0.version.adding(1))` renders `SET version = (version +
+`$0.version.set(to: $0.version.adding(1))` renders `SET "version" = ("version" +
 $1)`, so concurrent increments don't lose each other. A query carrying a
 clause a single `UPDATE` or `DELETE` can't honor — `LIMIT`, `ORDER BY`,
 `GROUP BY` — is refused (`HGR-QUERY-4111`) rather than run with the clause

@@ -65,7 +65,7 @@ enum K {
     static let profile = MultiKey<Profile>("profile")
 }
 
-var multi = Multi()
+let multi = Multi()
     .insert(K.user, userChangeset)
     .insert(K.profile) { results in profileChangeset(for: try results[K.user]) }
 

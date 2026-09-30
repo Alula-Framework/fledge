@@ -21,7 +21,7 @@ struct AppModule: AlulaModule {
 `datasource.<name>.*` out of `Configuration` and builds a
 `PostgresDataSource` in its own initializer, so a bad URL or pool size fails
 at *composition* — startup — rather than at the first query. It also dials the
-database before any service starts, so a database that refuses the
+database before any lifecycle service starts, so a database that refuses the
 connection is the one thing a failed start reports, with the data source,
 host and port it tried (`ALD-DATA-1001`) — never the password. Its keys are
 kebab-case like every other: `datasource.primary.url`,
@@ -77,7 +77,8 @@ first time a new binary starts.
 `migrate` reads the database from the same place the application does:
 `datasource.primary.url` from `alula.yaml`, with the environment overlay,
 `${VAR}` substitution and `ALULA_DATASOURCE_PRIMARY_URL` applied exactly as
-at runtime, unless `--database-url` or `ALULA_DATABASE_URL` says otherwise.
+at runtime, unless `--database-url`, `ALULA_DATABASE_URL` or `DATABASE_URL` says
+otherwise — in that order, and any of them beats `alula.yaml`.
 Before it does anything it prints which database it is about to use and
 why — `migrate: database 'app_dev' on db.internal:5432 (from
 datasource.primary.url in /srv/app/alula.yaml)` — so migrations can't quietly

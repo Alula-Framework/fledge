@@ -36,7 +36,7 @@ func fileIssueAndAdvanceCounter(_ repo: Repo) async throws {
             title: "Filed inside a transaction", status: "open",
             priority: "normal", reporterID: sample.reporterID))
 
-        _ = try await tx.transaction { inner in
+        try await tx.transaction { inner in
             try await inner.update(
                 Changeset(original: project).change(\.nextIssueNumber, nextNumber + 1))
         }

@@ -28,7 +28,7 @@ something explicitly preloads it. Reading through one that wasn't is not a
 silent `nil` and not a lazy query fired on first touch:
 
 ```swift
-let name = try issue.reporter.get().displayName   // HangarError.notPreloaded("reporter") if nobody preloaded it
+let name = try issue.reporter.get().displayName   // HangarError.notPreloaded(association: "reporter") if nobody preloaded it
 ```
 
 That's deliberate: lazy loading turns a missing preload into an invisible

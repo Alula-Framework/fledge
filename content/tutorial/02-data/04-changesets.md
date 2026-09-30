@@ -48,8 +48,8 @@ exception worth knowing: it checks the field's *effective* value, since
 it.
 
 Built-in rules beyond `.length` cover the other common shapes —
-`.email`, `.matches(pattern:)`, `.range(_:)`, `.oneOf(_:)` — and a
-`.custom { }` escape hatch for anything specific to your own data.
+`.email`, `.matches(_:)`, `.range(_:)`, `.oneOf(_:)` — and a
+`.custom(message:) { }` escape hatch for anything specific to your own data.
 
 ## `repo.insert`/`repo.update` validate too — you don't have to remember to
 

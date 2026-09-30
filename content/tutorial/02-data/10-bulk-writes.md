@@ -30,7 +30,7 @@ let closed = try await repo.update(Issue.where { $0.status == "in_progress" }) {
 `String` column is a compile error the same way a mistyped `where` predicate
 would be. It takes a value — the same for every matching row — or an
 expression the server computes per row: `$0.version.set(to:
-$0.version.adding(1))` renders `SET version = (version + $1)`, so twenty
+$0.version.adding(1))` renders `SET "version" = ("version" + $1)`, so twenty
 concurrent increments add twenty; `set(to: $0.otherColumn)` copies a column;
 `set(to: .transactionTimestamp)` writes the server's `now()`. Arithmetic is
 methods — `adding`, `subtracting`, `multiplied(by:)`, `divided(by:)` — not

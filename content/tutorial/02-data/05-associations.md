@@ -8,6 +8,7 @@ order: 5
 @Entity("issues")
 struct Issue {
     @ID var id: UUID
+    var projectID: UUID
     var title: String
     var reporterID: UUID
     @BelongsTo(foreignKey: \Issue.reporterID) var reporter: Loadable<User>
