@@ -1,12 +1,12 @@
-// The full planned curriculum, transcribed from PLAN-fledge.md §7.
+// The full curriculum, transcribed from PLAN.md §7.
 //
 // This is the site's source of truth for navigation and for distinguishing
 // "not written yet" from "doesn't exist" — a slug listed here with no
 // matching file under content/tutorial/<part>/ renders a "coming soon"
 // placeholder (using this manifest's title/description) instead of a 404.
-// That is deliberate: most of the curriculum is planned but not yet
-// authored, and a broken link reads as a bug while a labeled placeholder
-// reads as a map. See site/src/lib/server/content.ts for how a slug is
+// That is deliberate: every exercise listed today is written, but a new
+// one is listed here before it is authored, and a broken link reads as a
+// bug while a labeled placeholder reads as a map. See site/src/lib/server/content.ts for how a slug is
 // resolved against real files.
 
 export interface ExerciseOutline {
@@ -24,7 +24,7 @@ export interface PartOutline {
 	/// `snippet` is the only interactive one: those exercises carry a
 	/// sibling `.swift` file and get the embedded editor. `local` means the
 	/// code is real and CI-verified — each exercise keeps an `app-b`
-	/// solution built against a `alula new` template — but the reader runs
+	/// solution built against an `alula new` template — but the reader runs
 	/// it in their own project rather than in the page. `none` is prose
 	/// with nothing to run.
 	///
@@ -285,13 +285,13 @@ export const curriculum: PartOutline[] = [
 		slug: '05-modules',
 		title: 'Part 5 — Authoring your own modules',
 		summary:
-			'Writing a AlulaModule: providing components, values, routes, and a service, all wired by the composition root — the seam every subsystem (yours and the framework’s) is built on.',
+			'Writing an AlulaModule: providing values, routes, channels and a lifecycle service, all wired by the composition root — the seam every subsystem (yours and the framework’s) is built on.',
 		runtime: 'local',
 		exercises: [
 			{
 				slug: '01-your-first-module',
 				title: 'Your first module',
-				description: 'A AlulaModule is a value: what it declares, and how the composition root wires it.'
+				description: 'An AlulaModule is a value: what it declares, and how the composition root wires it.'
 			},
 			{
 				slug: '02-providing-values',
@@ -309,7 +309,7 @@ export const curriculum: PartOutline[] = [
 				slug: '04-a-service',
 				title: 'A module that runs something',
 				description:
-					'Owning a long-running service, and the provide-vs-take-the-graph rule that keeps composition acyclic.'
+					'Owning a long-running lifecycle service, and the provide-vs-take-the-graph rule that keeps composition acyclic.'
 			},
 			{
 				slug: '05-packaging',

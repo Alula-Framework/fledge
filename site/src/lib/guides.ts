@@ -1,5 +1,6 @@
-// The planned plain-documentation track, transcribed from
-// PLAN-fledge.md §8. Same "coming soon vs. 404" role as
+// The plain-documentation track, transcribed from PLAN.md §8. A guide
+// missing from this list 404s even when its markdown exists — the loader
+// checks here first. Same "coming soon vs. 404" role as
 // curriculum.ts — see the comment there.
 
 export interface GuideOutline {
@@ -67,7 +68,7 @@ export const guides: GuideOutline[] = [
 	{
 		slug: 'testing',
 		title: 'Testing',
-		description: 'AlulaWebTesting, AlulaChannelsTesting, and three sizes of test.',
+		description: 'AlulaTesting, the harnesses it re-exports, and three sizes of test.',
 		category: 'Alula'
 	},
 	{
@@ -86,6 +87,12 @@ export const guides: GuideOutline[] = [
 		slug: 'deployment',
 		title: 'Deployment',
 		description: 'systemd, Docker, stripping your release binary, and a reverse proxy.',
+		category: 'Alula'
+	},
+	{
+		slug: 'diagnostics',
+		title: 'When the Build Says No',
+		description: "Reading Alula's diagnostic codes, and `alula explain`.",
 		category: 'Alula'
 	}
 ];
