@@ -11,7 +11,7 @@ let package = Package(
         .executable(name: "App", targets: ["App"])
     ],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.60.0", traits: ["Web"]),
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.61.0", traits: ["Web"]),
         .package(path: "GreetKit"),
     ],
     targets: [
