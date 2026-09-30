@@ -101,13 +101,31 @@ jobs:
           ALULA_BUILD_DOCS: '1'
         run: |
           mkdir -p ../site-out/alula
+          # Same list as alula's own docs job (.github/workflows/ci.yml
+          # there), which is the gate that proves each of these builds
+          # clean. Keep the two in step: this one drifted fourteen targets
+          # behind — Sessions, APNs, rate limiting, queues, mail, the HTTP
+          # client, OpenAPI and the AlulaTesting umbrella the testing lesson
+          # teaches first all shipped without reference pages here.
+          # AlulaChannelsProtocol and AlulaTransport are targets still
+          # (re-exported by AlulaChannels/AlulaChannelsClient and AlulaWeb),
+          # so their symbols still need pages even though neither is a
+          # product a manifest should name.
           for target in AlulaCore AlulaConfig AlulaConfigCore AlulaWeb \
                         AlulaChannels AlulaChannelsProtocol \
                         AlulaChannelsClient AlulaChannelsTesting \
                         AlulaPubSub AlulaPubSubTesting AlulaPresence \
                         AlulaPresenceProtocol AlulaPresenceClient \
                         AlulaActuator AlulaSecurityCore AlulaWebTesting \
-                        AlulaTransport AlulaScheduler; do
+                        AlulaTransport AlulaScheduler \
+                        AlulaSessions AlulaSessionsTesting \
+                        AlulaAPNS AlulaAPNSTesting \
+                        AlulaRateLimit AlulaRateLimitTesting \
+                        AlulaTelemetryBridges \
+                        AlulaQueue AlulaQueueTesting \
+                        AlulaMail AlulaMailTesting AlulaMailSMTP \
+                        AlulaHTTPClient AlulaHTTPClientTesting \
+                        AlulaOpenAPI AlulaTesting; do
             echo "::group::alula/$target"
             swift package --enable-all-traits \
               --allow-writing-to-directory "../site-out/alula/$target" \
@@ -141,11 +159,15 @@ jobs:
           ALULA_BUILD_DOCS: '1'
         run: |
           mkdir -p ../site-out/alula-data
+          # alula-data's docs job list, plus AlulaCacheTesting (a product
+          # with no catalog of its own, which that job skips).
           for target in AlulaCache AlulaCacheTesting AlulaDataCore \
                         AlulaDataTesting AlulaMigrateCore \
                         AlulaDataPostgres AlulaMigrate \
                         AlulaSchedulerPostgres AlulaCacheValkey \
-                        AlulaDataValkey AlulaPubSubValkey; do
+                        AlulaDataValkey AlulaPubSubValkey \
+                        AlulaSessionsValkey AlulaRateLimitValkey \
+                        AlulaQueuePostgres AlulaPubSubPostgres; do
             echo "::group::alula-data/$target"
             swift package --enable-all-traits \
               --allow-writing-to-directory "../site-out/alula-data/$target" \
