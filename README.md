@@ -111,8 +111,18 @@ Running matters more than building, and that isn't a stylistic preference:
 the last real bug this caught — `repo.one` on a non-unique predicate —
 **compiled cleanly** and only failed when executed. A build-only check
 would have shipped it. `.github/workflows/exercises.yml` runs the whole
-thing on every PR and weekly, the schedule being there because the usual
-cause of a break is an upstream release rather than an edit here.
+thing on every push to `main`, every PR and weekly, the schedule being
+there because the usual cause of a break is an upstream release rather
+than an edit here. Today that is 48 checks: 11 Part 2 snippets built and
+run, and 26 `app-b` solutions built.
+
+## Reference docs
+
+`.github/workflows/docs.yml` generates DocC for alula, alula-data,
+Hangar and swift-changeset and publishes it to
+<https://alula-framework.github.io/fledge/> — weekly from each repo's
+`main`, or by hand (`workflow_dispatch`) against a tag. The guides link
+there for API detail.
 
 ## Contributing content
 

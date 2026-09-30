@@ -4,6 +4,33 @@ What's actually built, verified, and running, versus what's still just in
 `PLAN.md`. Updated as milestones land — see `PLAN.md` §10 for the full
 milestone list this maps onto.
 
+## Current state (2026-09-30)
+
+- **Content:** all 46 tutorial exercises (Parts 0–5) and all 14 guides
+  are written. Part 2 is the interactive snippet tier; Parts 1, 3, 4 and
+  5 are `local` — real code the reader runs in their own `alula new`
+  project, each with an `app-b` solution; Part 0 is prose.
+- **Pins:** exercises, `server/` and `runner/supervisor/` target alula
+  0.60.0; the snippet workspace pins Hangar 0.16.1; the alula-data
+  lesson teaches 0.24.0.
+- **Verification:** `scripts/check-exercises.py` (and
+  `.github/workflows/exercises.yml`, on every push to `main`, every PR
+  and weekly) builds the 11 Part 2 snippets and runs them against the
+  seeded database, and builds the 26 `app-b` solutions against the
+  alula-cli templates — 48 checks in all.
+- **Reference docs:** `.github/workflows/docs.yml` publishes DocC for
+  alula, alula-data, Hangar and swift-changeset to
+  `alula-framework.github.io/fledge/` weekly from each repo's `main`
+  (or by hand against a tag). Its target lists mirror each repo's own
+  docs job.
+- **Local runs** of the app exercises use `alula dev`, which sets
+  `ALULA_ENV=dev`; from alula 0.60.0 an undeclared environment no longer
+  counts as development. The server and runner images declare
+  `ALULA_ENV=prod`.
+
+The dated sections below are the build log, oldest milestones first
+after this one; they describe the state at the time.
+
 ## 2026-09-24 — Flight School is now Fledge
 
 The site was renamed Fledge (repo `Alula-Framework/fledge`), and the
@@ -112,7 +139,7 @@ alula-cli's actual templates/README, not invented:
   findings were cross-checked before anything got written from them,
   same bar as everywhere else in this file. Part 4 specifically used a
   real, unique source: a benchmark project
-  (`/home/sinner/swift/SwiftAlula/benchmark/`) that built the same
+  (`/home/sinner/swift/SwiftFlight/benchmark/`) that built the same
   realtime issue board twice — once on Alula, once hand-rolled against
   Hummingbird — specifically to measure what Channels is worth. Real
   numbers from it are cited directly in `04-advanced/01-websockets.md`
@@ -364,7 +391,7 @@ against `ServerSentEvent.encoded`'s wire format directly), `SessionService`
 (composes the two and fans `/run`'s output out to a `session:<id>`
 Channel topic via `ChannelBroadcaster`, resolved with
 `context.resolve(ChannelBroadcaster.self)` exactly the way
-`benchmark/alula-app`'s `IssueController` already does it), a
+`benchmark/flight-app`'s `IssueController` already does it), a
 `SessionController` (`@Controller`, `/api/session`, `/api/session/write`,
 `/api/session/run`, `/api/session/reset`), a `SessionChannel` (join gate
 for `session:*` — rejects a socket unless the topic's session id is
@@ -1090,6 +1117,12 @@ type no longer offers tiers nothing serves.
 
 ## Explicitly deviated from PLAN.md §6, on purpose
 
+*Superseded in part:* the app-tier shape this section says "doesn't
+exist anywhere" now does — Parts 1, 3, 4 and 5 use `README.md` +
+`meta.json` + `app-a/`/`app-b/` against an alula-cli template, as §6
+planned (with a smaller `meta.json`). What still holds is the Part 2
+snippet shape described here. PLAN.md §6 has an as-built note.
+
 The plan's content layout has each exercise as a directory with
 `README.md` + `meta.json` + `app-a/`/`app-b/` diffs against a CLI
 template. What's actually here, even now that the snippet tier is
@@ -1113,25 +1146,15 @@ shape generalizes to it.
   JSON from a build-time manifest) — `site` still reads `content/`
   directly and per-request (`site/src/lib/server/content.ts`); nothing
   has forced that to change yet.
-- "Solve" diffing, session presence, the preview proxy, and the
-  `app`/`app+db` execution tiers (PLAN §3) — the `db` tier's own tutorial
-  content (Part 2, `01-entities` through `12-diagnostics`) is now fully
-  migrated and wired; `app`/`app+db` (a learner editing files in a full
-  Alula application, not one snippet file) are a different, larger
-  architecture problem, genuinely M3+, not something left unfinished here.
-- `03-intermediate/01-repo-wiring` — still references the old
-  `Post`/`Comment`/`Author` domain and isn't wired to the `db` tier;
-  Part 2's `06-preloading` through `12-diagnostics` migration is the
-  pattern to repeat for it: migrate the domain, write a real starting
-  snippet, verify it against a real runner+server+postgres before
-  trusting it.
-- A similar accuracy pass over the *rest* of the plain-docs guides
-  (`up-and-running.md`, `routing-and-controllers.md`, etc.) and the
-  `db`/`app`-tier curriculum once those tiers exist — the M1-closing
-  audit above only covered the Hangar/Changeset guides, since that's
-  what M1's own scope touches. Worth doing again whenever a tier goes
-  from written to interactive, on the same theory that caught these
-  bugs: a code block nobody's run is a claim, not a fact.
+- "Solve" diffing and session presence (PLAN §3). The `app`/`app+db`
+  tiers and the preview proxy are not "not started": they were built
+  and removed (see "M3 reversed" above).
+
+The Web guides (`up-and-running.md`, `routing-and-controllers.md` and
+the rest) were checked against source in the 2026-09 upgrade passes and
+the 2026-09-30 documentation sweep, like the Hangar/Changeset guides
+before them. `03-intermediate/01-repo-wiring` moved to the shared issue
+domain and has an `app-b` CI builds.
 
 ## If you're picking this up cold
 
@@ -1139,10 +1162,9 @@ Read `PLAN.md` first, all of it — §7a and §8a in particular record two
 corrections made *after* the original plan was written, each from
 actually checking a claim against source rather than trusting the first
 draft. The tutorial curriculum itself is now fully written (see above),
-so the immediate next work here is more likely to be M1+ (the execution
-tiers) than new tutorial content — but if a gap does turn up (a new
-alula/Hangar/alula-data release unblocking `06-cookies`, a curriculum
-correction, a new guide), the same pattern that got the rest of this
+so the immediate next work here is more likely to be keeping it current
+with each alula/Hangar/alula-data release than new tutorial content —
+but if a gap does turn up (a curriculum correction, a new guide), the same pattern that got the rest of this
 content right still applies: don't assume a config/CLI flag/API shape
 without grepping the real source first — this plan has already been
 wrong twice in ways that only source-checking caught, and the "real bugs

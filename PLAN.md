@@ -1,8 +1,10 @@
 # Fledge — interactive tutorial + documentation site
 
-**Status: plan, not implementation.** Own repo under the Alula-Framework org.
-Proposed name: `fledge` (alternatives: `alula-learn`, `learn-alula`).
-The name matters less than reserving it before content links bake it in.
+**Status: the design record.** This was written before anything was
+built and is kept as the reasoning behind it; where the build departed
+from it, the section says so inline (§6, §8a, §10). What exists and what
+was verified is in [`STATUS.md`](STATUS.md). The repo is
+`Alula-Framework/fledge` (the site was Flight School until 2026-09-24).
 
 The ask: a docs/tutorial site for Alula in the mold of Svelte's
 learn.svelte.dev — interactive, embedded editor, step-by-step descriptions —
@@ -293,6 +295,14 @@ before the content ships.)
 editable-file allowlist, expected-output assertions (for CI), and the DB
 template if any.
 
+*As built:* the app-tier exercises (Parts 1, 3, 4, 5) keep exactly this
+`README.md` + `meta.json` + `app-a/`/`app-b/` shape, but `meta.json`
+carries only `runtime`, `template` and `focus`, and CI builds each
+`app-b` without running it. Part 2's snippet exercises are flat instead:
+`<slug>.md` beside a `<slug>.swift` that CI builds and, with a database,
+runs. There is no `reference/` directory; DocC is published separately
+(§8a). `scripts/check-exercises.py` is the CI half.
+
 ---
 
 ## 7. Curriculum
@@ -383,7 +393,7 @@ Asked directly and checked against source rather than answered from
 impression. **No — narrower than the plan first implied, and by design:
 the benchmark app was built to measure a specific capability's cost, not
 for curriculum breadth.** Verified by grepping every `import Alula*` in
-`benchmark/alula-app/Sources/App/*.swift`:
+`benchmark/flight-app/Sources/App/*.swift` (the directory predates the rename):
 
 | Actually exercised | Never exercised |
 |---|---|
@@ -482,6 +492,11 @@ Channels · Presence · Deployment. (Several can be seeded from the
 already-strong Hangar README/DocC prose.)
 
 ### 8a. DocC → GitHub Pages: current state, and what's actually missing
+
+*Since built:* `.github/workflows/docs.yml` does all five steps below
+and publishes to `alula-framework.github.io/fledge/` — weekly from each
+repo's `main`, or by hand against a tag. The audit that follows is the
+state before it existed.
 
 Asked directly: is this already a CI step? **Half of it is — and the half
 that exists lives in `alula`/`alula-data`'s CI today, not anywhere that
@@ -672,5 +687,5 @@ Each milestone ships; none blocks the previous from being deployed.
 the dev machine (headless `swift repl` ✅; `swift run --repl` vs. Hangar ❌
 duplicate modulemaps; 1.81s warm one-file rebuild with macros; 7–8s app
 incremental; ~73s/~470s clean debug/release) — and the benchmark suite's
-RESULTS files in `SwiftAlula/benchmark/` for the framework-level numbers
+RESULTS files in `SwiftFlight/benchmark/` for the framework-level numbers
 the curriculum cites.*
