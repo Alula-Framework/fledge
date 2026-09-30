@@ -122,9 +122,9 @@ struct Main {
 ```
 
 Read this and you've read the order events happen in, for every Alula
-app you'll ever open: configuration loads, the modules are composed in
-dependency order — each module's `dependencies` form a DAG that's resolved
-once — every `@Controller`, `@Service`, and `@Repository` is
+app you'll ever open: configuration loads, the modules are composed —
+each built after the modules whose values it takes, an order the build works
+out once — every `@Controller`, `@Service`, and `@Repository` is
 built a single time and wired by type, and *only then* does the server start
 accepting requests. Nothing serves traffic against a half-built graph —
 there's no window where a request could arrive before your controllers exist.

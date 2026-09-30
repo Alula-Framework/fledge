@@ -27,8 +27,8 @@ struct Main {
 1. **`Configuration.load()`** reads `alula.yaml`, the `alula-{env}.yaml`
    overlay for the environment `ALULA_ENV` names, and `ALULA_*` environment
    variables into one immutable value.
-2. **The modules are composed**, in dependency order — each module's
-   `dependencies` form a DAG that's resolved once, not hoped for. `modules:`
+2. **The modules are composed**, each one after the modules whose values it
+   takes — an order worked out at build time, not hoped for. `modules:`
    names which subsystems the app includes; `composedBy: alulaComposeModules`
    is how they're built.
 3. **Every component is built once, eagerly.** The composition root constructs
@@ -68,14 +68,15 @@ writes the code that builds and wires all of them, in dependency order. Add a
 controller, and it's picked up on the next build — you never edit `AppModule`
 to wire in a new route.
 
-## Why a DAG, not a list
+## Why not just a list
 
 `static var dependencies` matters the moment your app has more than one module.
-If `AppModule` needs something another module provides, naming that module in
-`dependencies` guarantees it's built first — regardless of the order modules
-appear in `Main.swift`'s array. You'll see this directly in Part 3, when
-scheduling adds a module your own depends on, and Part 5 is about writing
-modules of your own.
+Naming a module there *includes* it: list `AppModule` and its whole stack comes
+along. It is not what orders construction — a module that takes another's value
+is built after it, because it has to be, regardless of the order modules appear
+in `Main.swift`'s array or in `dependencies`. You'll see this directly in Part
+3, when scheduling adds a module your own depends on, and Part 5 is about
+writing modules of your own.
 
 **Try it — this is the exercise.** In a project of your own
 (`alula new MyService`, from Part 0 — `skeleton` is the default tier), add

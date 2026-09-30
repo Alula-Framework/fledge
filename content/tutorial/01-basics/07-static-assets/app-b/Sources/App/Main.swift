@@ -9,8 +9,8 @@ import AlulaWeb
 /// and `@Repository` — is wired by the generated composition
 /// root, so adding a controller does not mean editing this file.
 struct AppModule: AlulaModule {
-    /// Modules that must be built before this one. The list is a DAG resolved
-    /// once at bootstrap, so ordering is checked rather than hoped for.
+    /// Modules included whenever this one is. Construction order comes from
+    /// which module takes which value; this list only breaks ties.
     static var dependencies: [any AlulaModule.Type] { [] }
 
     /// The empty `"assets"` lane, as a value. Declaring a lane with nothing in
