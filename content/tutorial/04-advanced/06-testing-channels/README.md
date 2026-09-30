@@ -21,6 +21,14 @@ func joinRejected() async throws {
 }
 ```
 
+`Harness` is a few lines you write in your own test target — the demo
+template's `RealtimeTests.swift` has one. It builds the channels stack, puts
+it behind a `TestClient`, and its `wire()` returns
+`ChannelWireClient(socket: try await testClient.webSocket("/socket"))`.
+`ChannelWireClient`, `InMemoryChannelTransport` and the rest of
+`AlulaChannelsTesting` arrive with the same `import AlulaTesting` the
+[Testing](/tutorial/03-intermediate/07-testing) exercise used.
+
 `ChannelWireClient` is a deliberately dumb driver — it sends and reads raw
 `Envelope` values over an in-memory socket, with no heartbeats, no
 reconnect, no ref/reply correlation of its own. That's the entire point:
@@ -28,7 +36,7 @@ when what you're testing *is* the protocol — the exact close reason, the
 exact shape of a rejection — a client that helpfully retries or hides
 correlation from you would be testing the wrong layer. Underneath, it's
 still `InMemoryWebSocket` — no socket, no port — the same primitive
-`AlulaWebTesting` already gave you.
+`TestClient` already gave you.
 
 ## Asserting on fan-out
 
@@ -48,6 +56,10 @@ func fanOut() async throws {
     #expect(toBob?.ref == nil)   // server-initiated push, never correlated to a client ref
 }
 ```
+
+`join` and `expectEnvelope` are two more helpers of your own over
+`ChannelWireClient`'s `send` and `nextEnvelope()`: one sends `alula:join` and
+waits for its reply, the other reads envelopes until one matches.
 
 The same shape proves the negative cases that matter just as much:
 `excluding:` broadcasts skip only the sender, and a shout in one room

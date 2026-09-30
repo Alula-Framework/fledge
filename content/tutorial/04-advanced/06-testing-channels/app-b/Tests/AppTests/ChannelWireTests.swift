@@ -1,9 +1,8 @@
 import AlulaChannels
 import AlulaChannelsClient
-import AlulaChannelsTesting
 import AlulaCore
+import AlulaTesting
 import AlulaWeb
-import AlulaWebTesting
 import Foundation
 import Testing
 

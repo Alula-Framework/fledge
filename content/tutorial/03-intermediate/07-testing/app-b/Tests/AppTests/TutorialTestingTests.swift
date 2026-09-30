@@ -1,8 +1,7 @@
 import AlulaCore
 import AlulaMail
-import AlulaQueueTesting
+import AlulaTesting
 import AlulaWeb
-import AlulaWebTesting
 import Foundation
 import Testing
 
@@ -18,9 +17,10 @@ struct TutorialTestingTests {
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
         name: "Ada", email: "ada@example.com", createdAt: Date(), updatedAt: Date())
 
-    /// `UserService` injects a repository, a mailer and a job queue. The test
-    /// doubles for the last two ship with AlulaMail and AlulaQueueTesting;
-    /// only the repository is the test's own fake.
+    /// `UserService` injects a repository, a mailer and a job queue. The
+    /// doubles for the last two come from `AlulaTesting`: `QueueTestHarness`,
+    /// and `Mailer.testing`, the demo's own two-line extension over
+    /// `RecordingMailTransport`. Only the repository is the test's own fake.
     func makeService(_ repository: MockUserRepository) -> UserService {
         UserService(repository: repository, mailer: .testing, jobs: QueueTestHarness().queue)
     }

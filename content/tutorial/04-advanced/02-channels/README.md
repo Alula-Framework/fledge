@@ -137,8 +137,8 @@ prefix (`"room:*"`) or catch-all (`"*"`); the most specific wins, and a
 duplicate or malformed pattern fails startup, not a join. Each join builds one
 `Channel` instance per socket and topic, so an instance may keep state for
 that membership. Reserved,
-framework-owned events all share a `alula:` prefix (`alula:join`,
+framework-owned events all share an `alula:` prefix (`alula:join`,
 `alula:reply`, `alula:error`, `alula:heartbeat`, among others) and
 `"alula"` itself can never be joined as an ordinary topic — broadcasting
-under a `alula:`-prefixed event name from your own code is refused
+under an `alula:`-prefixed event name from your own code is refused
 rather than colliding with the protocol's own control channel.

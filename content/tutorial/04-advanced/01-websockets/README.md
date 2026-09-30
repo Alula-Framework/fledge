@@ -83,7 +83,7 @@ claim this measurement supports: **Alula doesn't make application logic
 shorter. It removes the layer underneath it.** The 315 hand-rolled lines
 went into three files — a session handler, a wire-protocol codec, and a
 topic/subscriber registry — each one a concurrency-sensitive piece of
-infrastructure a hand-rolled app has to get right on its own, that a
+infrastructure a hand-rolled app has to get right on its own, that an
 Alula app never writes at all.
 
 One honesty caveat worth keeping, since it's exactly the kind of thing

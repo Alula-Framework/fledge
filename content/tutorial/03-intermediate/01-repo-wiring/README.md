@@ -50,6 +50,13 @@ root wires it by type. Nothing marks the property as module-provided: the
 build sees which values the included modules provide, and were no module
 providing the pool, it would fail with `ALU-DI-1001`.
 
+The controller holds the pool here to keep the example to one type. In an
+application the same property usually sits one layer down, in a
+`@Repository` — `@Service` for data access, built once and injected by type —
+and the controller injects that. The `basics` template's `UserRepository` is
+exactly this shape: `@Inject var pool: PostgresDataSource`, and one
+`withRepo` per method.
+
 The lease is also where an outage shows up, and it shows up as what it is. A
 database that can't be reached, or a pool with no free connection, throws an
 error Alula answers as `503 Service Unavailable` with a `Retry-After`, not an

@@ -67,6 +67,12 @@ An unrecognized value throws rather than silently picking a side — a typo
 in the setting that controls disclosure should stop the app, not quietly
 choose for you.
 
+All of this is what the composition root's `init(configuration:)` reads, and
+you never call it yourself in an app. A test that builds the module by hand
+states the answer in code instead, with no environment to consult:
+`ActuatorModule(environment: .test, exposure: .full)`. Naming the
+environment there counts as declaring it, the same as setting `ALULA_ENV`.
+
 ## The one config key that *is* ordinary
 
 ```yaml

@@ -10,6 +10,24 @@ need nothing more than Swift: construct the type with fakes in place of its
 dependencies, call the method, and check what comes back — no container, no
 router, no HTTP.
 
+What the framework does give a test comes from one product. The `demo`
+template's test target lists `AlulaTesting`, and each test file does
+`import AlulaTesting`: that one import brings every testing module the
+package's traits allow — `TestClient` and `RequestContext.mock`
+(`AlulaWebTesting`), `QueueTestHarness` (`AlulaQueueTesting`),
+`RecordingMailTransport` (`AlulaMailTesting`) and the rest. Each module is
+also its own product, for a build that wants to compile only one.
+
+```swift
+.testTarget(
+    name: "AppTests",
+    dependencies: [
+        "App",
+        .product(name: "AlulaTesting", package: "alula"),
+    ]
+)
+```
+
 ## Service unit tests
 
 The `demo` template's `UserService` injects `any UserRepositoryProtocol`, a
@@ -30,9 +48,11 @@ func findByID() async throws {
 ```
 
 `MockUserRepository` is a plain type conforming to `UserRepositoryProtocol` —
-the seam that makes this possible. `Mailer.testing` (from `AlulaMail`) and
-`QueueTestHarness` (from `AlulaQueueTesting`) are the framework's own doubles,
-so a test that isn't about mail needs no mail server. Nothing is registered or
+the seam that makes this possible. `QueueTestHarness` is the framework's own
+queue double, and `Mailer.testing` is a two-line extension the demo's tests
+define: a real `Mailer` over `RecordingMailTransport`, which keeps what was
+sent instead of sending it. So a test that isn't about mail needs no mail
+server. Nothing is registered or
 resolved: wiring the real dependencies in is the composition root's job, and a
 unit test is exactly the place that does it by hand instead.
 

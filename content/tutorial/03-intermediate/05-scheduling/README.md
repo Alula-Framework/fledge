@@ -25,7 +25,11 @@ struct ReportJobs {
 ```
 
 `@Scheduler` marks an ordinary singleton component — `@Inject` resolves
-its dependencies exactly like any other type. `@Scheduled` takes either a
+its dependencies exactly like any other type. Like `@Service`, it only puts
+the type in the graph; nothing about the annotation starts anything. What
+fires the jobs is `AlulaSchedulerModule`'s *lifecycle* service — the
+long-running `run()` a module hands to the app's service group, a different
+thing from the `@Service` annotation despite the name. `@Scheduled` takes either a
 cron expression — six fields, seconds first: `0 0 3 * * *` is 03:00 UTC every
 day; the classic five-field shape is accepted too and means second zero — or
 a fixed interval measured from the end of the previous run, never

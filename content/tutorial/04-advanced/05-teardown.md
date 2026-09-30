@@ -66,7 +66,10 @@ while !Task.isCancelled {
 `alula:heartbeat` — a socket that's actively sending real messages never
 needs to heartbeat at all to stay alive. Worst-case detection latency is
 the timeout plus one check interval, so a socket can go unnoticed for up
-to 75 seconds under the defaults before this path closes it.
+to 75 seconds under the defaults before this path closes it. Both are
+configuration: `channels.heartbeat-timeout-seconds` and
+`channels.heartbeat-check-interval-seconds` (a quarter of the timeout when
+unset).
 
 ## A fifth name worth knowing: `alula:close`
 
