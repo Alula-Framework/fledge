@@ -15,7 +15,7 @@ injection, an HTTP server, and the operational endpoints. No database, no
 real-time layer, no cache — those aren't missing pieces, they're absent
 dependencies. You add them by asking for more.
 
-## Three tiers, and they nest
+## Three tiers
 
 ```bash
 alula new MyService                  # skeleton
@@ -29,11 +29,12 @@ alula new MyService --tier demo      # + PubSub, Channels, Presence, caching, au
 | `basics` | A service with a database | entities, migrations, a repository, CRUD |
 | `demo` | Reading, not starting from | PubSub, Channels, Presence, caching, auth, the full query tour |
 
-That "adds" is literal, not a summary: `skeleton`'s files are a subset of
-`basics`', and `basics`' a subset of `demo`'s, checked in the framework's
-own CI. Nothing you learn on `skeleton` gets invalidated when you move up a
-tier — the file that taught you `@Controller` is still there, unchanged,
-in `demo`.
+Each tier builds on the one before it, so nothing you learn on `skeleton`
+is invalidated by the others: the `HealthController` that teaches you
+`@Controller` is in all three (`demo`'s adds a second route). They are
+separate starting points, though, not layers you upgrade through. A project
+made from `skeleton` stays a `skeleton` project; moving it up later means
+adding the next tier's pieces by hand.
 
 `demo` is marked "for reading" on purpose: it is the widest tour of what
 Alula offers, not the tier you should build a new service from. Most real

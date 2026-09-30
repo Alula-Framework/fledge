@@ -13,11 +13,10 @@ struct AppModule: AlulaModule {
     /// once at bootstrap, so ordering is checked rather than hoped for.
     static var dependencies: [any AlulaModule.Type] { [] }
 
-    /// The application's default-lane middleware, outermost first — the value
-    /// form of the old `container.pipeline { }`. A `@Middleware` type is an
-    /// ordinary component; naming its *instance* here is the separate, explicit
-    /// step that puts it in a lane. The composer collects `middleware` from
-    /// every module and hands it to `AlulaWebModule`.
+    /// The application's default-lane middleware, outermost first. A
+    /// `@Middleware` type is an ordinary component; naming its *instance* here
+    /// is the separate, explicit step that puts it in a lane. The composer
+    /// collects `middleware` from every module and hands it to `AlulaWebModule`.
     ///
     /// The explicit `[MiddlewareRegistration]` annotation is load-bearing: the
     /// build-time scanner reads the declared type to know this property feeds

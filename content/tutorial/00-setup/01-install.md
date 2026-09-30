@@ -19,8 +19,8 @@ do not offer, and the failure looks unrelated to the SDK when you hit it — an
 error about `Data` having no member `bytes`, inside a package you did not
 write. On Linux there is nothing extra to install.
 
-If not, [Swiftly](https://www.swift.org/install/) is the fastest path on
-either platform:
+If you don't have 6.3 yet, [Swiftly](https://www.swift.org/install/) is
+the fastest path on either platform. On Linux:
 
 ```bash
 curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
@@ -28,6 +28,9 @@ tar zxf swiftly-$(uname -m).tar.gz
 ./swiftly init
 swiftly install latest
 ```
+
+On a Mac, the same page has the Swiftly installer package; after it, `swiftly
+install latest` is the same step.
 
 Confirm it:
 

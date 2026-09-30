@@ -49,7 +49,11 @@ let package = Package(
         ),
         .testTarget(
             name: "MyServiceTests",
-            dependencies: ["MyService", /* … */ .product(name: "AlulaWebTesting", package: "alula")]
+            dependencies: [
+                "MyService",
+                .product(name: "AlulaWeb", package: "alula"),
+                .product(name: "AlulaTesting", package: "alula"),
+            ]
         ),
     ]
 )
@@ -62,7 +66,8 @@ module, because neither was named. The `AlulaWeb` product brings
 why neither is listed. The transport is still a choice, not a given:
 `Main.swift` imports `AlulaTransport` and names it, it wraps HummingbirdCore,
 and any type conforming to the same transport protocol is a peer you could
-swap in.
+swap in. The test target takes `AlulaTesting`, which puts every testing
+module behind one `import AlulaTesting`.
 
 The plugin line matters more than it looks: `AlulaRegistrationPlugin`
 scans this target for `@Controller`/`@Service`/`@Repository` at *build*
@@ -85,9 +90,10 @@ actuator:
   format: json
 ```
 
-"Layer 3" because environment variables (`ALULA_*`) layer over this file,
-and both are frozen into an immutable `Configuration` once, at bootstrap.
-Nothing re-reads this file while the process is running — change a value,
+"Layer 3" because two layers sit over this file — an optional
+`alula-{env}.yaml` for the environment `ALULA_ENV` names, then environment
+variables (`ALULA_*`) — and all three are frozen into an immutable
+`Configuration` once, at bootstrap. Nothing re-reads this file while the process is running — change a value,
 restart the process. That's a deliberate trade: a config value can't drift
 mid-request, and every route you write can trust the value it read a
 minute ago is still the value it would read now.

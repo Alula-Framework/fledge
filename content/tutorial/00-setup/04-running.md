@@ -45,7 +45,8 @@ swift test
 ```
 
 `Tests/MyServiceTests/HealthControllerTests.swift` exercises the same route
-without a real socket — `AlulaWebTesting`'s `TestClient` dispatches
+without a real socket — `TestClient`, from the `AlulaTesting` product the
+test target lists, dispatches
 through the exact same `Request`/`Response` types your controller does,
 skipping the transport layer entirely rather than routing through an
 in-process stand-in for it. Routing, middleware, and dependency injection

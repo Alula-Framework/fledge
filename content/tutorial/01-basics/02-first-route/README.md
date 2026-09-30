@@ -18,7 +18,7 @@ struct GreetingController {
 ```
 
 Create this as `Sources/MyService/Controllers/GreetingController.swift` in
-your project, `swift run MyService`, and ask for it:
+your project, run it with `alula dev`, and ask for it:
 
 ```bash
 curl http://127.0.0.1:8080/hello
@@ -75,4 +75,4 @@ for you — it's never something you construct). It's your access point for
 everything about the current request: the request itself, its path
 parameters, and the logger. What a handler *depends on* — a service, a
 repository — isn't on it: those are `@Inject` properties of the controller,
-built once. The next two exercises are about what a request brings with it.
+built once (the configuration exercise injects its first one). The next two exercises are about what a request brings with it.

@@ -21,9 +21,8 @@ struct AppModule: AlulaModule {
     let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane("assets", [])
 
     /// A built frontend, mounted as a routing fallback rather than a route: it
-    /// only answers a `GET`/`HEAD` the router did not match. The value form of
-    /// the old `container.assets(at:root:pipelines:)`; the composer hands these
-    /// to `AlulaWebModule` the same way it hands over routes.
+    /// only answers a `GET`/`HEAD` the router did not match. The composer hands
+    /// these to `AlulaWebModule` the same way it hands over routes.
     let assets: [AssetMountRegistration] = [
         .mount(at: "/", root: "web/build", pipelines: ["assets"]) { options in
             options.spaFallback = "index.html"

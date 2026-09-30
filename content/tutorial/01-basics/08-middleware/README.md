@@ -90,13 +90,28 @@ through every enclosing layer exactly like an ordinary Swift call. Listing
 both instances orders them, outermost first:
 
 ```swift
-let middleware: [MiddlewareRegistration] = MiddlewareRegistration.lane(
-    .default, [RequestTiming(), MaintenanceGate()])
+struct AppModule: AlulaModule {
+    static var dependencies: [any AlulaModule.Type] { [] }
+
+    let middleware: [MiddlewareRegistration]
+
+    init(graph: AlulaGraph) {
+        middleware = MiddlewareRegistration.lane(
+            .default, [RequestTiming(), graph.maintenanceGate])
+    }
+}
 ```
 
 `RequestTiming` wraps `MaintenanceGate` wraps the handler — a request the
 gate turns away is still timed, because timing sits outside it. Reverse the
 two entries and it wouldn't be.
+
+`MaintenanceGate` reads configuration, so it can't be built with a bare
+`MaintenanceGate()` the way `RequestTiming` can: its generated initializer
+takes the `Configuration`. The module takes the instance the composition root
+already built instead. A module whose initializer asks for `graph: AlulaGraph`
+is handed the graph, and every component is a property on it, named after its
+type.
 
 ## Named lanes
 
@@ -106,9 +121,10 @@ all, or something narrower — names its own. A module declares as many lanes
 as it likes by concatenating them, and a route opts in by name:
 
 ```swift
-let middleware: [MiddlewareRegistration] =
+// in AppModule's init(graph:)
+middleware =
     MiddlewareRegistration.lane(.default, [RequestTiming()])
-    + MiddlewareRegistration.lane("admin", [RequestTiming(), MaintenanceGate()])
+    + MiddlewareRegistration.lane("admin", [RequestTiming(), graph.maintenanceGate])
 
 @Controller("/admin", pipelines: ["admin"])
 struct AdminController { /* ... */ }

@@ -24,8 +24,9 @@ struct Main {
 }
 ```
 
-1. **`Configuration.load()`** reads `alula.yaml` plus `ALULA_*`
-   environment variables into one immutable value.
+1. **`Configuration.load()`** reads `alula.yaml`, the `alula-{env}.yaml`
+   overlay for the environment `ALULA_ENV` names, and `ALULA_*` environment
+   variables into one immutable value.
 2. **The modules are composed**, in dependency order — each module's
    `dependencies` form a DAG that's resolved once, not hoped for. `modules:`
    names which subsystems the app includes; `composedBy: alulaComposeModules`
@@ -72,8 +73,9 @@ to wire in a new route.
 `static var dependencies` matters the moment your app has more than one module.
 If `AppModule` needs something another module provides, naming that module in
 `dependencies` guarantees it's built first — regardless of the order modules
-appear in `Main.swift`'s array. You'll see this directly once Part 2 adds a
-database module ahead of your own.
+appear in `Main.swift`'s array. You'll see this directly in Part 3, when
+scheduling adds a module your own depends on, and Part 5 is about writing
+modules of your own.
 
 **Try it — this is the exercise.** In a project of your own
 (`alula new MyService`, from Part 0 — `skeleton` is the default tier), add
@@ -94,7 +96,7 @@ struct StatusController {
 }
 ```
 
-`swift run MyService`, then `curl 127.0.0.1:8080/status` — it answers
+`alula dev` (from Part 0), then `curl 127.0.0.1:8080/status` — it answers
 `MyService: up` (the `app.name` `alula new` wrote), and
 nothing in `AppModule` or `Main.swift` changed to make that happen. That's the
 composition root doing its job: the plugin found the new type at build time and
