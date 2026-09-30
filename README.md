@@ -113,16 +113,21 @@ the last real bug this caught — `repo.one` on a non-unique predicate —
 would have shipped it. `.github/workflows/exercises.yml` runs the whole
 thing on every push to `main`, every PR and weekly, the schedule being
 there because the usual cause of a break is an upstream release rather
-than an edit here. Today that is 48 checks: 11 Part 2 snippets built and
-run, and 26 `app-b` solutions built.
+than an edit here. Today that is 48 checks: each of the 11 Part 2
+snippets is built and then run (22), and each of the 26 `app-b`
+solutions is built (26).
 
-## Reference docs
+## Where things are hosted
 
-`.github/workflows/docs.yml` generates DocC for alula, alula-data,
-Hangar and swift-changeset and publishes it to
-<https://alula-framework.github.io/fledge/> — weekly from each repo's
-`main`, or by hand (`workflow_dispatch`) against a tag. The guides link
-there for API detail.
+The Fledge site itself — tutorial and guides — is not hosted anywhere
+yet. Run it locally as above; `docker-compose.yml` is the deployment
+shape for when it is.
+
+What *is* published is the DocC API reference: `.github/workflows/docs.yml`
+generates it for alula, alula-data, Hangar and swift-changeset and
+deploys it to GitHub Pages at <https://alula-framework.github.io/fledge/>,
+weekly from each repo's `main`, or by hand (`workflow_dispatch`) against
+a tag. That URL is the reference only, not the tutorial.
 
 ## Contributing content
 

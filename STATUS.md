@@ -16,8 +16,10 @@ milestone list this maps onto.
 - **Verification:** `scripts/check-exercises.py` (and
   `.github/workflows/exercises.yml`, on every push to `main`, every PR
   and weekly) builds the 11 Part 2 snippets and runs them against the
-  seeded database, and builds the 26 `app-b` solutions against the
-  alula-cli templates — 48 checks in all.
+  seeded database (22 checks), and builds the 26 `app-b` solutions
+  against the alula-cli templates (26) — 48 checks in all.
+- **Hosting:** the Fledge site itself is not hosted yet; it runs
+  locally or under `docker compose`.
 - **Reference docs:** `.github/workflows/docs.yml` publishes DocC for
   alula, alula-data, Hangar and swift-changeset to
   `alula-framework.github.io/fledge/` weekly from each repo's `main`

@@ -107,10 +107,13 @@ jobs:
           # behind — Sessions, APNs, rate limiting, queues, mail, the HTTP
           # client, OpenAPI and the AlulaTesting umbrella the testing lesson
           # teaches first all shipped without reference pages here.
-          # AlulaChannelsProtocol and AlulaTransport are targets still
-          # (re-exported by AlulaChannels/AlulaChannelsClient and AlulaWeb),
-          # so their symbols still need pages even though neither is a
-          # product a manifest should name.
+          # AlulaChannelsProtocol and AlulaTransport stay, although
+          # neither is a product a manifest should name: both are still
+          # targets, re-exported by AlulaChannels/AlulaChannelsClient and
+          # AlulaWeb. DocC documents only a module's own symbols, never
+          # what it re-exports, so dropping AlulaChannelsProtocol would
+          # leave Envelope, JSONValue and ReservedEvent with no reference
+          # page at all. Its landing page says to `import AlulaChannels`.
           for target in AlulaCore AlulaConfig AlulaConfigCore AlulaWeb \
                         AlulaChannels AlulaChannelsProtocol \
                         AlulaChannelsClient AlulaChannelsTesting \
