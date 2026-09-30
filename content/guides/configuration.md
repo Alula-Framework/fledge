@@ -85,6 +85,30 @@ missing-key error names exactly the variable the runtime reads:
 error: [ALU-CONFIG-5004] Configuration key 'posts.max-page-size' is not set in any source (active environment: prod). Add it to alula.yaml or alula-prod.yaml, or set the ALULA_POSTS_MAX_PAGE_SIZE environment variable.
 ```
 
+## Renamed keys stop the start
+
+A few keys have been renamed to the kebab-case, unprefixed spelling the rest
+of Alula uses, and the old spelling is no longer read — not as a fallback, and
+not silently ignored either, since that would put the setting back to its
+default without a word. A layer that still sets one stops the app with
+`ALU-CONFIG-5014`, naming both spellings and the layer:
+
+| Old spelling | Current key |
+|---|---|
+| `pubsub.node_id`, `pubsub.broadcast_timeout` | `pubsub.node-id`, `pubsub.broadcast-timeout` |
+| `alula.presence.*` | `presence.*` |
+| `alula.channels.*` | `channels.*` |
+| snake_case `security.oidc.*` (`jwks_url`, …) | kebab-case (`jwks-url`, …) |
+
+```
+error: [ALU-CONFIG-5014] Configuration key 'pubsub.node_id' is set in alula.yaml, but it was renamed 'pubsub.node-id' and the old spelling is no longer read. Rename it to 'pubsub.node-id'; Alula stops here rather than start without the value you set.
+```
+
+An environment variable like `ALULA_PUBSUB_NODE_ID` is fine: the transform
+above writes both spellings the same way, so it is read as the new key. One
+that spells only the old key, such as `ALULA_ALULA_PRESENCE_NODE_NAME`, is
+refused like a YAML line.
+
 ## Where to go next
 
 - [Routing and Controllers](/guides/routing-and-controllers) — where a
