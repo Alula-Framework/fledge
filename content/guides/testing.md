@@ -25,8 +25,8 @@ construct the type with a fake, call the method, assert on what comes back. No
 container, no router, no HTTP.
 
 ```swift
-// A service: a fake repository and the framework's mail and queue doubles in,
-// called directly.
+// A service: a fake repository, a recording mailer and the framework's queue
+// double in, called directly.
 let service = UserService(
     repository: MockUserRepository(users: [ada]),
     mailer: .testing, jobs: QueueTestHarness().queue)
@@ -39,9 +39,10 @@ let user = try await controller.getUser(.mock(), id: ada.id)
 ```
 
 `MockUserRepository` is a plain type conforming to `UserRepositoryProtocol`;
-`Mailer.testing` and `QueueTestHarness` ship with `AlulaMail` and
-`AlulaQueueTesting`; and `RequestContext.mock(...)` builds a context with no
-transport behind it. Nothing
+`Mailer.testing` is a two-line extension the `demo` project's tests define, a
+real `Mailer` over `RecordingMailTransport`, which keeps what was sent instead
+of sending it; `QueueTestHarness` is the framework's queue double; and
+`RequestContext.mock(...)` builds a context with no transport behind it. Nothing
 is registered or resolved — wiring the real dependency in is the composition
 root's job, which a unit test replaces by hand. Handlers return domain values
 (`getUser` returns a `User`), so a unit test asserts on the value or, for the

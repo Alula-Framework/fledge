@@ -8,8 +8,9 @@ category: Realtime
 Tracking who's here is two calls, made from a channel's `join`:
 
 ```swift
+guard let principal = socket.principal else { return .reject(.unauthenticated) }
 await presence.track(topic: topic, key: principal.subject,
-                      payload: ["displayName": principal.name ?? principal.subject], socket: socket)
+                      payload: ["displayName": principal.subject], socket: socket)
 await presence.sendState(topic: topic, to: socket)
 ```
 
@@ -28,8 +29,9 @@ A user with three browser tabs open is one person, present three times —
 one key, three metas, each with its own `ref`. Closing one tab removes
 one meta; only when the last one goes do other clients see a leave.
 `payload` is a flat `[String: String]` your application controls
-entirely — plain strings, not `JSONValue`, which is why `principal.name` (a
-`String?`, from the standard `name` claim) needs a fallback above.
+entirely — plain strings, not `JSONValue`. A socket's principal is an
+`any ChannelPrincipal`, which guarantees only a `subject`; anything richer, such
+as a display name, is yours to look up and put in the payload.
 
 ## State, then diffs — never the reverse
 

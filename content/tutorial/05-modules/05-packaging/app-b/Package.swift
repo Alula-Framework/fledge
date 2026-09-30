@@ -33,7 +33,8 @@ let package = Package(
             dependencies: [
                 "App",
                 .product(name: "AlulaWeb", package: "alula"),
-                .product(name: "AlulaWebTesting", package: "alula"),
+                // Every testing module behind one import: `import AlulaTesting`.
+                .product(name: "AlulaTesting", package: "alula"),
             ]
         ),
     ]

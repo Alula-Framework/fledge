@@ -49,9 +49,10 @@ that `alula new` prints as its last step. It is also the `app.name` in
 `alula.yaml`, which is where the greeting below gets it.
 
 `Main.swift` is the whole boot sequence, in one place: configuration
-loads, the modules compose in dependency order (each module's
-`dependencies` forming a DAG resolved once), every component is built
-once, and only then does the server start accepting requests. There's no
+loads, the modules are built in an order the build plugin works out from
+what each one needs (a module that takes another's value is built after
+it), every component is built once, and only then does the server start
+accepting requests. There's no
 window where a request could arrive against a half-built graph.
 
 `HealthController` is the one route worth curling once the server is up:

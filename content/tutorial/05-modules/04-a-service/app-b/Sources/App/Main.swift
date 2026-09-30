@@ -6,9 +6,10 @@ import Foundation
 import Logging
 import ServiceLifecycle
 
-/// A long-running component: it starts when the app starts, runs until the app
+/// Something long-running: it starts when the app starts, runs until the app
 /// shuts down, and is cancelled cleanly when it does. Conforms to
-/// ServiceLifecycle's `Service` — one `run()` method.
+/// ServiceLifecycle's `Service` — one `run()` method. (Not the `@Service`
+/// annotation, which puts a type in the graph and starts nothing.)
 struct HeartbeatService: Service {
     let interval: Duration
     let logger: Logger

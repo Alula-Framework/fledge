@@ -70,8 +70,8 @@ self.middleware = MiddlewareRegistration.lane(.default, [StampMiddleware()])
 outermost first. `.default` is the lane every route runs through unless it
 names others; `.authenticated`, `.authentication`, and `.public` are the other
 built-in lanes, and you can declare your own just by naming it. Because the
-module owns the *instance* (`StampMiddleware()`), there's nothing to look up —
-the value form of what a runtime container's `pipeline { }` block used to do.
+module owns the *instance* (`StampMiddleware()`), there's nothing to look up
+and nothing for the scan to build.
 
 ## How the root folds them together
 

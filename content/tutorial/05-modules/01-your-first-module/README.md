@@ -73,7 +73,7 @@ it reads your *source*, at build time, before anything runs:
   have answered:
 
   ```
-  Sources/MyService/Controllers/TimeController.swift:9:24: error: [ALU-DI-1001] no module in this application provides `Clock`
+  Sources/MyService/Controllers/TimeController.swift:8:24: error: [ALU-DI-1001] no module in this application provides `Clock`
       needed by:
         TimeController.clock → Clock
       A module provides a value by holding it as a stored property with a written type.
@@ -85,9 +85,7 @@ it reads your *source*, at build time, before anything runs:
 - **Nothing marks `clock` as module-provided.** `TimeController` just asks
   for a `Clock`; the generator sees every module's stored properties, works out
   that `AppModule` provides one, and wires it. A type nothing provides fails
-  the build with the error above. (Code written for Alula before 0.60 may carry
-  a `// alula:hand-registered` comment on such a property. The build no longer
-  reads it — it is an ordinary comment, and you can delete it.)
+  the build with the error above.
 
 ## Why a module, and not just a global
 
@@ -95,10 +93,11 @@ A module is a *value*, built once when the app is composed. `static var
 dependencies` says which *other* modules come along when this one is included —
 naming one module names its whole stack, so an app that lists `AppModule` and
 depends on, say, the database module doesn't also have to list the database
-module by hand. It is an inclusion list, not an ordering knob: construction
-order isn't read off it. The generator works out the order from the *values* —
-if your module's initializer needs a `Clock`, whatever module provides a
-`Clock` is built first, because it has to be. The next exercises lean on
+module by hand. It is an inclusion list, not an ordering knob: the generator
+works out construction order from the *values* — if your module's initializer
+needs a `Clock`, whatever module provides a `Clock` is built first, because it
+has to be. `dependencies` only breaks ties between modules the values leave
+unordered. The next exercises lean on
 exactly that: a module names another in `dependencies` to pull it in, declares
 an `init` that takes the value that module provides, and is handed it —
 matched by type, the same way `clock` reached the controller.

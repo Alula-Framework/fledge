@@ -40,8 +40,9 @@ starts nothing:
 - **No `AlulaRegistrationPlugin`.** The plugin generates a composition root
   from a bootstrap list, and a library has none. The *application* that
   installs GreetKit runs the plugin, and its scan reaches across into GreetKit's
-  source to find your module. A library that ran the plugin would just generate
-  an empty root.
+  source to find your module. A library may run the plugin for its build-time
+  checks, but it composes nothing; GreetKit has nothing to check, so it leaves
+  the plugin out.
 - **No transport, no `@main`.** Those belong to the application. The library
   ships the module and whatever it provides, nothing more.
 
@@ -69,7 +70,11 @@ public struct GreetingModule: AlulaModule {
 The `public` matters: the struct, `dependencies`, the provided `routes`, and
 the `init` all have to cross the package boundary for the consuming app's
 generator to see and build the module. A non-public member is invisible to it —
-the same way any other type hidden behind a package boundary would be.
+the same way any other type hidden behind a package boundary would be. For
+initializers the generator is strict about it: from another package it
+considers only `public` ones, because those are the only ones the app's
+composition root can call. An `internal` init that works while the module
+lives in the app stops counting once the module moves into a package.
 
 This module brings its own route, so it's *fully self-contained*: installing it
 is the whole integration. That's the strongest form a reusable module takes,
@@ -107,8 +112,8 @@ builds `GreetingModule`, sees it needs `configuration`, supplies it, and folds
 the routes it brings into the web layer. If the module had declared
 `dependencies`, those would come along too, exactly as in the earlier
 exercises. From the outside, your module is indistinguishable from a framework
-one: `AlulaSecurityModule` is a `public struct AlulaModule` in a package,
-providing `public let middleware`, installed by listing it. You've been using
+one: `AlulaSecurityModule` is a `public struct` conforming to `AlulaModule`,
+in a package, providing `public let middleware`, installed by listing it. You've been using
 modules packaged this way since Part 1 — now you can ship your own.
 
 **Try it.** The solution ships GreetKit as a sibling directory and depends on

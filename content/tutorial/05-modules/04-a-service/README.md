@@ -7,13 +7,17 @@ order: 4
 Everything a module has provided so far is *inert* — a value someone else calls
 into. Some modules own something that runs on its own: a queue consumer, a
 cache warmer, a reaper that sweeps expired rows on a timer. Alula has one seam
-for that, and it's the last member of the `AlulaModule` protocol you haven't
-used: `var service: (any Service)?`.
+for that, a part of the `AlulaModule` protocol you haven't used yet:
+`var service: (any Service)?`.
 
 ## The service seam
 
-A `Service` is ServiceLifecycle's contract — a single `run()` method that
-starts when the app starts and is cancelled when it shuts down:
+A `Service` here is ServiceLifecycle's protocol — a single `run()` method that
+starts when the app starts and is cancelled when it shuts down. It is not the
+`@Service` annotation you've put on types for the graph: annotating a type
+`@Service` builds it and makes it injectable, and starts nothing. A lifecycle
+`Service` is something that runs, and the only way it runs is a module handing
+it over.
 
 ```swift
 struct HeartbeatService: Service {
@@ -47,8 +51,9 @@ error: [ALU-LIFE-8005] HeartbeatModule failed after running 4m 07s
 ```
 
 A service that *returns* while the app is still running — a loop that ended,
-a stream that finished — stops it too, as `ALU-LIFE-8006`, "HeartbeatModule's
-service ended on its own." Returning is only clean when shutdown asked for it,
+a stream that finished — stops it too: "HeartbeatModule's service ended on its
+own", reported as `ALU-LIFE-8006`, "HeartbeatModule's service returned without
+throwing". Returning is only clean when shutdown asked for it,
 which is what `cancelWhenGracefulShutdown` arranges. A service that is
 genuinely a bounded job — an import that finishes — says so with
 `serviceCompletion: .endsApp` on its module, and then finishing shuts the app

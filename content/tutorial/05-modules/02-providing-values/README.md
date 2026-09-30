@@ -47,9 +47,10 @@ applied to a module's own construction. Two kinds of thing can satisfy a
 parameter:
 
 - **`configuration: Configuration`** — the loaded `Configuration`, which the
-  root always has. Any module can ask for it. (`ModuleHealthRegistry` and the
-  `AlulaGraph`, met in later exercises, are the two other values the root
-  itself supplies.)
+  root always has. Any module can ask for it. (The root supplies a few more
+  values itself: the component graph, `AlulaGraph`, which exercise 4 comes
+  back to; the shared `ModuleHealthRegistry` Actuator reports from; and the
+  `OpenAPIDocument` the build derives from your routes.)
 - **`clock: Clock`** — a value *another module provides*. Here that's
   `ClockModule.clock`. The root finds the one module offering a `Clock` and
   passes it.
@@ -64,7 +65,8 @@ let greetingModule = GreetingModule(configuration: configuration, clock: clockMo
 `clockModule` is built first — not because it appears earlier in a list, but
 because `greetingModule` can't be constructed until its `clock` argument
 exists. Construction order is *derived from the values*, which is why the last
-exercise insisted `dependencies` is not an ordering knob.
+exercise insisted `dependencies` is not an ordering knob: it only breaks ties
+the values leave open.
 
 ## `dependencies` is what pulls ClockModule in
 
