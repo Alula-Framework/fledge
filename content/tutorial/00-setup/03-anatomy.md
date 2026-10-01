@@ -36,7 +36,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [.executable(name: "MyService", targets: ["MyService"])],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.61.0", traits: ["Web"])
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.62.0", traits: ["Web"])
     ],
     targets: [
         .executableTarget(

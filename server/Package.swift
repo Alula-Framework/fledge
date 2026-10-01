@@ -5,7 +5,7 @@ let package = Package(
     name: "server",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.61.0", traits: ["Web"]),
+        .package(url: "https://github.com/Alula-Framework/alula.git", from: "0.62.0", traits: ["Web"]),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.21.0"),
         // Session-database provisioning (PLAN §3's `db` tier) needs a raw
         // CREATE/DROP DATABASE connection — not Hangar's query builder,
